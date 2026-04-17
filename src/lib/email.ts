@@ -1,0 +1,219 @@
+// Utilitario de email com Resend.
+// Todas as funcoes sao fire-and-forget: erros sao logados mas nao propagados
+// para nao bloquear a operacao principal (ex: atualizar status de pedido).
+//
+// Variaveis de ambiente necessarias no .env.local:
+//   RESEND_API_KEY=re_xxxx
+//   RESEND_FROM_EMAIL=noreply@seudomain.com  (dominio verificado no Resend)
+
+import { Resend } from 'resend'
+import { formatBRL } from '@/lib/utils'
+import type { Order } from '@/types'
+
+// Inicializa uma unica instancia — o SDK cuida da conexao por baixo
+const resend = new Resend(process.env.RESEND_API_KEY)
+
+const EMAIL_REMETENTE =
+  process.env.RESEND_FROM_EMAIL ?? 'noreply@spacefit.com.br'
+
+// =============================================================================
+// Templates HTML em pt-BR com identidade visual Space Fit
+// =============================================================================
+
+function layoutEmail(titulo: string, corpo: string): string {
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${titulo}</title>
+</head>
+<body style="margin:0;padding:0;background:#0a0a0a;font-family:Arial,Helvetica,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:32px 16px;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#111111;border-radius:16px;border:1px solid #2a2a2a;overflow:hidden;">
+
+        <!-- Cabecalho -->
+        <tr>
+          <td style="background:#111111;padding:28px 32px;border-bottom:1px solid #2a2a2a;text-align:center;">
+            <p style="margin:0;font-size:24px;font-weight:900;color:#b2ea0f;letter-spacing:2px;">SPACE FIT</p>
+            <p style="margin:6px 0 0;font-size:13px;color:#9ca3af;">Sua loja de moda fitness</p>
+          </td>
+        </tr>
+
+        <!-- Corpo -->
+        <tr>
+          <td style="padding:32px;">
+            ${corpo}
+          </td>
+        </tr>
+
+        <!-- Rodape -->
+        <tr>
+          <td style="padding:20px 32px;border-top:1px solid #2a2a2a;text-align:center;">
+            <p style="margin:0;font-size:12px;color:#6b7280;">
+              Este email foi enviado automaticamente. Nao responda este email.
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`
+}
+
+// =============================================================================
+// Bloco de itens do pedido — reutilizado em varios templates
+// =============================================================================
+function htmlItens(pedido: Order): string {
+  const linhas = pedido.items
+    .map(
+      item => `
+      <tr>
+        <td style="padding:10px 0;border-bottom:1px solid #2a2a2a;font-size:14px;color:#d1d5db;">
+          ${item.product_name}${item.size ? ` <span style="color:#9ca3af;">(${item.size})</span>` : ''}
+          &times; ${item.quantity}
+        </td>
+        <td style="padding:10px 0;border-bottom:1px solid #2a2a2a;font-size:14px;color:#ffffff;text-align:right;font-weight:bold;">
+          ${formatBRL(item.total_price)}
+        </td>
+      </tr>`
+    )
+    .join('')
+
+  return `
+    <table width="100%" cellpadding="0" cellspacing="0">
+      ${linhas}
+      ${pedido.discount > 0 ? `
+      <tr>
+        <td style="padding:8px 0;font-size:13px;color:#b2ea0f;">Desconto${pedido.coupon_code ? ` (${pedido.coupon_code})` : ''}</td>
+        <td style="padding:8px 0;font-size:13px;color:#b2ea0f;text-align:right;">- ${formatBRL(pedido.discount)}</td>
+      </tr>` : ''}
+      <tr>
+        <td style="padding:8px 0;font-size:13px;color:#9ca3af;">Frete</td>
+        <td style="padding:8px 0;font-size:13px;color:#9ca3af;text-align:right;">${pedido.shipping === 0 ? 'Gratis' : formatBRL(pedido.shipping)}</td>
+      </tr>
+      <tr>
+        <td style="padding:12px 0 0;font-size:16px;font-weight:900;color:#ffffff;border-top:1px solid #2a2a2a;">Total</td>
+        <td style="padding:12px 0 0;font-size:16px;font-weight:900;color:#b2ea0f;text-align:right;border-top:1px solid #2a2a2a;">${formatBRL(pedido.total)}</td>
+      </tr>
+    </table>`
+}
+
+// =============================================================================
+// Email 1: Confirmacao de pedido pago
+// =============================================================================
+export async function enviarEmailConfirmacaoPedido(pedido: Order): Promise<void> {
+  if (!pedido.customer_email) return
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('[email] RESEND_API_KEY nao configurado — email de confirmacao ignorado.')
+    return
+  }
+
+  const corpo = `
+    <h2 style="margin:0 0 8px;font-size:22px;font-weight:900;color:#ffffff;">
+      Pedido confirmado!
+    </h2>
+    <p style="margin:0 0 24px;font-size:14px;color:#9ca3af;">
+      Ola, ${pedido.customer_name}. Recebemos seu pedido e o pagamento foi aprovado.
+    </p>
+
+    <div style="background:#1a1a1a;border-radius:12px;padding:16px;margin-bottom:24px;">
+      <p style="margin:0 0 4px;font-size:12px;color:#9ca3af;text-transform:uppercase;letter-spacing:1px;">
+        Numero do pedido
+      </p>
+      <p style="margin:0;font-size:20px;font-weight:900;color:#b2ea0f;">${pedido.order_number}</p>
+    </div>
+
+    <p style="margin:0 0 12px;font-size:13px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:1px;">
+      Resumo da compra
+    </p>
+    ${htmlItens(pedido)}
+
+    ${pedido.address ? `
+    <div style="margin-top:24px;background:#1a1a1a;border-radius:12px;padding:16px;">
+      <p style="margin:0 0 8px;font-size:12px;color:#9ca3af;text-transform:uppercase;letter-spacing:1px;">Endereco de entrega</p>
+      <p style="margin:0;font-size:14px;color:#d1d5db;">
+        ${pedido.address.street}, ${pedido.address.number}${pedido.address.complement ? ` — ${pedido.address.complement}` : ''}<br/>
+        ${pedido.address.neighborhood}, ${pedido.address.city}/${pedido.address.state}<br/>
+        CEP ${pedido.address.cep}
+      </p>
+    </div>` : ''}
+
+    <p style="margin:24px 0 0;font-size:13px;color:#9ca3af;">
+      Em breve seu pedido entrara em preparacao. Voce recebera outro email quando ele for enviado.
+    </p>`
+
+  try {
+    await resend.emails.send({
+      from:    EMAIL_REMETENTE,
+      to:      pedido.customer_email,
+      subject: `Pedido ${pedido.order_number} confirmado — Space Fit`,
+      html:    layoutEmail('Pedido confirmado', corpo),
+    })
+  } catch (erro) {
+    console.error('[email] Erro ao enviar confirmacao de pedido:', erro)
+  }
+}
+
+// =============================================================================
+// Email 2: Atualizacao de status (Enviado / Entregue)
+// =============================================================================
+
+const MENSAGENS_STATUS: Record<string, { assunto: string; titulo: string; descricao: string }> = {
+  shipped: {
+    assunto:    'Seu pedido foi enviado!',
+    titulo:     'Pedido a caminho!',
+    descricao:  'Seu pedido foi despachado e esta a caminho do seu endereco. Fique de olho no rastreamento.',
+  },
+  delivered: {
+    assunto:    'Pedido entregue — obrigado por comprar na Space Fit!',
+    titulo:     'Pedido entregue!',
+    descricao:  'Seu pedido foi entregue. Esperamos que voce curta muito sua compra!',
+  },
+}
+
+export async function enviarEmailStatusAtualizado(
+  pedido: Order,
+  novoStatus: string
+): Promise<void> {
+  if (!pedido.customer_email) return
+  if (!process.env.RESEND_API_KEY) return
+  if (!MENSAGENS_STATUS[novoStatus]) return // So envia para shipped e delivered
+
+  const msg = MENSAGENS_STATUS[novoStatus]
+
+  const corpo = `
+    <h2 style="margin:0 0 8px;font-size:22px;font-weight:900;color:#ffffff;">
+      ${msg.titulo}
+    </h2>
+    <p style="margin:0 0 24px;font-size:14px;color:#9ca3af;">
+      Ola, ${pedido.customer_name}. ${msg.descricao}
+    </p>
+
+    <div style="background:#1a1a1a;border-radius:12px;padding:16px;margin-bottom:24px;">
+      <p style="margin:0 0 4px;font-size:12px;color:#9ca3af;text-transform:uppercase;letter-spacing:1px;">
+        Numero do pedido
+      </p>
+      <p style="margin:0;font-size:20px;font-weight:900;color:#b2ea0f;">${pedido.order_number}</p>
+    </div>
+
+    ${htmlItens(pedido)}
+
+    <p style="margin:24px 0 0;font-size:13px;color:#9ca3af;">
+      Obrigado por comprar na Space Fit! Qualquer duvida entre em contato conosco.
+    </p>`
+
+  try {
+    await resend.emails.send({
+      from:    EMAIL_REMETENTE,
+      to:      pedido.customer_email,
+      subject: `${msg.assunto} — Pedido ${pedido.order_number}`,
+      html:    layoutEmail(msg.titulo, corpo),
+    })
+  } catch (erro) {
+    console.error('[email] Erro ao enviar atualizacao de status:', erro)
+  }
+}

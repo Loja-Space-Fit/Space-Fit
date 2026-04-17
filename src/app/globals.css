@@ -1,0 +1,190 @@
+@import "tailwindcss";
+
+:root {
+  --background: #0a0a0a;
+  --foreground: #f1f1f1;
+  --green: #b2ea0f;
+  --green-light: #c8f040;
+  --green-dark: #8fbb00;
+  --surface: #111111;
+  --surface-2: #1a1a1a;
+  --border: #2a2a2a;
+  --muted: #9ca3af;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-green: var(--green);
+  --color-green-light: var(--green-light);
+  --color-green-dark: var(--green-dark);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
+  --font-sans: var(--font-rajdhani);
+  --font-mono: var(--font-rajdhani);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  font-size: 20px;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-rajdhani), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar personalizada */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--surface);
+}
+::-webkit-scrollbar-thumb {
+  background: #2a2a2a;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--green-dark);
+}
+
+/* Animações */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(100%); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes pulse-green {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(178, 234, 15, 0.4); }
+  50%       { box-shadow: 0 0 0 10px rgba(178, 234, 15, 0); }
+}
+
+.animate-fade-in    { animation: fadeIn 0.3s ease forwards; }
+.animate-slide-in   { animation: slideInRight 0.3s ease forwards; }
+.animate-pulse-green { animation: pulse-green 2s infinite; }
+
+/* Botão principal verde */
+.btn-green {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background-color: var(--green);
+  color: #000;
+  font-weight: 700;
+  font-size: 0.95rem;
+  border-radius: 0.5rem;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.15s, transform 0.1s, box-shadow 0.15s;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.btn-green:hover {
+  background-color: var(--green-light);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(178, 234, 15, 0.35);
+}
+.btn-green:active {
+  transform: translateY(0);
+}
+.btn-green:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Botão outline */
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background-color: transparent;
+  color: var(--green);
+  font-weight: 700;
+  font-size: 0.95rem;
+  border-radius: 0.5rem;
+  border: 1.5px solid var(--green);
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.btn-outline:hover {
+  background-color: var(--green);
+  color: #000;
+}
+
+/* Card de produto */
+.product-card {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  transition: border-color 0.2s, transform 0.2s;
+}
+.product-card:hover {
+  border-color: var(--green);
+  transform: translateY(-3px);
+}
+
+/* Input */
+.input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background-color: var(--surface-2);
+  border: 1.5px solid var(--border);
+  border-radius: 0.5rem;
+  color: var(--foreground);
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.input:focus {
+  border-color: var(--green);
+}
+.input::placeholder { color: var(--muted); }
+
+/* Ícone do calendário nativo com caixa verde */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  background-color: #b2ea0f;
+  border-radius: 4px;
+  padding: 3px;
+  cursor: pointer;
+}
+
+/* Badge de status */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Linha de divisão */
+.divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 1.5rem 0;
+}
+
+
+

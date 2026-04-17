@@ -1,0 +1,110 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { createServiceClient, createClient } from '@/lib/supabase/server'
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json()
+    const {
+      customer_name, customer_phone, customer_email,
+      address, items, subtotal, discount, total,
+      payment_method, coupon_code, points_to_use,
+    } = body
+
+    // Validação básica
+    if (!customer_name || !customer_phone || !items?.length || !payment_method) {
+      return NextResponse.json({ error: 'Dados incompletos' }, { status: 400 })
+    }
+
+    // Obter user_id do cliente logado (se houver sessão)
+    let userId: string | null = null
+    try {
+      const userClient = await createClient()
+      const { data: { user } } = await userClient.auth.getUser()
+      if (user) userId = user.id
+    } catch { /* usuário não logado — pedido como visitante */ }
+
+    const supabase = createServiceClient()
+
+    // Validar estoque e guardar valores atuais
+    const stockMap = new Map<string, number>()
+    for (const item of items) {
+      const { data: product } = await supabase
+        .from('products')
+        .select('id, stock, name')
+        .eq('id', item.product_id)
+        .single()
+
+      if (!product) {
+        return NextResponse.json({ error: `Produto não encontrado: ${item.product_name}` }, { status: 400 })
+      }
+      if (product.stock < item.quantity) {
+        return NextResponse.json({
+          error: `Estoque insuficiente para "${product.name}". Disponível: ${product.stock}`
+        }, { status: 400 })
+      }
+      stockMap.set(item.product_id, product.stock)
+    }
+
+    // Criar pedido
+    const { data: order, error } = await supabase
+      .from('orders')
+      .insert({
+        customer_name,
+        customer_phone,
+        customer_email: customer_email || null,
+        address: address || null,
+        items,
+        subtotal,
+        discount: discount || 0,
+        shipping: 0,
+        total,
+        payment_method,
+        payment_status: 'pending',
+        order_status: 'pending',
+        coupon_code: coupon_code || null,
+        user_id: userId,
+        points_to_use: points_to_use || 0,
+        points_earned: Math.floor(total * 0.01),
+        points_processed: false,
+      })
+      .select('id, order_number')
+      .single()
+
+    if (error) {
+      console.error('Erro ao criar pedido:', error)
+      return NextResponse.json({ error: 'Erro ao salvar pedido' }, { status: 500 })
+    }
+
+    // Decrementar estoque
+    for (const item of items) {
+      const currentStock = stockMap.get(item.product_id) ?? 0
+      await supabase
+        .from('products')
+        .update({ stock: Math.max(0, currentStock - item.quantity) })
+        .eq('id', item.product_id)
+    }
+
+    // Incrementar uso do cupom
+    if (coupon_code) {
+      const { data: coupon } = await supabase
+        .from('coupons')
+        .select('uses_count')
+        .eq('code', coupon_code)
+        .single()
+      if (coupon) {
+        await supabase
+          .from('coupons')
+          .update({ uses_count: (coupon.uses_count || 0) + 1 })
+          .eq('code', coupon_code)
+      }
+    }
+
+    // Notificar admin via WhatsApp (link de redirecionamento simples)
+    // A notificação real é via webhook do Mercado Pago
+
+    return NextResponse.json({ order_id: order.id, order_number: order.order_number })
+  } catch (error) {
+    console.error('Checkout error:', error)
+    return NextResponse.json({ error: 'Erro interno. Tente novamente.' }, { status: 500 })
+  }
+}
