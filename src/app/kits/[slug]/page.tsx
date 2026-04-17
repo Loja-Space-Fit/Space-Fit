@@ -18,7 +18,7 @@ interface ProductRef {
   slug: string
 }
 
-interface BundleItemFull extends BundleItem {
+type BundleItemFull = Omit<BundleItem, 'product'> & {
   product: ProductRef | null
 }
 
