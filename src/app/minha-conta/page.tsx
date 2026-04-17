@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, Suspense } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -55,7 +55,7 @@ const orderStatusColor: Record<string, string> = {
   cancelled: 'bg-red-500/20 text-red-400',
 }
 
-export default function MinhaContaPage() {
+function MinhaContaPageInner() {
   const { user, profile, loading, signOut, refreshProfile } = useAuth()
   const { favorites, toggle } = useFavorites()
   const router = useRouter()
@@ -673,5 +673,13 @@ function Field({ label, value, onChange, placeholder }: { label: string; value: 
         className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[#b2ea0f] transition-colors"
       />
     </div>
+  )
+}
+
+export default function MinhaContaPage() {
+  return (
+    <Suspense>
+      <MinhaContaPageInner />
+    </Suspense>
   )
 }
