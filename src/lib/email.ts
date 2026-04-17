@@ -10,8 +10,9 @@ import { Resend } from 'resend'
 import { formatBRL } from '@/lib/utils'
 import type { Order } from '@/types'
 
-// Inicializa uma unica instancia — o SDK cuida da conexao por baixo
-const resend = new Resend(process.env.RESEND_API_KEY)
+function getResend() {
+  return new Resend(process.env.RESEND_API_KEY)
+}
 
 const EMAIL_REMETENTE =
   process.env.RESEND_FROM_EMAIL ?? 'noreply@spacefit.com.br'
@@ -147,7 +148,7 @@ export async function enviarEmailConfirmacaoPedido(pedido: Order): Promise<void>
     </p>`
 
   try {
-    await resend.emails.send({
+    await getResend().emails.send({
       from:    EMAIL_REMETENTE,
       to:      pedido.customer_email,
       subject: `Pedido ${pedido.order_number} confirmado — Space Fit`,
@@ -207,7 +208,7 @@ export async function enviarEmailStatusAtualizado(
     </p>`
 
   try {
-    await resend.emails.send({
+    await getResend().emails.send({
       from:    EMAIL_REMETENTE,
       to:      pedido.customer_email,
       subject: `${msg.assunto} — Pedido ${pedido.order_number}`,
