@@ -47,7 +47,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
           failure: `${siteUrl}/pedido-confirmado/${order.id}?mp_result=failure`,
           pending: `${siteUrl}/pedido-confirmado/${order.id}`,
         },
-        ...(!isLocal && { auto_return: 'all' }),
+        ...(!isLocal && { auto_return: 'approved' }),
         ...(!isLocal && { notification_url: `${siteUrl}/api/payments/webhook` }),
       },
     })
