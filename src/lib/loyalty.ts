@@ -33,7 +33,7 @@ export async function processLoyaltyPoints(
   }
 
   const toDeduct = pedido.points_to_use || 0
-  const toEarn   = pedido.points_earned || Math.floor(pedido.total * 0.01) // 1% do valor gasto em pontos
+  const toEarn   = pedido.points_earned || Math.round(pedido.total * 0.01 * 100) / 100 // 1% do valor, 2 casas decimais
 
   // Buscar conta existente pelo user_id
   const { data: acc, error: accErr } = await supabase

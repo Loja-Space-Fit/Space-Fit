@@ -522,7 +522,7 @@ function MinhaContaPageInner() {
                 {/* Pontos grandes */}
                 <div className="mb-6">
                   <p className="text-6xl font-black text-[#b2ea0f] leading-none">
-                    {(loyalty?.points ?? 0).toLocaleString('pt-BR')}
+                    {(loyalty?.points ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                   <p className="text-[#9ca3af] text-sm mt-1">pontos acumulados — vale {formatBRL(loyalty?.points ?? 0)}</p>
                 </div>
@@ -542,7 +542,7 @@ function MinhaContaPageInner() {
                 {/* Como funciona */}
                 <div className="mt-4 pt-4 border-t border-[#2a2a2a] flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-[#b2ea0f] shrink-0" />
-                  <p className="text-xs text-[#9ca3af]">A cada compra confirmada você ganha <span className="text-[#b2ea0f] font-bold">1 ponto a cada R$ 100 gastos</span>. Use todos os pontos como desconto no checkout.</p>
+                  <p className="text-xs text-[#9ca3af]">A cada compra confirmada você ganha <span className="text-[#b2ea0f] font-bold">1% do valor em pontos</span>. Use todos os pontos como desconto no checkout.</p>
                 </div>
               </div>
 
