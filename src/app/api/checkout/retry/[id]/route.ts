@@ -26,6 +26,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   try {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
     const isLocal = siteUrl.includes('localhost')
+    const isSandbox = (process.env.MERCADOPAGO_ACCESS_TOKEN || '').startsWith('TEST-')
     const preferenceClient = getPreferenceClient()
 
     const preference = await preferenceClient.create({
@@ -47,8 +48,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
           failure: `${siteUrl}/pedido-confirmado/${order.id}?mp_result=failure`,
           pending: `${siteUrl}/pedido-confirmado/${order.id}`,
         },
-        ...(!isLocal && { auto_return: 'approved' }),
-        ...(!isLocal && { notification_url: `${siteUrl}/api/payments/webhook` }),
+        ...(!isSandbox && { auto_return: 'approved' }),
+        ...(!isSandbox && { notification_url: `${siteUrl}/api/payments/webhook` }),
       },
     })
 
@@ -58,7 +59,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       .update({ mp_preference_id: preference.id, payment_status: 'pending' })
       .eq('id', order.id)
 
-    return NextResponse.redirect(preference.init_point!)
+    return NextResponse.redirect(isSandbox ? preference.sandbox_init_point! : preference.init_point!)
   } catch (e) {
     console.error('[retry] Erro ao criar preferência:', e)
     return NextResponse.redirect(

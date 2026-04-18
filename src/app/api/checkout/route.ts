@@ -105,6 +105,7 @@ export async function POST(req: NextRequest) {
       try {
         const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
         const isLocal = siteUrl.includes('localhost')
+        const isSandbox = (process.env.MERCADOPAGO_ACCESS_TOKEN || '').startsWith('TEST-')
         const preferenceClient = getPreferenceClient()
 
         // Calcula o total real a cobrar (já com descontos)
@@ -129,8 +130,8 @@ export async function POST(req: NextRequest) {
               failure: `${siteUrl}/pedido-confirmado/${order.id}?mp_result=failure`,
               pending: `${siteUrl}/pedido-confirmado/${order.id}`,
             },
-            ...(!isLocal && { auto_return: 'approved' }),
-            ...(!isLocal && { notification_url: `${siteUrl}/api/payments/webhook` }),
+            ...(!isSandbox && { auto_return: 'approved' }),
+            ...(!isSandbox && { notification_url: `${siteUrl}/api/payments/webhook` }),
           },
         })
 
@@ -143,7 +144,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({
           order_id: order.id,
           order_number: order.order_number,
-          payment_url: preference.init_point,
+          payment_url: isSandbox ? preference.sandbox_init_point : preference.init_point,
         })
       } catch (mpError) {
         console.error('Erro ao criar preferência Mercado Pago:', mpError)
