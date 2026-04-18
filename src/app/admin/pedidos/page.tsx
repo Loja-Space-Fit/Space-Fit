@@ -100,10 +100,10 @@ export default function PaginaPedidosAdmin() {
     if (!confirmou) return
 
     setExcluindo(idPedido)
-    const supabase = createClient()
-    const { error } = await supabase.from('orders').delete().eq('id', idPedido)
+    const res = await fetch(`/api/admin/pedidos/${idPedido}`, { method: 'DELETE' })
+    const json = await res.json()
 
-    if (error) {
+    if (!res.ok || json.erro) {
       toast.error('Erro ao excluir pedido. Tente novamente.')
     } else {
       setListaPedidos(anterior => anterior.filter(p => p.id !== idPedido))
