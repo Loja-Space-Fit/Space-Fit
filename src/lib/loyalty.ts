@@ -2,24 +2,23 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 
 /**
  * Processa os pontos de fidelidade de um pedido aprovado.
- * Vinculado ao user_id do pedido — independente de telefone ou formato.
- * 1 ponto = R$ 1,00 gasto. Pontos podem ser usados como desconto no checkout.
- * Idempotente: a flag points_processed impede processamento duplicado.
+ * 1 ponto = R$ 1,00 gasto. Lança erro em caso de falha para que o chamador saiba.
  */
 export async function processLoyaltyPoints(
   orderId: string,
   supabase: SupabaseClient,
 ) {
-  // Buscar pedido incluindo user_id
-  const { data: pedido } = await supabase
+  const { data: pedido, error: fetchErr } = await supabase
     .from('orders')
     .select('id, order_number, user_id, customer_phone, customer_name, customer_email, total, points_to_use, points_earned, points_processed')
     .eq('id', orderId)
     .single()
 
-  if (!pedido) return
+  if (fetchErr) throw new Error(`Pedido não encontrado: ${fetchErr.message}`)
+  if (!pedido) throw new Error('Pedido não encontrado')
+
+  // Idempotência: verifica se já existe transação para este pedido
   if (pedido.points_processed) {
-    // Verificar se os pontos foram de fato creditados
     const { data: txExistente } = await supabase
       .from('loyalty_transactions')
       .select('id')
@@ -27,54 +26,55 @@ export async function processLoyaltyPoints(
       .limit(1)
       .maybeSingle()
     if (txExistente) return // já processado com sucesso
-    // Caso contrário: reprocessa (execução anterior falhou após marcar a flag)
   }
 
-  // Sem user_id não conseguimos vincular à conta — logar e sair
   if (!pedido.user_id) {
-    console.warn(`[loyalty] Pedido ${pedido.order_number} sem user_id — pontos não creditados`)
-    return
+    throw new Error(`Pedido ${pedido.order_number} sem user_id`)
   }
 
   const toDeduct = pedido.points_to_use || 0
-  const toEarn   = pedido.points_earned || Math.floor(pedido.total)  // 1 ponto por real gasto
+  const toEarn   = pedido.points_earned || Math.floor(pedido.total) // 1 ponto por real gasto
 
-  // Buscar conta pelo user_id (forma correta e confiável)
-  const { data: acc } = await supabase
+  // Buscar conta existente pelo user_id
+  const { data: acc, error: accErr } = await supabase
     .from('loyalty_accounts')
     .select('id, points, total_spent')
     .eq('user_id', pedido.user_id)
     .maybeSingle()
 
-  let accountId: string | null = null
+  if (accErr) throw new Error(`Erro ao buscar conta: ${accErr.message}`)
+
+  let accountId: string
 
   if (acc) {
     const { error: updErr } = await supabase
       .from('loyalty_accounts')
       .update({
         points:      Math.max(0, acc.points - toDeduct) + toEarn,
-        total_spent: acc.total_spent + pedido.total,
+        total_spent: Number(acc.total_spent) + pedido.total,
       })
       .eq('id', acc.id)
 
-    if (updErr) { console.error('[loyalty] Erro ao atualizar conta:', updErr.message); return }
+    if (updErr) throw new Error(`Erro ao atualizar conta: ${updErr.message}`)
     accountId = acc.id
   } else {
+    // Criar conta nova — usar upsert para evitar race condition
     const phone = (pedido.customer_phone ?? '').replace(/\D/g, '')
     const { data: newAcc, error: insErr } = await supabase
       .from('loyalty_accounts')
-      .insert({
+      .upsert({
         user_id:        pedido.user_id,
         customer_phone: phone || null,
         customer_name:  pedido.customer_name,
         customer_email: pedido.customer_email || null,
         points:         toEarn,
         total_spent:    pedido.total,
-      })
+      }, { onConflict: 'user_id', ignoreDuplicates: false })
       .select('id')
       .single()
 
-    if (insErr || !newAcc) { console.error('[loyalty] Erro ao criar conta:', insErr?.message); return }
+    if (insErr) throw new Error(`Erro ao criar conta: ${insErr.message}`)
+    if (!newAcc) throw new Error('Conta criada mas ID não retornado')
     accountId = newAcc.id
   }
 

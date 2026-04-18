@@ -6,6 +6,7 @@ import { Star, Loader2, CheckCircle, AlertCircle } from 'lucide-react'
 interface Resultado {
   processados: number
   erros: number
+  errosDetalhados?: string[]
   total: number
   erro?: string
 }
@@ -73,8 +74,14 @@ export default function BotaoReprocessarPontos() {
                   <p className="text-xl font-black text-red-400">{resultado.erros}</p>
                   <p className="text-xs text-[#9ca3af] mt-0.5">Erros</p>
                 </div>
-              </div>
-            </>
+              </div>              {resultado.errosDetalhados && resultado.errosDetalhados.length > 0 && (
+                <div className="mt-3 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                  <p className="text-xs text-red-400 font-bold mb-1">Detalhes dos erros:</p>
+                  {resultado.errosDetalhados.map((e, i) => (
+                    <p key={i} className="text-xs text-red-300 break-all">{e}</p>
+                  ))}
+                </div>
+              )}            </>
           )}
         </div>
       )}
