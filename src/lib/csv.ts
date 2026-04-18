@@ -49,8 +49,8 @@ export function baixarCSV(nome: string, conteudo: string): void {
   link.click()
   document.body.removeChild(link)
 
-  // Libera a URL para nao vazar memoria
-  URL.revokeObjectURL(url)
+  // Libera a URL após o browser iniciar o download (revoke imediato cancela o download)
+  setTimeout(() => URL.revokeObjectURL(url), 100)
 }
 
 // =============================================================================
