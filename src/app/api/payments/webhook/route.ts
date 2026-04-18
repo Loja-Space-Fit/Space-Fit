@@ -7,7 +7,13 @@ import type { Order } from '@/types'
 // Webhook do Mercado Pago — chamado automaticamente quando o pagamento muda de status
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json()
+    let body: Record<string, unknown> = {}
+    try {
+      body = await req.json()
+    } catch {
+      // Corpo vazio ou não-JSON — tudo bem, responder 200
+      return NextResponse.json({ received: true })
+    }
 
     // Verificar assinatura HMAC do Mercado Pago (quando disponível)
     const mpSignature = req.headers.get('x-signature')
