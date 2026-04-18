@@ -23,7 +23,8 @@ import MetricCard        from '@/components/admin/MetricCard'
 import PainelAlertas     from '@/components/admin/PainelAlertas'
 import GraficoVendas     from '@/components/admin/GraficoVendas'
 import TopProductsList   from '@/components/admin/TopProductsList'
-import BotaoLimpezaBanco from '@/components/admin/CleanupButton'
+import BotaoLimpezaBanco   from '@/components/admin/CleanupButton'
+import BotaoReprocessarPontos from '@/components/admin/ReprocessarPontosButton'
 
 // =============================================================================
 // Paleta de status — usada na tabela de pedidos recentes
@@ -253,7 +254,10 @@ export default async function AdminDashboard() {
       {/* ================================================================ */}
       {/* LINHA 6 — Manutencao do banco */}
       {/* ================================================================ */}
-      <BotaoLimpezaBanco />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <BotaoLimpezaBanco />
+        <BotaoReprocessarPontos />
+      </div>
 
     </div>
   )

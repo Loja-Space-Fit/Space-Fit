@@ -119,51 +119,30 @@ function MinhaContaPageInner() {
     // Só mostra spinner na primeira carga — evita flash no alt+tab
     if (!dataFetched.current) setLoadingData(true)
 
-    // Normaliza telefone (remove formatação) para garantir match no banco
-    const phoneRaw = (profile?.phone ?? '').replace(/\D/g, '')
-
-    const [{ data: ordersData }, { data: loyaltyData }] = await Promise.all([
+    const [{ data: ordersData }, loyaltyRes, favRes] = await Promise.all([
       supabase
         .from('orders')
         .select('id, order_number, total, order_status, payment_status, created_at, items')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false }),
-      phoneRaw
-        ? supabase
-            .from('loyalty_accounts')
-            .select('id, points, total_spent')
-            .eq('customer_phone', phoneRaw)
-            .single()
-        : Promise.resolve({ data: null }),
+      // Busca via API server-side (service role) — evita bloqueio de RLS e formato de telefone
+      fetch('/api/loyalty/me').then(r => r.json()).catch(() => ({ account: null, transactions: [] })),
+      // Favoritos
+      (async () => {
+        const favIds = Array.from(favorites)
+        if (favIds.length === 0) return { data: [] }
+        return supabase.from('products').select('id, name, slug, price, images').in('id', favIds)
+      })(),
     ])
 
     setOrders((ordersData as Order[]) ?? [])
-    setLoyalty(loyaltyData ?? null)
+    setLoyalty(loyaltyRes.account ?? null)
+    setLoyaltyTx(loyaltyRes.transactions ?? [])
+    setFavProducts(((favRes as { data: FavProduct[] | null }).data as FavProduct[]) ?? [])
 
-    // Fetch favorite products
-    const favIds = Array.from(favorites)
-    if (favIds.length > 0) {
-      const { data: favData } = await supabase
-        .from('products')
-        .select('id, name, slug, price, images')
-        .in('id', favIds)
-      setFavProducts((favData as FavProduct[]) ?? [])
-    } else {
-      setFavProducts([])
-    }
-
-    if (loyaltyData?.id) {
-      const { data: txData } = await supabase
-        .from('loyalty_transactions')
-        .select('points, type, description, created_at')
-        .eq('account_id', loyaltyData.id)
-        .order('created_at', { ascending: false })
-        .limit(20)
-      setLoyaltyTx(txData ?? [])
-    }
     dataFetched.current = true
     setLoadingData(false)
-  }, [user, profile, supabase])
+  }, [user, supabase, favorites])
 
   useEffect(() => {
     if (user) fetchData()
@@ -174,8 +153,8 @@ function MinhaContaPageInner() {
     if (!user) { setFavProducts([]); return }
     const favIds = Array.from(favorites)
     if (favIds.length === 0) { setFavProducts([]); return }
-    const supabase = createClient()
-    supabase
+    const sb = createClient()
+    sb
       .from('products')
       .select('id, name, slug, price, images')
       .in('id', favIds)
