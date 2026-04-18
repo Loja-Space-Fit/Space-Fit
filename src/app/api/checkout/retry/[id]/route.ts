@@ -44,7 +44,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         external_reference: order.id,
         back_urls: {
           success: `${siteUrl}/pedido-confirmado/${order.id}`,
-          failure: `${siteUrl}/pedido-confirmado/${order.id}`,
+          failure: `${siteUrl}/pedido-confirmado/${order.id}?mp_result=failure`,
           pending: `${siteUrl}/pedido-confirmado/${order.id}`,
         },
         ...(!isLocal && { auto_return: 'all' }),

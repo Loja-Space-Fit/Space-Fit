@@ -22,6 +22,7 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
   const mpStatus          = String(sp.status          ?? sp.collection_status ?? '')
   const mpPaymentId       = String(sp.payment_id      ?? sp.collection_id     ?? '')
   const mpMerchantOrderId = String(sp.merchant_order_id ?? '')
+  const mpResult          = String(sp.mp_result ?? '')
 
   // Se o MP retornou status, atualizar o pedido no banco
   if (mpStatus && mpPaymentId) {
@@ -38,10 +39,8 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
         .eq('id', id)
         .eq('payment_status', 'pending')
 
-      // Processar pontos de fidelidade (idempotente via points_processed flag)
       await processLoyaltyPoints(id, service)
     } else if (mpStatus === 'in_process' || mpStatus === 'pending') {
-      // Pagamento em análise (ex: boleto aguardando, PIX não pago ainda)
       await service
         .from('orders')
         .update({
@@ -58,8 +57,18 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
           mp_payment_id:  mpPaymentId,
         })
         .eq('id', id)
-        .neq('payment_status', 'approved') // não sobrescreve aprovação real
+        .neq('payment_status', 'approved')
     }
+  }
+
+  // MP redireciona para failure URL sem params — usar mp_result=failure para detectar
+  if (mpResult === 'failure') {
+    const service = createServiceClient()
+    await service
+      .from('orders')
+      .update({ payment_status: 'rejected', order_status: 'cancelled' })
+      .eq('id', id)
+      .neq('payment_status', 'approved')
   }
 
   const supabase = createServiceClient()
@@ -76,7 +85,7 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
   const isPix = o.payment_method === 'pix'
 
   // Se o MP mandou status na URL, usar como fonte da verdade para o display
-  const displayStatus = (mpStatus === 'rejected' || mpStatus === 'cancelled') ? 'rejected'
+  const displayStatus = (mpResult === 'failure' || mpStatus === 'rejected' || mpStatus === 'cancelled') ? 'rejected'
     : mpStatus === 'approved' ? 'approved'
     : o.payment_status
 

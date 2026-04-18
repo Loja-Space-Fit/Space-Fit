@@ -126,7 +126,7 @@ export async function POST(req: NextRequest) {
             external_reference: order.id,
             back_urls: {
               success: `${siteUrl}/pedido-confirmado/${order.id}`,
-              failure: `${siteUrl}/pedido-confirmado/${order.id}`,
+              failure: `${siteUrl}/pedido-confirmado/${order.id}?mp_result=failure`,
               pending: `${siteUrl}/pedido-confirmado/${order.id}`,
             },
             ...(!isLocal && { auto_return: 'all' }),
