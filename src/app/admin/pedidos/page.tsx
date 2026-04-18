@@ -166,66 +166,19 @@ export default function PaginaPedidosAdmin() {
       setListaPedidos(anterior =>
         anterior.map(p =>
           p.id === idPedido
-            ? { ...p, order_status: novoStatus as Order['order_status'] }
+            ? { ...p, order_status: novoStatus as Order['order_status'], ...(novoStatus === 'paid' ? { payment_status: 'approved' as Order['payment_status'] } : {}) }
             : p
         )
       )
       toast.success(`Status atualizado para ${ROTULO_STATUS[novoStatus]}.`)
 
-      // Processa pontos de fidelidade ao marcar como pago
+      // Quando marcado como pago: atualiza payment_status e processa pontos via API
       if (novoStatus === 'paid') {
-        const pedido = listaPedidos.find(p => p.id === idPedido)
-        if (pedido && !pedido.points_processed) {
-          const phone        = pedido.customer_phone
-          const toDeduct     = pedido.points_to_use  || 0
-          const toEarn       = pedido.points_earned   || Math.floor(pedido.total * 0.01)
-
-          const { data: acc } = await supabase
-            .from('loyalty_accounts')
-            .select('id, points, total_spent')
-            .eq('customer_phone', phone)
-            .single()
-
-          if (acc) {
-            await supabase.from('loyalty_accounts').update({
-              points:      Math.max(0, acc.points - toDeduct) + toEarn,
-              total_spent: acc.total_spent + pedido.total,
-            }).eq('id', acc.id)
-            if (toDeduct > 0) {
-              await supabase.from('loyalty_transactions').insert({
-                account_id:  acc.id,
-                points:     -toDeduct,
-                type:        'redeem',
-                description: `Resgate no pedido ${pedido.order_number}`,
-              })
-            }
-            if (toEarn > 0) {
-              await supabase.from('loyalty_transactions').insert({
-                account_id:  acc.id,
-                points:      toEarn,
-                type:        'earn',
-                description: `Cashback 1% do pedido ${pedido.order_number}`,
-              })
-            }
-          } else {
-            const { data: newAcc } = await supabase.from('loyalty_accounts').insert({
-              customer_phone: phone,
-              customer_name:  pedido.customer_name,
-              customer_email: pedido.customer_email || null,
-              points:         toEarn,
-              total_spent:    pedido.total,
-            }).select('id').single()
-            if (newAcc && toEarn > 0) {
-              await supabase.from('loyalty_transactions').insert({
-                account_id:  newAcc.id,
-                points:      toEarn,
-                type:        'earn',
-                description: `Cashback 1% do pedido ${pedido.order_number}`,
-              })
-            }
-          }
-          await supabase.from('orders').update({ points_processed: true }).eq('id', idPedido)
-        }
+        fetch(`/api/admin/pedidos/${idPedido}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ order_status: novoStatus }),
+        }).catch(e => console.error('[pedidos] Falha ao processar pontos:', e))
       }
 
       // Dispara email de notificacao para "Enviado" e "Entregue" — nao bloqueia UI

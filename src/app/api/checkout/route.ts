@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
         coupon_code: coupon_code || null,
         user_id: userId,
         points_to_use: points_to_use || 0,
-        points_earned: Math.floor(total * 0.01),
+        points_earned: Math.round(total * 0.01 * 100) / 100,
         points_processed: false,
       })
       .select('id, order_number')
