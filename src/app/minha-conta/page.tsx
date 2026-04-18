@@ -45,6 +45,7 @@ const orderStatusLabel: Record<string, string> = {
   shipped:   'Enviado',
   delivered: 'Entregue',
   cancelled: 'Cancelado',
+  rejected:  'Recusado',
 }
 const orderStatusColor: Record<string, string> = {
   pending:   'bg-yellow-500/20 text-yellow-400',
@@ -53,6 +54,7 @@ const orderStatusColor: Record<string, string> = {
   shipped:   'bg-purple-500/20 text-purple-400',
   delivered: 'bg-[#b2ea0f]/20 text-[#b2ea0f]',
   cancelled: 'bg-red-500/20 text-red-400',
+  rejected:  'bg-red-500/20 text-red-400',
 }
 
 function MinhaContaPageInner() {
@@ -301,8 +303,14 @@ function MinhaContaPageInner() {
                         })}
                       </p>
                     </div>
-                    <span className={`text-xs font-semibold px-2 py-1 rounded-full ${orderStatusColor[order.order_status] || 'bg-[#2a2a2a] text-[#9ca3af]'}`}>
-                      {orderStatusLabel[order.order_status] || order.order_status}
+                    <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                      order.payment_status === 'rejected'
+                        ? 'bg-red-500/20 text-red-400'
+                        : orderStatusColor[order.order_status] || 'bg-[#2a2a2a] text-[#9ca3af]'
+                    }`}>
+                      {order.payment_status === 'rejected'
+                        ? 'Recusado'
+                        : orderStatusLabel[order.order_status] || order.order_status}
                     </span>
                   </div>
                   <div className="flex flex-col gap-1 mb-3">

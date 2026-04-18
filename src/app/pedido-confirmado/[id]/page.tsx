@@ -50,11 +50,11 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
         })
         .eq('id', id)
     } else if (mpStatus === 'rejected' || mpStatus === 'cancelled') {
-      // Rejeitado — raro chegar aqui, pois failure vai para /checkout
       await service
         .from('orders')
         .update({
           payment_status: 'rejected',
+          order_status:   'cancelled',
           mp_payment_id:  mpPaymentId,
         })
         .eq('id', id)
