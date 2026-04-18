@@ -131,7 +131,7 @@ export async function POST(req: NextRequest) {
               pending: `${siteUrl}/pedido-confirmado/${order.id}`,
             },
             ...(!isSandbox && { auto_return: 'approved' }),
-            ...(!isSandbox && { notification_url: `${siteUrl}/api/payments/webhook` }),
+            notification_url: `${siteUrl}/api/payments/webhook`,
           },
         })
 
