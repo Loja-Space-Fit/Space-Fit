@@ -58,7 +58,7 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
           mp_payment_id:  mpPaymentId,
         })
         .eq('id', id)
-        .eq('payment_status', 'pending')
+        .neq('payment_status', 'approved') // não sobrescreve aprovação real
     }
   }
 
@@ -74,8 +74,14 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
 
   const o = order as Order
   const isPix = o.payment_method === 'pix'
-  const isPending = o.payment_status === 'pending'
-  const isRejected = o.payment_status === 'rejected'
+
+  // Se o MP mandou status na URL, usar como fonte da verdade para o display
+  const displayStatus = (mpStatus === 'rejected' || mpStatus === 'cancelled') ? 'rejected'
+    : mpStatus === 'approved' ? 'approved'
+    : o.payment_status
+
+  const isPending  = displayStatus === 'pending'
+  const isRejected = displayStatus === 'rejected'
 
   const waMessage = `Olá! Realizei um pedido na Space Fit. Número: ${o.order_number}. Pedido de ${o.customer_name} — ${formatBRL(o.total)}. ${isPix ? 'Aguardando confirmação do PIX.' : ''}`
 
@@ -116,12 +122,12 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
         <div className="flex items-center justify-between mb-3">
           <span className="text-[#9ca3af] text-sm">Status</span>
           <span className={`font-semibold text-sm ${
-            o.payment_status === 'approved' ? 'text-[#b2ea0f]' :
-            o.payment_status === 'rejected' ? 'text-red-400' :
+            displayStatus === 'approved' ? 'text-[#b2ea0f]' :
+            displayStatus === 'rejected' ? 'text-red-400' :
             'text-yellow-400'
           }`}>
-            {o.payment_status === 'approved' ? '✓ Pago' :
-             o.payment_status === 'rejected' ? '✗ Recusado' :
+            {displayStatus === 'approved' ? '✓ Pago' :
+             displayStatus === 'rejected' ? '✗ Recusado' :
              '⏳ Aguardando pagamento'}
           </span>
         </div>
