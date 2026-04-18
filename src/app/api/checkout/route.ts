@@ -147,7 +147,7 @@ export async function POST(req: NextRequest) {
           payment_url: isSandbox ? preference.sandbox_init_point : preference.init_point,
         })
       } catch (mpError) {
-        console.error('Erro ao criar preferência Mercado Pago:', mpError)
+        console.error('Erro ao criar preferência Mercado Pago:', JSON.stringify(mpError, null, 2))
         // Retorna erro explícito para o frontend saber que o pagamento não foi iniciado
         return NextResponse.json(
           { error: 'Não foi possível iniciar o pagamento. Tente novamente em instantes.', order_id: order.id },
