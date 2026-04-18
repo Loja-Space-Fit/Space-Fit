@@ -65,6 +65,7 @@ export default function PaginaPedidosAdmin() {
     let consulta = supabase
       .from('orders')
       .select('*')
+      .eq('hidden_from_admin', false)
       .order('created_at', { ascending: false })
 
     // Só aplica o filtro se não for "todos"
