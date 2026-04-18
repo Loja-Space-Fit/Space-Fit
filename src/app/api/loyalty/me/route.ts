@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createServiceClient, createClient } from '@/lib/supabase/server'
 
-// Retorna a conta de fidelidade + transações do usuário logado
-// Usa service role para contornar RLS — seguro pois sempre filtra pelo user_id da sessão
+// Retorna a conta de fidelidade + transações do usuário logado via user_id
 export async function GET() {
   try {
     const userClient = await createClient()
@@ -11,31 +10,17 @@ export async function GET() {
 
     const supabase = createServiceClient()
 
-    // Buscar perfil para pegar o telefone
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('phone')
-      .eq('id', user.id)
-      .single()
-
-    const phone = (profile?.phone ?? '').replace(/\D/g, '')
-
-    if (!phone) {
-      return NextResponse.json({ account: null, transactions: [] })
-    }
-
-    // Buscar conta de fidelidade pelo telefone (service role ignora RLS)
+    // Busca conta pelo user_id — direto, sem depender de telefone
     const { data: account } = await supabase
       .from('loyalty_accounts')
       .select('id, points, total_spent')
-      .eq('customer_phone', phone)
+      .eq('user_id', user.id)
       .maybeSingle()
 
     if (!account) {
       return NextResponse.json({ account: null, transactions: [] })
     }
 
-    // Buscar transações
     const { data: transactions } = await supabase
       .from('loyalty_transactions')
       .select('points, type, description, created_at')
