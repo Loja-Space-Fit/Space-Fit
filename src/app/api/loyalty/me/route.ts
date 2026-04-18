@@ -21,12 +21,23 @@ export async function GET() {
       return NextResponse.json({ account: null, transactions: [] })
     }
 
-    const { data: transactions } = await supabase
-      .from('loyalty_transactions')
-      .select('points, type, description, created_at')
-      .eq('account_id', account.id)
-      .order('created_at', { ascending: false })
-      .limit(20)
+    // Buscar order_ids do usuário para puxar as transações (schema real usa order_id, não account_id)
+    const { data: orders } = await supabase
+      .from('orders')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('payment_status', 'approved')
+
+    const orderIds = (orders ?? []).map((o: { id: string }) => o.id)
+
+    const { data: transactions } = orderIds.length > 0
+      ? await supabase
+          .from('loyalty_transactions')
+          .select('points_earned, points_redeemed, description, created_at')
+          .in('order_id', orderIds)
+          .order('created_at', { ascending: false })
+          .limit(20)
+      : { data: [] }
 
     return NextResponse.json({ account, transactions: transactions ?? [] })
   } catch (err) {

@@ -22,7 +22,7 @@ export async function processLoyaltyPoints(
     const { data: txExistente } = await supabase
       .from('loyalty_transactions')
       .select('id')
-      .ilike('description', `%${pedido.order_number}%`)
+      .eq('order_id', orderId)
       .limit(1)
       .maybeSingle()
     if (txExistente) return // já processado com sucesso
@@ -77,25 +77,17 @@ export async function processLoyaltyPoints(
     accountId = newAcc.id
   }
 
-  // Registrar transação de ganho de pontos
-  if (toDeduct > 0) {
-    const { error: txErr } = await supabase.from('loyalty_transactions').insert({
-      account_id:  accountId,
-      points:     -toDeduct,
-      type:        'redeem',
-      description: `Resgate no pedido ${pedido.order_number}`,
-    })
-    if (txErr) throw new Error(`Erro ao inserir transação redeem: ${txErr.message}`)
-  }
-  if (toEarn > 0) {
-    const { error: txErr } = await supabase.from('loyalty_transactions').insert({
-      account_id:  accountId,
-      points:      toEarn,
-      type:        'earn',
-      description: `Pontos do pedido ${pedido.order_number}`,
-    })
-    if (txErr) throw new Error(`Erro ao inserir transação earn: ${txErr.message}`)
-  }
+  const phone = (pedido.customer_phone ?? '').replace(/\D/g, '')
+
+  // Registrar transação usando o schema real da tabela loyalty_transactions
+  const { error: txErr } = await supabase.from('loyalty_transactions').insert({
+    customer_phone:   phone || null,
+    order_id:         orderId,
+    points_earned:    toEarn,
+    points_redeemed:  toDeduct,
+    description:      `Pedido ${pedido.order_number}`,
+  })
+  if (txErr) throw new Error(`Erro ao inserir transação: ${txErr.message}`)
 
   // Marcar como processado SOMENTE após tudo ter funcionado
   await supabase.from('orders').update({ points_processed: true }).eq('id', orderId)

@@ -82,7 +82,7 @@ function MinhaContaPageInner() {
   }, [searchParams])
   const [orders, setOrders]   = useState<Order[]>([])
   const [loyalty, setLoyalty] = useState<LoyaltyAccount | null>(null)
-  const [loyaltyTx, setLoyaltyTx] = useState<{ points: number; type: string; description: string; created_at: string }[]>([])
+  const [loyaltyTx, setLoyaltyTx] = useState<{ points_earned: number; points_redeemed: number; description: string; created_at: string }[]>([])
   const [favProducts, setFavProducts] = useState<FavProduct[]>([])
   const [loadingData, setLoadingData] = useState(false)
   const dataFetched = useRef(false)
@@ -565,10 +565,10 @@ function MinhaContaPageInner() {
                       }`}>
                         <div className="flex items-center gap-3">
                           <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                            tx.type === 'earn' ? 'bg-[#b2ea0f]/15' : 'bg-red-500/15'
+                            tx.points_earned > 0 ? 'bg-[#b2ea0f]/15' : 'bg-red-500/15'
                           }`}>
                             <Star className={`w-4 h-4 ${
-                              tx.type === 'earn' ? 'text-[#b2ea0f]' : 'text-red-400'
+                              tx.points_earned > 0 ? 'text-[#b2ea0f]' : 'text-red-400'
                             }`} />
                           </div>
                           <div>
@@ -578,11 +578,14 @@ function MinhaContaPageInner() {
                             </p>
                           </div>
                         </div>
-                        <p className={`text-sm font-black ${
-                          tx.points > 0 ? 'text-[#b2ea0f]' : 'text-red-400'
-                        }`}>
-                          {tx.points > 0 ? '+' : ''}{tx.points} pts
-                        </p>
+                        <div className="text-right">
+                          {tx.points_earned > 0 && (
+                            <p className="text-sm font-black text-[#b2ea0f]">+{tx.points_earned} pts</p>
+                          )}
+                          {tx.points_redeemed > 0 && (
+                            <p className="text-sm font-black text-red-400">-{tx.points_redeemed} pts</p>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>
