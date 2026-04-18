@@ -18,7 +18,7 @@ const navItems = [
   { href: '/admin/cupons',        label: 'Cupons',      icon: Gift },
   { href: '/admin/clientes',      label: 'Clientes',    icon: Users },
   { href: '/admin/conteudo',      label: 'Conteúdo',    icon: Megaphone },
-  { href: '/admin/fidelidade',    label: 'Fidelidade',  icon: Star },
+  { href: '/admin/fidelidade',    label: 'Space Points', icon: Star },
   { href: '/admin/avaliacoes',    label: 'Avaliações',  icon: MessageSquare },
 ]
 

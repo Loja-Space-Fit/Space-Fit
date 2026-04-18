@@ -138,7 +138,14 @@ export default function CartDrawer() {
               </div>
             </div>
 
-            {/* Botão finalizar */}
+            {/* Botões */}
+            <button
+              onClick={closeCart}
+              className="w-full py-3 rounded-xl border border-[#2a2a2a] text-[#9ca3af] text-sm font-semibold hover:border-[#b2ea0f]/50 hover:text-white transition-colors"
+            >
+              Continuar Comprando
+            </button>
+
             {user ? (
               <Link
                 href="/checkout"

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { enviarEmailConfirmacaoPedido } from '@/lib/email'
+import { processLoyaltyPoints } from '@/lib/loyalty'
 import type { Order } from '@/types'
 
 // Webhook do Mercado Pago — chamado automaticamente quando o pagamento muda de status
@@ -94,6 +95,9 @@ export async function POST(req: NextRequest) {
             .single()
 
           if (pedidoCompleto) {
+            // Processar pontos de fidelidade
+            await processLoyaltyPoints(orders[0].id, supabase)
+
             // Sem await intencional — nao queremos bloquear a resposta do webhook por causa do email
             enviarEmailConfirmacaoPedido(pedidoCompleto as Order).catch(e =>
               console.error('[webhook] Falha ao enviar email de confirmacao:', e)

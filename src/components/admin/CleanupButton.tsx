@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Trash2, Loader2, CheckCircle, AlertCircle } from 'lucide-react'
+import { Trash2, Loader2, CheckCircle, AlertCircle, X } from 'lucide-react'
 
 interface ResultadoLimpeza {
   pedidosExcluidos: number
@@ -15,16 +15,14 @@ export default function BotaoLimpezaBanco() {
   const [executando, setExecutando]             = useState(false)
   const [resultado, setResultado]               = useState<ResultadoLimpeza | null>(null)
   const [mostrarResultado, setMostrarResultado] = useState(false)
+  const [mostrarConfirm, setMostrarConfirm]     = useState(false)
+
+  function pedirConfirmacao() {
+    setMostrarConfirm(true)
+  }
 
   async function executarLimpeza() {
-    const confirmou = confirm(
-      'Executar limpeza do banco?\n\n' +
-      '- Pedidos pendentes com +30 dias serao excluidos\n' +
-      '- Cupons expirados serao desativados\n' +
-      '- Avaliacoes nao aprovadas com +60 dias serao excluidas'
-    )
-    if (!confirmou) return
-
+    setMostrarConfirm(false)
     setExecutando(true)
     setResultado(null)
     setMostrarResultado(true)
@@ -54,6 +52,65 @@ export default function BotaoLimpezaBanco() {
   }
 
   return (
+    <>
+      {/* Modal de confirmação */}
+      {mostrarConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Overlay */}
+          <div
+            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            onClick={() => setMostrarConfirm(false)}
+          />
+          {/* Caixa */}
+          <div className="relative z-10 w-full max-w-sm bg-[#111111] border border-[#2a2a2a] rounded-2xl p-6 shadow-2xl">
+            <button
+              onClick={() => setMostrarConfirm(false)}
+              className="absolute top-4 right-4 text-[#9ca3af] hover:text-white transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 rounded-xl bg-red-500/10 border border-red-500/20">
+                <Trash2 className="w-5 h-5 text-red-400" />
+              </div>
+              <h3 className="font-black text-white text-base">Limpeza do Banco</h3>
+            </div>
+
+            <p className="text-sm text-[#9ca3af] mb-4">As seguintes ações serão executadas:</p>
+
+            <ul className="space-y-2 mb-6">
+              {[
+                'Pedidos pendentes com +30 dias serão excluídos',
+                'Cupons expirados serão desativados',
+                'Avaliações não aprovadas com +60 dias serão excluídas',
+              ].map((item) => (
+                <li key={item} className="flex items-start gap-2 text-sm text-[#d1d5db]">
+                  <span className="mt-1 w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setMostrarConfirm(false)}
+                className="flex-1 py-2.5 rounded-xl border border-[#2a2a2a] text-[#9ca3af] hover:text-white hover:border-[#3a3a3a] text-sm font-bold transition-all"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={executarLimpeza}
+                className="flex-1 py-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 hover:text-red-300 text-sm font-bold transition-all"
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Card */}
     <div className="bg-[#111111] border border-[#2a2a2a] rounded-2xl p-5">
       <div className="flex items-center justify-between mb-1">
         <div>
@@ -61,7 +118,7 @@ export default function BotaoLimpezaBanco() {
           <p className="text-xs text-[#9ca3af] mt-0.5">Remove dados desnecessarios acumulados</p>
         </div>
         <button
-          onClick={executarLimpeza}
+          onClick={pedirConfirmacao}
           disabled={executando}
           className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 hover:text-red-300 text-sm font-bold transition-all disabled:opacity-50"
         >
@@ -112,5 +169,6 @@ export default function BotaoLimpezaBanco() {
         </div>
       )}
     </div>
+    </>
   )
 }

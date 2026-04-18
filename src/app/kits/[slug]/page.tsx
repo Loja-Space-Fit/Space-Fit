@@ -4,8 +4,9 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Package, ArrowLeft, ShoppingCart } from 'lucide-react'
+import { Package, ArrowLeft } from 'lucide-react'
 import { formatBRL } from '@/lib/utils'
+import AddBundleToCartButton from './AddBundleToCartButton'
 
 interface Props {
   params: Promise<{ slug: string }>
@@ -150,12 +151,13 @@ export default async function KitDetailPage({ params }: Props) {
           )}
 
           {/* CTA */}
-          <button
-            className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-[#b2ea0f] hover:bg-[#c8f040] text-black font-black text-lg transition-colors"
-          >
-            <ShoppingCart className="w-5 h-5" />
-            Adicionar ao Carrinho — {formatBRL(bundle.price)}
-          </button>
+          <AddBundleToCartButton
+            bundleId={bundle.id}
+            bundleName={bundle.name}
+            bundleSlug={bundle.slug}
+            bundleImage={images[0]}
+            bundlePrice={bundle.price}
+          />
         </div>
       </div>
     </div>

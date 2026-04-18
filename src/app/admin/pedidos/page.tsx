@@ -287,12 +287,12 @@ export default function PaginaPedidosAdmin() {
       {/* Filtros de busca e status */}
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9ca3af]" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9ca3af] pointer-events-none" />
           <input
             value={termoBusca}
             onChange={e => setTermoBusca(e.target.value)}
             placeholder="Buscar por nome, pedido ou telefone..."
-            className="input pl-9 text-sm"
+            className="input pl-10 text-sm"
           />
         </div>
         <select

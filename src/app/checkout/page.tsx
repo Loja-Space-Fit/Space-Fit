@@ -10,7 +10,7 @@ import { formatBRL } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import {
-  User, Phone, Mail, MapPin, CreditCard, QrCode,
+  User, Phone, Mail, MapPin, CreditCard, Zap,
   Store, ChevronRight, Loader2, ShoppingBag, CheckCircle2, AlertCircle, Tag, Star, X,
 } from 'lucide-react'
 import type { Coupon } from '@/types'
@@ -55,7 +55,7 @@ export default function CheckoutPage() {
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { delivery_type: 'delivery', payment_method: 'pix' },
+    defaultValues: { delivery_type: 'delivery', payment_method: 'credit_card' },
   })
 
   const buscarCep = useCallback(async (cep: string) => {
@@ -208,7 +208,12 @@ export default function CheckoutPage() {
       if (!res.ok) throw new Error(result.error || 'Erro ao criar pedido')
 
       clearCart()
-      router.push(`/pedido-confirmado/${result.order_id}`)
+      if (result.payment_url) {
+        window.location.href = result.payment_url
+      } else if (result.order_id) {
+        // Apenas pickup vai para confirmado sem pagamento MP
+        router.push(`/pedido-confirmado/${result.order_id}`)
+      }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Erro inesperado. Tente novamente.')
     } finally {
@@ -451,33 +456,40 @@ export default function CheckoutPage() {
                     <p className="mt-1">Pague na hora da retirada (dinheiro, Pix ou cartão).</p>
                   </div>
                 ) : (
-                  <div className="space-y-3">
-                    <button
-                      type="button"
-                      onClick={() => form.setValue('payment_method', 'pix')}
-                      className={`w-full p-4 rounded-xl border-2 text-left transition-all flex items-center gap-3 ${
-                        paymentMethod === 'pix' ? 'border-[#b2ea0f] bg-[#b2ea0f]/10' : 'border-[#2a2a2a]'
-                      }`}
-                    >
-                      <QrCode className="w-6 h-6 text-[#b2ea0f]" />
-                      <div>
-                        <p className="font-bold text-white">PIX</p>
-                        <p className="text-xs text-[#9ca3af]">Pagamento instantâneo — confirmação imediata</p>
+                  <div className="space-y-4">
+                    {/* Botão único MP */}
+                    <div className="p-4 rounded-xl border-2 border-[#b2ea0f] bg-[#b2ea0f]/10 flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-lg bg-[#b2ea0f]/20 flex items-center justify-center shrink-0">
+                        <CreditCard className="w-5 h-5 text-[#b2ea0f]" />
                       </div>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => form.setValue('payment_method', 'credit_card')}
-                      className={`w-full p-4 rounded-xl border-2 text-left transition-all flex items-center gap-3 ${
-                        paymentMethod === 'credit_card' ? 'border-[#b2ea0f] bg-[#b2ea0f]/10' : 'border-[#2a2a2a]'
-                      }`}
-                    >
-                      <CreditCard className="w-6 h-6 text-[#b2ea0f]" />
                       <div>
-                        <p className="font-bold text-white">Cartão de Crédito</p>
-                        <p className="text-xs text-[#9ca3af]">Em até 12x — processado pelo Mercado Pago (seguro)</p>
+                        <p className="font-bold text-white">Pagar com Mercado Pago</p>
+                        <p className="text-xs text-[#9ca3af]">PIX, cartão, boleto e mais • com ou sem conta</p>
                       </div>
-                    </button>
+                    </div>
+
+                    {/* Resumo dos itens antes de ir ao MP */}
+                    <div className="pt-3 border-t border-[#2a2a2a]">
+                      <p className="text-xs text-[#9ca3af] font-bold uppercase tracking-wide mb-3">O que você está comprando</p>
+                      <div className="space-y-2">
+                        {items.map(item => (
+                          <div key={`${item.product_id}-${item.size || ''}`} className="flex items-center gap-3">
+                            {item.product_image && (
+                              <div className="w-10 h-10 rounded-lg overflow-hidden bg-[#2a2a2a] shrink-0">
+                                <Image src={item.product_image} alt={item.product_name} width={40} height={40} className="w-full h-full object-cover" />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs text-white font-semibold truncate">{item.product_name}</p>
+                              <p className="text-xs text-[#9ca3af]">
+                                Qtd: {item.quantity}{item.size ? ` • Tam: ${item.size}` : ''}
+                              </p>
+                            </div>
+                            <p className="text-xs font-bold text-[#b2ea0f] shrink-0">{formatBRL(item.unit_price * item.quantity)}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 )}
 

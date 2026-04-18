@@ -31,6 +31,7 @@ export interface ProdutoMaisVendido {
 // Tudo que o dashboard precisa para montar os cards e graficos
 export interface MetricasDashboard {
   receitaHoje:          number
+  receitaHojePendente:  number
   receitaOntem:         number
   receitaMesAtual:      number
   receitaMesAnterior:   number
@@ -134,9 +135,11 @@ export async function buscarMetricasDashboard(): Promise<MetricasDashboard> {
 
   const [
     { data: pedidosHoje         },
+    { data: pedidosHojePendente },
     { data: pedidosOntem        },
     { data: pedidos7dias        },
     { data: pedidos30dias       },
+    { data: pedidosAntigos      },
     { data: pedidosMesAtual     },
     { data: pedidosMesAnterior  },
     { data: pedidosPagos        },
@@ -145,17 +148,24 @@ export async function buscarMetricasDashboard(): Promise<MetricasDashboard> {
     { data: produtosEstoqueBaixo  },
     { data: produtosEstoqueZerado },
   ] = await Promise.all([
-    supabase.from('orders').select('total').gte('created_at', inicioHoje),
+    supabase.from('orders').select('total').gte('created_at', inicioHoje).eq('payment_status', 'approved'),
+
+    supabase.from('orders').select('total').gte('created_at', inicioHoje).eq('payment_status', 'pending'),
 
     supabase.from('orders').select('total')
       .gte('created_at', inicioOntem)
-      .lt('created_at', inicioHoje),
+      .lt('created_at', inicioHoje)
+      .eq('payment_status', 'approved'),
 
     supabase.from('orders').select('id').gte('created_at', inicio7dias),
 
-    // Traz o telefone para calcular novos vs recorrentes
+    // Traz o telefone para calcular novos vs recorrentes (últimos 30 dias)
     supabase.from('orders').select('id, customer_phone')
       .gte('created_at', inicio30dias),
+
+    // Pedidos ANTES do período de 30 dias — para detectar clientes novos x recorrentes
+    supabase.from('orders').select('customer_phone')
+      .lt('created_at', inicio30dias),
 
     supabase.from('orders').select('total')
       .in('order_status', ['paid', 'delivered'])
@@ -181,26 +191,29 @@ export async function buscarMetricasDashboard(): Promise<MetricasDashboard> {
       .eq('active', true).eq('stock', 0),
   ])
 
-  const receitaHoje        = somarReceita(pedidosHoje       ?? [])
-  const receitaOntem       = somarReceita(pedidosOntem      ?? [])
-  const receitaMesAtual    = somarReceita(pedidosMesAtual   ?? [])
-  const receitaMesAnterior = somarReceita(pedidosMesAnterior?? [])
-  const receitaTotal       = somarReceita(pedidosPagos      ?? [])
+  const receitaHoje        = somarReceita(pedidosHoje         ?? [])
+  const receitaHojePendente= somarReceita(pedidosHojePendente ?? [])
+  const receitaOntem       = somarReceita(pedidosOntem        ?? [])
+  const receitaMesAtual    = somarReceita(pedidosMesAtual     ?? [])
+  const receitaMesAnterior = somarReceita(pedidosMesAnterior  ?? [])
+  const receitaTotal       = somarReceita(pedidosPagos        ?? [])
   const ticketMedio        = (pedidosPagos?.length ?? 0) > 0
     ? receitaTotal / pedidosPagos!.length
     : 0
 
-  // Contar novos vs recorrentes pelo numero de compras no periodo
-  const comprasPorTelefone = new Map<string, number>()
-  for (const p of pedidos30dias ?? []) {
-    const tel = p.customer_phone ?? 'desconhecido'
-    comprasPorTelefone.set(tel, (comprasPorTelefone.get(tel) ?? 0) + 1)
-  }
+  // Clientes novos = compraram nos últimos 30d e NUNCA compraram antes
+  // Recorrentes = compraram nos últimos 30d e já tinham comprado antes
+  const telefonesAntigos = new Set<string>(
+    (pedidosAntigos ?? []).map(p => p.customer_phone).filter(Boolean)
+  )
+  const telefonesRecentes = new Set<string>(
+    (pedidos30dias ?? []).map(p => p.customer_phone).filter(Boolean)
+  )
   let clientesNovos30d       = 0
   let clientesRecorrentes30d = 0
-  for (const qtd of comprasPorTelefone.values()) {
-    if (qtd === 1) clientesNovos30d++
-    else           clientesRecorrentes30d++
+  for (const tel of telefonesRecentes) {
+    if (telefonesAntigos.has(tel)) clientesRecorrentes30d++
+    else                           clientesNovos30d++
   }
 
   const produtosSemVenda30d = await contarProdutosSemVenda(
@@ -211,6 +224,7 @@ export async function buscarMetricasDashboard(): Promise<MetricasDashboard> {
 
   return {
     receitaHoje,
+    receitaHojePendente,
     receitaOntem,
     receitaMesAtual,
     receitaMesAnterior,

@@ -85,13 +85,13 @@ export default function FiltroClientes({ clientes, ticketMedio }: PropsFiltroCli
 
         {/* Campo de busca */}
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9ca3af]" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9ca3af] pointer-events-none" />
           <input
             type="text"
             value={busca}
             onChange={e => setBusca(e.target.value)}
             placeholder="Buscar por nome, email ou telefone..."
-            className="w-full pl-9 pr-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl text-sm text-white placeholder-[#9ca3af] focus:outline-none focus:border-[#b2ea0f]/50 transition-colors"
+            className="w-full pl-10 pr-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl text-sm text-white placeholder-[#9ca3af] focus:outline-none focus:border-[#b2ea0f]/50 transition-colors"
           />
         </div>
 

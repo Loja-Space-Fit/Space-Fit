@@ -1,17 +1,68 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { formatBRL, getWhatsAppLink, ORDER_STATUS_LABELS, PAYMENT_METHOD_LABELS } from '@/lib/utils'
-import { CheckCircle, Clock, QrCode, MessageCircle, ShoppingBag } from 'lucide-react'
+import { processLoyaltyPoints } from '@/lib/loyalty'
+import { CheckCircle, Clock, QrCode, MessageCircle, ShoppingBag, Package } from 'lucide-react'
+import Image from 'next/image'
 import Link from 'next/link'
 import type { Order } from '@/types'
 
+export const dynamic = 'force-dynamic'
+
 interface Props {
   params: Promise<{ id: string }>
+  searchParams: Promise<Record<string, string | string[] | undefined>>
 }
 
-export default async function OrderConfirmationPage({ params }: Props) {
+export default async function OrderConfirmationPage({ params, searchParams }: Props) {
   const { id } = await params
-  const supabase = await createClient()
+  const sp = await searchParams
+
+  // Parâmetros enviados pelo Mercado Pago na URL de retorno
+  const mpStatus          = String(sp.status          ?? sp.collection_status ?? '')
+  const mpPaymentId       = String(sp.payment_id      ?? sp.collection_id     ?? '')
+  const mpMerchantOrderId = String(sp.merchant_order_id ?? '')
+
+  // Se o MP retornou status, atualizar o pedido no banco
+  if (mpStatus && mpPaymentId) {
+    const service = createServiceClient()
+
+    if (mpStatus === 'approved') {
+      await service
+        .from('orders')
+        .update({
+          payment_status: 'approved',
+          order_status:   'paid',
+          mp_payment_id:  mpPaymentId,
+        })
+        .eq('id', id)
+        .eq('payment_status', 'pending')
+
+      // Processar pontos de fidelidade (idempotente via points_processed flag)
+      await processLoyaltyPoints(id, service)
+    } else if (mpStatus === 'in_process' || mpStatus === 'pending') {
+      // Pagamento em análise (ex: boleto aguardando, PIX não pago ainda)
+      await service
+        .from('orders')
+        .update({
+          payment_status: 'pending',
+          mp_payment_id:  mpPaymentId,
+        })
+        .eq('id', id)
+    } else if (mpStatus === 'rejected' || mpStatus === 'cancelled') {
+      // Rejeitado — raro chegar aqui, pois failure vai para /checkout
+      await service
+        .from('orders')
+        .update({
+          payment_status: 'rejected',
+          mp_payment_id:  mpPaymentId,
+        })
+        .eq('id', id)
+        .eq('payment_status', 'pending')
+    }
+  }
+
+  const supabase = createServiceClient()
 
   const { data: order } = await supabase
     .from('orders')
@@ -62,6 +113,45 @@ export default async function OrderConfirmationPage({ params }: Props) {
           <span className="text-[#b2ea0f] font-black text-xl">{formatBRL(o.total)}</span>
         </div>
       </div>
+
+      {/* Itens do pedido */}
+      {o.items?.length > 0 && (
+        <div className="bg-[#111111] border border-[#2a2a2a] rounded-2xl p-5 mb-6 text-left">
+          <div className="flex items-center gap-2 mb-4">
+            <Package className="w-5 h-5 text-[#b2ea0f]" />
+            <h2 className="font-black text-white">Produtos do Pedido</h2>
+          </div>
+          <div className="space-y-3">
+            {o.items.map((item, idx) => (
+              <div key={idx} className="flex items-center gap-3">
+                {item.product_image && (
+                  <div className="w-12 h-12 rounded-lg overflow-hidden bg-[#2a2a2a] shrink-0">
+                    <Image
+                      src={item.product_image}
+                      alt={item.product_name}
+                      width={48}
+                      height={48}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-white font-semibold truncate">{item.product_name}</p>
+                  {item.size && <p className="text-xs text-[#9ca3af]">Tamanho: {item.size}</p>}
+                  <p className="text-xs text-[#9ca3af]">Qtd: {item.quantity}</p>
+                </div>
+                <p className="text-sm font-bold text-[#b2ea0f] shrink-0">{formatBRL(item.unit_price * item.quantity)}</p>
+              </div>
+            ))}
+          </div>
+          {o.discount > 0 && (
+            <div className="flex justify-between mt-3 pt-3 border-t border-[#2a2a2a] text-sm">
+              <span className="text-[#9ca3af]">Desconto</span>
+              <span className="text-green-400">− {formatBRL(o.discount)}</span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Instrução PIX */}
       {isPix && isPending && (

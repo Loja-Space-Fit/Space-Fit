@@ -137,7 +137,7 @@ export default function AdminCouponsPage() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-black text-white">Cupons de Desconto</h1>
-          <p className="text-[#9ca3af] text-sm">{coupons.length} cupom{coupons.length !== 1 ? 'ns' : ''}</p>
+          <p className="text-[#9ca3af] text-sm">{coupons.length} cup{coupons.length !== 1 ? 'ons' : 'om'} cadastrado{coupons.length !== 1 ? 's' : ''}</p>
         </div>
         <button onClick={openCreate} className="btn-green gap-2">
           <Plus className="w-4 h-4" /> Novo Cupom

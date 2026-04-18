@@ -81,6 +81,14 @@ export default async function AdminDashboard() {
         />
 
         <MetricCard
+          rotulo="Receita Pendente"
+          valor={formatBRL(metricas.receitaHojePendente)}
+          icone={Clock}
+          cor={metricas.receitaHojePendente > 0 ? '#f59e0b' : '#9ca3af'}
+          subTexto="Pagamentos aguardando aprovação"
+        />
+
+        <MetricCard
           rotulo="Receita do Mes"
           valor={formatBRL(metricas.receitaMesAtual)}
           icone={TrendingUp}
@@ -101,7 +109,7 @@ export default async function AdminDashboard() {
         />
 
         <MetricCard
-          rotulo="Pendentes"
+          rotulo="Pedidos Pendentes"
           valor={metricas.pedidosPendentes.toString()}
           icone={Clock}
           cor={metricas.pedidosPendentes > 0 ? '#f59e0b' : '#b2ea0f'}

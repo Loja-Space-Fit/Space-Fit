@@ -60,7 +60,7 @@ export default function AdminLoyaltyPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-black text-white">Programa de Fidelidade</h1>
+        <h1 className="text-2xl font-black text-white">Space Points</h1>
         <p className="text-[#9ca3af] text-sm">{accounts.length} cliente{accounts.length !== 1 ? 's' : ''} no programa</p>
       </div>
 
@@ -68,7 +68,7 @@ export default function AdminLoyaltyPage() {
         {/* Lista de clientes */}
         <div className="lg:col-span-2">
           <div className="relative mb-4">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9ca3af]" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9ca3af] pointer-events-none" />
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por nome ou telefone..." className="input pl-10" />
           </div>
           <div className="bg-[#111111] border border-[#2a2a2a] rounded-2xl overflow-hidden">

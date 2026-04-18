@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import type { Banner, Product, Category, Bundle } from '@/types'
+import type { Banner, Product, Category } from '@/types'
 import BannerSlider from '@/components/store/BannerSlider'
 import ProductCard from '@/components/store/ProductCard'
 import CategoryCards from '@/components/store/CategoryCards'
@@ -10,7 +10,7 @@ import { ArrowRight, Zap, Flame, Shield, Trophy, Users } from 'lucide-react'
 export default async function HomePage() {
   const supabase = await createClient()
 
-  const [{ data: banners }, { data: featured }, { data: categories }, { data: bundles }] = await Promise.all([
+  const [{ data: banners }, { data: featured }, { data: categories }] = await Promise.all([
     supabase
       .from('banners')
       .select('*')
@@ -28,11 +28,6 @@ export default async function HomePage() {
       .select('*')
       .eq('active', true)
       .order('display_order'),
-    supabase
-      .from('bundles')
-      .select('*, bundle_items(id, quantity, product:products(name, price))')
-      .eq('active', true)
-      .order('created_at', { ascending: false }),
   ])
 
   return (
@@ -60,7 +55,7 @@ export default async function HomePage() {
             <p className="text-[#9ca3af] text-sm mt-1">Tudo para o seu treino em um só lugar</p>
           </div>
         </div>
-        <CategoryCards categories={(categories || []) as Category[]} bundles={(bundles || []) as Bundle[]} />
+        <CategoryCards categories={(categories || []) as Category[]} />
       </section>
 
       {/* Produtos em destaque */}

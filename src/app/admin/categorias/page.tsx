@@ -371,10 +371,6 @@ export default function AdminCategoriesPage() {
                 </select>
               </div>
               <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" checked={catForm.is_bundle_category} onChange={e => setCatForm(f => ({ ...f, is_bundle_category: e.target.checked }))} className="w-4 h-4 accent-[#b2ea0f]" />
-                <span className="text-sm text-white">Exibe Kits &amp; Combos <span className="text-xs text-[#9ca3af]">(a página da categoria lista os kits cadastrados)</span></span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" checked={catForm.active} onChange={e => setCatForm(f => ({ ...f, active: e.target.checked }))} className="w-4 h-4 accent-[#b2ea0f]" />
                 <span className="text-sm text-white">Categoria ativa</span>
               </label>

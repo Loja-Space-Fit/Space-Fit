@@ -40,12 +40,20 @@ export async function GET(request: NextRequest) {
     .from('orders')
     .select('total, created_at')
     .gte('created_at', desde)
-    .in('order_status', ['paid', 'preparing', 'shipped', 'delivered'])
+    .eq('payment_status', 'approved')
     .order('created_at', { ascending: true })
 
   if (ateISO) query.lte('created_at', ateISO)
 
-  const { data: pedidos, error } = await query
+  const { data: pedidos, error } = await (ateISO
+    ? serviceClient
+        .from('orders')
+        .select('total, created_at')
+        .gte('created_at', desde)
+        .lte('created_at', ateISO)
+        .eq('payment_status', 'approved')
+        .order('created_at', { ascending: true })
+    : query)
 
   if (error) return NextResponse.json({ erro: error.message }, { status: 500 })
 

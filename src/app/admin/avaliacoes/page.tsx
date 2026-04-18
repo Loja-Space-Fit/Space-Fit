@@ -140,13 +140,13 @@ export default function PaginaAvaliacoesAdmin() {
           ))}
         </div>
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#555]" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#555] pointer-events-none" />
           <input
             type="text"
             placeholder="Buscar por cliente, produto ou comentário..."
             value={busca}
             onChange={e => setBusca(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-sm text-white placeholder-[#555] focus:outline-none focus:border-[#b2ea0f]/50"
+            className="w-full pl-10 pr-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-sm text-white placeholder-[#555] focus:outline-none focus:border-[#b2ea0f]/50"
           />
         </div>
       </div>

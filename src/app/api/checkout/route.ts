@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient, createClient } from '@/lib/supabase/server'
+import { getPreferenceClient } from '@/lib/mercadopago'
 
 export async function POST(req: NextRequest) {
   try {
@@ -99,8 +100,60 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Notificar admin via WhatsApp (link de redirecionamento simples)
-    // A notificação real é via webhook do Mercado Pago
+    // Criar preferência de pagamento no Mercado Pago (apenas para pagamentos online)
+    if (payment_method !== 'pickup') {
+      try {
+        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+        const isLocal = siteUrl.includes('localhost')
+        const preferenceClient = getPreferenceClient()
+
+        // Calcula o total real a cobrar (já com descontos)
+        const totalFinal = Number(total)
+
+        const preference = await preferenceClient.create({
+          body: {
+            items: [{
+              id: 'pedido',
+              title: `Pedido Space Fit #${order.order_number}`,
+              quantity: 1,
+              currency_id: 'BRL',
+              unit_price: totalFinal,
+            }],
+            payer: {
+              name: customer_name,
+              email: customer_email || 'cliente@spacefit.com.br',
+            },
+            external_reference: order.id,
+            back_urls: {
+              success: `${siteUrl}/pedido-confirmado/${order.id}`,
+              failure: `${siteUrl}/checkout?erro=pagamento`,
+              pending: `${siteUrl}/pedido-confirmado/${order.id}`,
+            },
+            ...(!isLocal && { auto_return: 'approved' }),
+            ...(!isLocal && { notification_url: `${siteUrl}/api/payments/webhook` }),
+          },
+        })
+
+        // Salvar mp_preference_id no pedido
+        await supabase
+          .from('orders')
+          .update({ mp_preference_id: preference.id })
+          .eq('id', order.id)
+
+        return NextResponse.json({
+          order_id: order.id,
+          order_number: order.order_number,
+          payment_url: preference.init_point,
+        })
+      } catch (mpError) {
+        console.error('Erro ao criar preferência Mercado Pago:', mpError)
+        // Retorna erro explícito para o frontend saber que o pagamento não foi iniciado
+        return NextResponse.json(
+          { error: 'Não foi possível iniciar o pagamento. Tente novamente em instantes.', order_id: order.id },
+          { status: 502 }
+        )
+      }
+    }
 
     return NextResponse.json({ order_id: order.id, order_number: order.order_number })
   } catch (error) {

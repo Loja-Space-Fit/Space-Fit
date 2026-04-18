@@ -43,7 +43,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [supabase])
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        // Refresh token inválido — limpar sessão localmente
+        supabase.auth.signOut()
+        setLoading(false)
+        return
+      }
       setSession(session)
       setUser(session?.user ?? null)
       if (session?.user) fetchProfile(session.user.id)

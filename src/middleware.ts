@@ -23,7 +23,13 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
+  let user = null
+  try {
+    const { data, error } = await supabase.auth.getUser()
+    if (!error) user = data.user
+  } catch {
+    // Refresh token inválido/expirado — tratar como não autenticado
+  }
   const path = request.nextUrl.pathname
 
   // === Proteção /admin — exige autenticação + is_admin verificado no servidor ===
