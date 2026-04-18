@@ -66,7 +66,6 @@ export async function processLoyaltyPoints(
         user_id:        pedido.user_id,
         customer_phone: phone || null,
         customer_name:  pedido.customer_name,
-        customer_email: pedido.customer_email || null,
         points:         toEarn,
         total_spent:    pedido.total,
       }, { onConflict: 'user_id', ignoreDuplicates: false })
