@@ -129,7 +129,7 @@ export async function POST(req: NextRequest) {
               failure: `${siteUrl}/pedido-confirmado/${order.id}`,
               pending: `${siteUrl}/pedido-confirmado/${order.id}`,
             },
-            ...(!isLocal && { auto_return: 'approved' }),
+            ...(!isLocal && { auto_return: 'all' }),
             ...(!isLocal && { notification_url: `${siteUrl}/api/payments/webhook` }),
           },
         })
