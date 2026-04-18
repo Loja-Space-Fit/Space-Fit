@@ -77,25 +77,25 @@ export async function processLoyaltyPoints(
     accountId = newAcc.id
   }
 
-  // Registrar transações
-  const txInserts = []
+  // Registrar transação de ganho de pontos
   if (toDeduct > 0) {
-    txInserts.push(supabase.from('loyalty_transactions').insert({
+    const { error: txErr } = await supabase.from('loyalty_transactions').insert({
       account_id:  accountId,
       points:     -toDeduct,
       type:        'redeem',
       description: `Resgate no pedido ${pedido.order_number}`,
-    }))
+    })
+    if (txErr) throw new Error(`Erro ao inserir transação redeem: ${txErr.message}`)
   }
   if (toEarn > 0) {
-    txInserts.push(supabase.from('loyalty_transactions').insert({
+    const { error: txErr } = await supabase.from('loyalty_transactions').insert({
       account_id:  accountId,
       points:      toEarn,
       type:        'earn',
       description: `Pontos do pedido ${pedido.order_number}`,
-    }))
+    })
+    if (txErr) throw new Error(`Erro ao inserir transação earn: ${txErr.message}`)
   }
-  if (txInserts.length > 0) await Promise.all(txInserts)
 
   // Marcar como processado SOMENTE após tudo ter funcionado
   await supabase.from('orders').update({ points_processed: true }).eq('id', orderId)
