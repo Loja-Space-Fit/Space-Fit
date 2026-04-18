@@ -20,14 +20,13 @@ export async function POST(req: NextRequest) {
     const mpRequestId = req.headers.get('x-request-id')
     const secret = process.env.MERCADOPAGO_WEBHOOK_SECRET
 
-    if (secret && mpSignature) {
+    if (secret && mpSignature && body.data?.id && mpRequestId) {
       const ts = mpSignature.match(/ts=(\d+)/)?.[1]
       const signatureValue = mpSignature.match(/v1=([a-f0-9]+)/)?.[1]
 
       if (ts && signatureValue) {
         const { createHmac } = await import('crypto')
-        const dataId = body.data?.id
-        const manifest = `id:${dataId};request-id:${mpRequestId};ts:${ts};`
+        const manifest = `id:${body.data.id};request-id:${mpRequestId};ts:${ts};`
         const expectedSignature = createHmac('sha256', secret)
           .update(manifest)
           .digest('hex')
