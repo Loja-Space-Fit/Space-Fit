@@ -86,6 +86,15 @@ export async function POST(req: NextRequest) {
 
       const { data: orders } = await query
       if (orders && orders.length > 0) {
+        const orderId = orders[0].id
+
+        // Buscar estado atual antes de atualizar (idempotência — evita processar duas vezes)
+        const { data: pedidoAtual } = await supabase
+          .from('orders')
+          .select('payment_status')
+          .eq('id', orderId)
+          .single()
+
         await supabase
           .from('orders')
           .update({
@@ -93,21 +102,19 @@ export async function POST(req: NextRequest) {
             payment_status: mapped.payment_status,
             order_status:   mapped.order_status,
           })
-          .eq('id', orders[0].id)
+          .eq('id', orderId)
 
-        // Envia email de confirmacao quando o pagamento e aprovado
-        if (mapped.payment_status === 'approved') {
+        // Só dispara loyalty e email na transição pending → approved (evita duplicatas em retries)
+        if (mapped.payment_status === 'approved' && pedidoAtual?.payment_status !== 'approved') {
           const { data: pedidoCompleto } = await supabase
             .from('orders')
             .select('*')
-            .eq('id', orders[0].id)
+            .eq('id', orderId)
             .single()
 
           if (pedidoCompleto) {
-            // Processar pontos de fidelidade
-            await processLoyaltyPoints(orders[0].id, supabase)
+            await processLoyaltyPoints(orderId, supabase)
 
-            // Sem await intencional — nao queremos bloquear a resposta do webhook por causa do email
             enviarEmailConfirmacaoPedido(pedidoCompleto as Order).catch(e =>
               console.error('[webhook] Falha ao enviar email de confirmacao:', e)
             )
