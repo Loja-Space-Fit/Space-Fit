@@ -17,26 +17,41 @@ export async function POST() {
     .single()
   if (!perfil?.is_admin) return NextResponse.json({ erro: 'Acesso negado' }, { status: 403 })
 
-  // Buscar todos os pedidos pagos — independente da flag points_processed
-  // O processLoyaltyPoints já verifica internamente se os pontos existem
+  // 1. Limpar todos os dados antigos de fidelidade (reset completo)
+  await supabase.from('loyalty_transactions').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+  await supabase.from('loyalty_accounts').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+
+  // 2. Resetar flag points_processed em todos os pedidos aprovados
+  await supabase
+    .from('orders')
+    .update({ points_processed: false })
+    .eq('payment_status', 'approved')
+
+  // 3. Buscar todos os pedidos aprovados com user_id
   const { data: pedidos, error } = await supabase
     .from('orders')
     .select('id')
     .eq('payment_status', 'approved')
+    .not('user_id', 'is', null)
 
   if (error) return NextResponse.json({ erro: error.message }, { status: 500 })
 
   let processados = 0
-  let erros = 0
+  const errosDetalhados: string[] = []
 
   for (const pedido of pedidos ?? []) {
     try {
       await processLoyaltyPoints(pedido.id, supabase)
       processados++
-    } catch {
-      erros++
+    } catch (e) {
+      errosDetalhados.push(`${pedido.id}: ${e instanceof Error ? e.message : String(e)}`)
     }
   }
 
-  return NextResponse.json({ processados, erros, total: pedidos?.length ?? 0 })
+  return NextResponse.json({
+    processados,
+    erros: errosDetalhados.length,
+    errosDetalhados,
+    total: pedidos?.length ?? 0,
+  })
 }
