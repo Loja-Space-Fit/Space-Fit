@@ -25,7 +25,7 @@ export async function GET() {
     user_id: user.id,
     profile_phone_raw: perfil?.phone,
     profile_phone_normalized: phoneRaw,
-    pedidos: pedidos?.map(p => ({
+    pedidos: pedidos?.map((p: { customer_phone?: string | null; [key: string]: unknown }) => ({
       ...p,
       customer_phone_normalized: (p.customer_phone ?? '').replace(/\D/g, ''),
     })),
