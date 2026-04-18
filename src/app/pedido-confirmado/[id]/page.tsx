@@ -174,10 +174,10 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
       {isRejected && (
         <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-5 mb-6">
           <p className="text-sm text-[#9ca3af] mb-3">Você pode tentar novamente com outro cartão ou entrar em contato pelo WhatsApp.</p>
-          <Link href="/checkout" className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white text-black font-black hover:bg-gray-100 transition-colors">
+          <a href={`/api/checkout/retry/${o.id}`} className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white text-black font-black hover:bg-gray-100 transition-colors">
             <ShoppingBag className="w-4 h-4" />
             Tentar Novamente
-          </Link>
+          </a>
         </div>
       )}
 
