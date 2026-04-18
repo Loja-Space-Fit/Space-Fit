@@ -7,7 +7,7 @@ import type { Order } from '@/types'
 // Webhook do Mercado Pago — chamado automaticamente quando o pagamento muda de status
 export async function POST(req: NextRequest) {
   try {
-    let body: Record<string, unknown> = {}
+    let body: { type?: string; topic?: string; data?: { id?: string }; [key: string]: unknown } = {}
     try {
       body = await req.json()
     } catch {
