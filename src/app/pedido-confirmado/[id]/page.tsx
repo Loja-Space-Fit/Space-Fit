@@ -87,10 +87,13 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
   // Se o MP mandou status na URL, usar como fonte da verdade para o display
   const displayStatus = (mpResult === 'failure' || mpStatus === 'rejected' || mpStatus === 'cancelled') ? 'rejected'
     : mpStatus === 'approved' ? 'approved'
+    : (mpStatus === 'in_process' || mpStatus === 'pending') ? 'pending'
     : o.payment_status
 
-  const isPending  = displayStatus === 'pending'
-  const isRejected = displayStatus === 'rejected'
+  const isPending             = displayStatus === 'pending'
+  const isRejected            = displayStatus === 'rejected'
+  // Pendente vindo do MP (em verificação real) — não é só order recém-criado sem redirect do MP
+  const isPendingVerification = isPending && (mpStatus === 'in_process' || mpStatus === 'pending')
 
   const waMessage = `Olá! Realizei um pedido na Space Fit. Número: ${o.order_number}. Pedido de ${o.customer_name} — ${formatBRL(o.total)}. ${isPix ? 'Aguardando confirmação do PIX.' : ''}`
 
@@ -98,22 +101,26 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
     <div className="max-w-2xl mx-auto px-4 py-16 text-center">
       {/* Ícone de status */}
       <div className={`w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-6 ${
-        isRejected
-          ? 'bg-red-500/15 border-2 border-red-500'
-          : 'bg-[#b2ea0f]/15 border-2 border-[#b2ea0f]'
+        isRejected            ? 'bg-red-500/15 border-2 border-red-500'
+        : isPendingVerification ? 'bg-yellow-500/15 border-2 border-yellow-400'
+        : 'bg-[#b2ea0f]/15 border-2 border-[#b2ea0f]'
       }`}>
         {isRejected
           ? <XCircle className="w-10 h-10 text-red-500" />
+          : isPendingVerification
+          ? <Clock className="w-10 h-10 text-yellow-400" />
           : <CheckCircle className="w-10 h-10 text-[#b2ea0f]" />
         }
       </div>
 
       <h1 className="text-2xl md:text-3xl font-black text-white mb-2">
-        {isRejected ? 'Pagamento Recusado' : 'Pedido Realizado!'}
+        {isRejected ? 'Pagamento Recusado' : isPendingVerification ? 'Pagamento em Verificação' : 'Pedido Realizado!'}
       </h1>
       <p className="text-[#9ca3af] mb-6">
         {isRejected
           ? <><strong className="text-white">{o.customer_name}</strong>, seu pagamento foi recusado. Tente outro cartão ou forma de pagamento.</>  
+          : isPendingVerification
+          ? <><strong className="text-white">{o.customer_name}</strong>, seu pagamento está sendo verificado. Você será notificado assim que for confirmado.</>
           : <>Obrigado, <strong className="text-white">{o.customer_name}</strong>! Seu pedido foi recebido com sucesso.</>
         }
       </p>
@@ -193,6 +200,17 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
             <ShoppingBag className="w-4 h-4" />
             Tentar Novamente
           </a>
+        </div>
+      )}
+
+      {/* Card em verificação */}
+      {isPendingVerification && (
+        <div className="bg-yellow-500/10 border border-yellow-400/30 rounded-2xl p-5 mb-6 text-left">
+          <div className="flex items-center gap-2 mb-3">
+            <Clock className="w-5 h-5 text-yellow-400" />
+            <h2 className="font-black text-white">Aguardando confirmação</h2>
+          </div>
+          <p className="text-sm text-[#9ca3af]">Seu pagamento está sendo processado. Assim que confirmado, seu pedido será liberado automaticamente e você receberá um e-mail.</p>
         </div>
       )}
 
