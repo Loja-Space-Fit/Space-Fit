@@ -18,7 +18,8 @@ export async function processLoyaltyPoints(
 
   if (!pedido || pedido.points_processed) return
 
-  const phone    = pedido.customer_phone
+  // Normaliza o telefone (remove formatação) para garantir match no banco
+  const phone    = (pedido.customer_phone ?? '').replace(/\D/g, '')
   const toDeduct = pedido.points_to_use  || 0
   const toEarn   = pedido.points_earned  || Math.floor(pedido.total * 0.01)
 

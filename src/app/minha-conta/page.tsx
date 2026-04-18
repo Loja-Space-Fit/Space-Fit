@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback, Suspense } from 'react'
+import { useEffect, useState, useCallback, useRef, Suspense } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -60,13 +60,21 @@ function MinhaContaPageInner() {
   const { favorites, toggle } = useFavorites()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const supabase = createClient()
+  // Instância estável — não muda entre renders, evita loop infinito no fetchData
+  const supabaseRef = useRef(createClient())
+  const supabase = supabaseRef.current
 
   const validTabs: Tab[] = ['pedidos', 'perfil', 'fidelidade', 'favoritos']
   const tabParam = searchParams.get('tab') as Tab | null
   const [tab, setTab] = useState<Tab>(validTabs.includes(tabParam as Tab) ? tabParam as Tab : 'pedidos')
 
-  // Sync tab when URL param changes (e.g. navigating from header dropdown)
+  // Atualiza a tab e persiste na URL para sobreviver ao refresh
+  function changeTab(t: Tab) {
+    setTab(t)
+    router.replace(`/minha-conta?tab=${t}`, { scroll: false })
+  }
+
+  // Sync tab quando URL muda externamente (ex: link do header)
   useEffect(() => {
     const t = searchParams.get('tab') as Tab | null
     if (t && validTabs.includes(t)) setTab(t)
@@ -76,7 +84,8 @@ function MinhaContaPageInner() {
   const [loyalty, setLoyalty] = useState<LoyaltyAccount | null>(null)
   const [loyaltyTx, setLoyaltyTx] = useState<{ points: number; type: string; description: string; created_at: string }[]>([])
   const [favProducts, setFavProducts] = useState<FavProduct[]>([])
-  const [loadingData, setLoadingData] = useState(true)
+  const [loadingData, setLoadingData] = useState(false)
+  const dataFetched = useRef(false)
 
   // Edit profile state
   const [editing, setEditing] = useState(false)
@@ -107,7 +116,11 @@ function MinhaContaPageInner() {
 
   const fetchData = useCallback(async () => {
     if (!user) return
-    setLoadingData(true)
+    // Só mostra spinner na primeira carga — evita flash no alt+tab
+    if (!dataFetched.current) setLoadingData(true)
+
+    // Normaliza telefone (remove formatação) para garantir match no banco
+    const phoneRaw = (profile?.phone ?? '').replace(/\D/g, '')
 
     const [{ data: ordersData }, { data: loyaltyData }] = await Promise.all([
       supabase
@@ -115,11 +128,13 @@ function MinhaContaPageInner() {
         .select('id, order_number, total, order_status, payment_status, created_at, items')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false }),
-      supabase
-        .from('loyalty_accounts')
-        .select('id, points, total_spent')
-        .eq('customer_phone', profile?.phone ?? '')
-        .single(),
+      phoneRaw
+        ? supabase
+            .from('loyalty_accounts')
+            .select('id, points, total_spent')
+            .eq('customer_phone', phoneRaw)
+            .single()
+        : Promise.resolve({ data: null }),
     ])
 
     setOrders((ordersData as Order[]) ?? [])
@@ -146,6 +161,7 @@ function MinhaContaPageInner() {
         .limit(20)
       setLoyaltyTx(txData ?? [])
     }
+    dataFetched.current = true
     setLoadingData(false)
   }, [user, profile, supabase])
 
@@ -266,7 +282,7 @@ function MinhaContaPageInner() {
         ] as { id: Tab; label: string; icon: React.FC<{ className?: string }> }[]).map(t => (
           <button
             key={t.id}
-            onClick={() => setTab(t.id)}
+            onClick={() => changeTab(t.id)}
             className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-sm font-semibold transition-all ${
               tab === t.id
                 ? 'bg-[#b2ea0f] text-black'
