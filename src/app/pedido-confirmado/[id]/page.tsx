@@ -2,7 +2,7 @@ import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { formatBRL, getWhatsAppLink, ORDER_STATUS_LABELS, PAYMENT_METHOD_LABELS } from '@/lib/utils'
 import { processLoyaltyPoints } from '@/lib/loyalty'
-import { CheckCircle, Clock, QrCode, MessageCircle, ShoppingBag, Package } from 'lucide-react'
+import { CheckCircle, XCircle, Clock, QrCode, MessageCircle, ShoppingBag, Package } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import type { Order } from '@/types'
@@ -75,21 +75,32 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
   const o = order as Order
   const isPix = o.payment_method === 'pix'
   const isPending = o.payment_status === 'pending'
+  const isRejected = o.payment_status === 'rejected'
 
   const waMessage = `Olá! Realizei um pedido na Space Fit. Número: ${o.order_number}. Pedido de ${o.customer_name} — ${formatBRL(o.total)}. ${isPix ? 'Aguardando confirmação do PIX.' : ''}`
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-16 text-center">
-      {/* Ícone de sucesso */}
-      <div className="w-20 h-20 mx-auto rounded-full bg-[#b2ea0f]/15 border-2 border-[#b2ea0f] flex items-center justify-center mb-6">
-        <CheckCircle className="w-10 h-10 text-[#b2ea0f]" />
+      {/* Ícone de status */}
+      <div className={`w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-6 ${
+        isRejected
+          ? 'bg-red-500/15 border-2 border-red-500'
+          : 'bg-[#b2ea0f]/15 border-2 border-[#b2ea0f]'
+      }`}>
+        {isRejected
+          ? <XCircle className="w-10 h-10 text-red-500" />
+          : <CheckCircle className="w-10 h-10 text-[#b2ea0f]" />
+        }
       </div>
 
       <h1 className="text-2xl md:text-3xl font-black text-white mb-2">
-        Pedido Realizado!
+        {isRejected ? 'Pagamento Recusado' : 'Pedido Realizado!'}
       </h1>
       <p className="text-[#9ca3af] mb-6">
-        Obrigado, <strong className="text-white">{o.customer_name}</strong>! Seu pedido foi recebido com sucesso.
+        {isRejected
+          ? <><strong className="text-white">{o.customer_name}</strong>, seu pagamento foi recusado. Tente outro cartão ou forma de pagamento.</>  
+          : <>Obrigado, <strong className="text-white">{o.customer_name}</strong>! Seu pedido foi recebido com sucesso.</>
+        }
       </p>
 
       {/* Número do pedido */}
@@ -104,8 +115,14 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
         </div>
         <div className="flex items-center justify-between mb-3">
           <span className="text-[#9ca3af] text-sm">Status</span>
-          <span className={`font-semibold text-sm ${o.payment_status === 'approved' ? 'text-[#b2ea0f]' : 'text-yellow-400'}`}>
-            {o.payment_status === 'approved' ? '✓ Pago' : '⏳ Aguardando pagamento'}
+          <span className={`font-semibold text-sm ${
+            o.payment_status === 'approved' ? 'text-[#b2ea0f]' :
+            o.payment_status === 'rejected' ? 'text-red-400' :
+            'text-yellow-400'
+          }`}>
+            {o.payment_status === 'approved' ? '✓ Pago' :
+             o.payment_status === 'rejected' ? '✗ Recusado' :
+             '⏳ Aguardando pagamento'}
           </span>
         </div>
         <div className="flex items-center justify-between">
@@ -150,6 +167,17 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
               <span className="text-green-400">− {formatBRL(o.discount)}</span>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Botão tentar novamente se recusado */}
+      {isRejected && (
+        <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-5 mb-6">
+          <p className="text-sm text-[#9ca3af] mb-3">Você pode tentar novamente com outro cartão ou entrar em contato pelo WhatsApp.</p>
+          <Link href="/checkout" className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white text-black font-black hover:bg-gray-100 transition-colors">
+            <ShoppingBag className="w-4 h-4" />
+            Tentar Novamente
+          </Link>
         </div>
       )}
 

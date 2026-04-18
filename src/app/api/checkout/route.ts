@@ -126,7 +126,7 @@ export async function POST(req: NextRequest) {
             external_reference: order.id,
             back_urls: {
               success: `${siteUrl}/pedido-confirmado/${order.id}`,
-              failure: `${siteUrl}/checkout?erro=pagamento`,
+              failure: `${siteUrl}/pedido-confirmado/${order.id}`,
               pending: `${siteUrl}/pedido-confirmado/${order.id}`,
             },
             ...(!isLocal && { auto_return: 'approved' }),
