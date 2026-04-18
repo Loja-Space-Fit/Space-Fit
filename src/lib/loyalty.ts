@@ -62,13 +62,13 @@ export async function processLoyaltyPoints(
     const phone = (pedido.customer_phone ?? '').replace(/\D/g, '')
     const { data: newAcc, error: insErr } = await supabase
       .from('loyalty_accounts')
-      .upsert({
+      .insert({
         user_id:        pedido.user_id,
         customer_phone: phone || null,
         customer_name:  pedido.customer_name,
         points:         toEarn,
         total_spent:    pedido.total,
-      }, { onConflict: 'user_id', ignoreDuplicates: false })
+      })
       .select('id')
       .single()
 
