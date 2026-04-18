@@ -9,13 +9,12 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
 
-    // Verificar assinatura HMAC do Mercado Pago (segurança obrigatória)
+    // Verificar assinatura HMAC do Mercado Pago (quando disponível)
     const mpSignature = req.headers.get('x-signature')
     const mpRequestId = req.headers.get('x-request-id')
     const secret = process.env.MERCADOPAGO_WEBHOOK_SECRET
 
     if (secret && mpSignature) {
-      // Validação da assinatura conforme documentação do MP
       const ts = mpSignature.match(/ts=(\d+)/)?.[1]
       const signatureValue = mpSignature.match(/v1=([a-f0-9]+)/)?.[1]
 
@@ -32,6 +31,11 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
       }
+    }
+
+    // Corpo vazio ou ping de teste do Mercado Pago — apenas confirmar recebimento
+    if (!body.type && !body.topic) {
+      return NextResponse.json({ received: true })
     }
 
     // Processar notificação
