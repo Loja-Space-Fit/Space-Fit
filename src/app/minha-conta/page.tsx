@@ -542,7 +542,7 @@ function MinhaContaPageInner() {
                 {/* Como funciona */}
                 <div className="mt-4 pt-4 border-t border-[#2a2a2a] flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-[#b2ea0f] shrink-0" />
-                  <p className="text-xs text-[#9ca3af]">A cada compra confirmada você ganha <span className="text-[#b2ea0f] font-bold">1 ponto por real gasto</span>. Use todos os pontos como desconto no checkout.</p>
+                  <p className="text-xs text-[#9ca3af]">A cada compra confirmada você ganha <span className="text-[#b2ea0f] font-bold">1 ponto a cada R$ 100 gastos</span>. Use todos os pontos como desconto no checkout.</p>
                 </div>
               </div>
 
