@@ -13,7 +13,7 @@
 // envolve em aspas e dobra as aspas internas.
 function escaparCampo(valor: string | number | null | undefined): string {
   const texto = String(valor ?? '')
-  if (texto.includes(',') || texto.includes('"') || texto.includes('\n')) {
+  if (texto.includes(';') || texto.includes('"') || texto.includes('\n')) {
     return `"${texto.replace(/"/g, '""')}"`
   }
   return texto
@@ -25,10 +25,12 @@ export function gerarCSV(
   cabecalhos: string[],
   linhas: (string | number | null | undefined)[][]
 ): string {
-  const bom      = '\uFEFF'
-  const cabecalho = cabecalhos.map(escaparCampo).join(',')
+  // Ponto e virgula como separador — padrao do Excel em pt-BR
+  const sep       = ';'
+  const bom       = '\uFEFF'
+  const cabecalho = cabecalhos.map(escaparCampo).join(sep)
   const corpo     = linhas
-    .map(linha => linha.map(escaparCampo).join(','))
+    .map(linha => linha.map(escaparCampo).join(sep))
     .join('\n')
 
   return `${bom}${cabecalho}\n${corpo}`
