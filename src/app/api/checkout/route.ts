@@ -149,7 +149,9 @@ export async function POST(req: NextRequest) {
             }],
             payer: {
               name: customer_name,
-              email: customer_email || 'cliente@spacefit.com.br',
+              // Nunca usar o email real do cliente como payer — o MP bloqueia quando
+              // o email do comprador coincide com o da conta do vendedor.
+              email: 'comprador@spacefit.com.br',
             },
             external_reference: order.id,
             back_urls: {
