@@ -131,7 +131,8 @@ export async function POST(req: NextRequest) {
     // Criar preferência de pagamento no Mercado Pago (apenas para pagamentos online)
     if (payment_method !== 'pickup') {
       try {
-        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
+          || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
         const isSandbox = (process.env.MERCADOPAGO_ACCESS_TOKEN || '').startsWith('TEST-')
         const preferenceClient = getPreferenceClient()
 
