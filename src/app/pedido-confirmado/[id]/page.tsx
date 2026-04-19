@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { formatBRL, getWhatsAppLink, ORDER_STATUS_LABELS, PAYMENT_METHOD_LABELS } from '@/lib/utils'
 import { processLoyaltyPoints } from '@/lib/loyalty'
 import { getPaymentClient } from '@/lib/mercadopago'
+import { enviarEmailConfirmacaoPedido } from '@/lib/email'
 import { CheckCircle, XCircle, Clock, QrCode, MessageCircle, ShoppingBag, Package, CreditCard } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -40,12 +41,24 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
   // Atualizar o pedido no banco com o status real do MP
   if (mpRealStatus && mpPaymentId && mpPaymentId !== 'undefined') {
     if (mpRealStatus === 'approved') {
+      const { data: wasAlreadyApproved } = await service
+        .from('orders')
+        .select('payment_status')
+        .eq('id', id)
+        .single()
+
       await service
         .from('orders')
         .update({ payment_status: 'approved', order_status: 'paid', mp_payment_id: mpPaymentId })
         .eq('id', id)
         .eq('payment_status', 'pending')
-      await processLoyaltyPoints(id, service)
+
+      // Só processa loyalty e email se não estava aprovado antes (evita duplicatas)
+      if (wasAlreadyApproved?.payment_status !== 'approved') {
+        await processLoyaltyPoints(id, service)
+        const { data: pedidoAprovado } = await service.from('orders').select('*').eq('id', id).single()
+        if (pedidoAprovado) enviarEmailConfirmacaoPedido(pedidoAprovado as Order).catch(() => {})
+      }
     } else if (mpRealStatus === 'in_process' || mpRealStatus === 'pending') {
       await service
         .from('orders')
