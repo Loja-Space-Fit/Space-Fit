@@ -10,7 +10,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import {
   User, Package, Star, LogOut, Edit2, Save, X,
-  ChevronRight, Loader2, ShoppingBag, Phone, Mail, MapPin, KeyRound, Eye, EyeOff, Heart,
+  ChevronRight, ChevronDown, Loader2, ShoppingBag, Phone, Mail, MapPin, KeyRound, Eye, EyeOff, Heart,
 } from 'lucide-react'
 
 type Tab = 'pedidos' | 'perfil' | 'fidelidade' | 'favoritos'
@@ -87,6 +87,7 @@ function MinhaContaPageInner() {
   const [loyaltyTx, setLoyaltyTx] = useState<{ points_earned: number; points_redeemed: number; description: string; created_at: string }[]>([])
   const [favProducts, setFavProducts] = useState<FavProduct[]>([])
   const [loadingData, setLoadingData] = useState(false)
+  const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null)
   const dataFetched = useRef(false)
 
   // Edit profile state
@@ -291,67 +292,78 @@ function MinhaContaPageInner() {
               <a href="/" className="btn-green text-sm py-2 px-6 rounded-lg inline-block">Ver Produtos</a>
             </div>
           ) : (
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-3">
               {orders.map(order => {
-                const isPending = order.payment_status === 'pending'
+                const isPending  = order.payment_status === 'pending'
                 const isRejected = order.payment_status === 'rejected'
+                const isExpanded = expandedOrderId === order.id
                 return (
-                <div key={order.id} className="bg-[#111111] border border-[#2a2a2a] rounded-xl overflow-hidden">
-                  {/* Cabeçalho clicável */}
-                  <Link
-                    href={`/pedido-confirmado/${order.id}`}
-                    className="flex items-start justify-between p-4 hover:bg-[#1a1a1a] transition-colors"
-                  >
-                    <div>
-                      <span className="text-[#b2ea0f] font-black text-sm">{order.order_number}</span>
-                      <p className="text-xs text-[#9ca3af] mt-0.5">
-                        {new Date(order.created_at).toLocaleDateString('pt-BR', {
-                          day: '2-digit', month: 'long', year: 'numeric'
-                        })}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                        isRejected
-                          ? 'bg-red-500/20 text-red-400'
-                          : isPending
-                          ? 'bg-yellow-500/20 text-yellow-400'
+                  <div key={order.id} className="bg-[#111111] border border-[#2a2a2a] rounded-xl overflow-hidden">
+                    {/* Cabeçalho — toggle ao clicar */}
+                    <button
+                      onClick={() => setExpandedOrderId(isExpanded ? null : order.id)}
+                      className="w-full flex items-center justify-between p-4 hover:bg-[#1a1a1a] transition-colors text-left"
+                    >
+                      <div>
+                        <span className="text-[#b2ea0f] font-black text-sm">{order.order_number}</span>
+                        <p className="text-xs text-[#9ca3af] mt-0.5">
+                          {new Date(order.created_at).toLocaleDateString('pt-BR', {
+                            day: '2-digit', month: 'long', year: 'numeric'
+                          })}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                          isRejected ? 'bg-red-500/20 text-red-400'
+                          : isPending ? 'bg-yellow-500/20 text-yellow-400'
                           : orderStatusColor[order.order_status] || 'bg-[#2a2a2a] text-[#9ca3af]'
-                      }`}>
-                        {isRejected ? 'Recusado' : isPending ? 'Aguardando pagamento' : orderStatusLabel[order.order_status] || order.order_status}
-                      </span>
-                      <ChevronRight className="w-4 h-4 text-[#555]" />
-                    </div>
-                  </Link>
+                        }`}>
+                          {isRejected ? 'Recusado' : isPending ? 'Aguardando pagamento' : orderStatusLabel[order.order_status] || order.order_status}
+                        </span>
+                        {isExpanded
+                          ? <ChevronDown className="w-4 h-4 text-[#9ca3af]" />
+                          : <ChevronRight className="w-4 h-4 text-[#555]" />
+                        }
+                      </div>
+                    </button>
 
-                  {/* Itens do pedido */}
-                  <div className="px-4 pb-3 flex flex-col gap-1">
-                    {(order.items as { product_name: string; quantity: number; unit_price: number }[]).map((item, i) => (
-                      <p key={i} className="text-sm text-[#9ca3af]">
-                        {item.quantity}× {item.product_name}
-                        <span className="text-[#555] ml-2">{formatBRL(item.unit_price * item.quantity)}</span>
-                      </p>
-                    ))}
+                    {/* Detalhes expandíveis */}
+                    {isExpanded && (
+                      <div className="border-t border-[#2a2a2a]">
+                        {/* Itens */}
+                        <div className="px-4 py-3 flex flex-col gap-2">
+                          {(order.items as { product_name: string; quantity: number; unit_price: number }[]).map((item, i) => (
+                            <div key={i} className="flex items-center justify-between text-sm">
+                              <span className="text-[#9ca3af]">{item.quantity}× {item.product_name}</span>
+                              <span className="text-white font-semibold">{formatBRL(item.unit_price * item.quantity)}</span>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Total + ações */}
+                        <div className="px-4 pb-4 flex flex-col gap-3 border-t border-[#2a2a2a] pt-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-[#9ca3af]">Total</span>
+                            <span className="text-[#b2ea0f] font-black">{formatBRL(order.total)}</span>
+                          </div>
+                          {isPending && (
+                            <a
+                              href={`/api/checkout/retry/${order.id}`}
+                              className="flex items-center justify-center w-full py-2.5 rounded-xl bg-[#b2ea0f] text-black font-black text-sm hover:bg-[#c8f040] transition-colors"
+                            >
+                              Finalizar Pagamento
+                            </a>
+                          )}
+                          <Link
+                            href={`/pedido-confirmado/${order.id}`}
+                            className="flex items-center justify-center w-full py-2.5 rounded-xl border border-[#2a2a2a] text-[#9ca3af] font-semibold text-sm hover:border-[#b2ea0f] hover:text-white transition-colors"
+                          >
+                            Ver detalhes completos
+                          </Link>
+                        </div>
+                      </div>
+                    )}
                   </div>
-
-                  {/* Rodapé */}
-                  <div className="px-4 pb-4 flex items-center justify-between pt-3 border-t border-[#2a2a2a]">
-                    <span className="text-sm text-[#9ca3af]">Total</span>
-                    <span className="text-[#b2ea0f] font-black">{formatBRL(order.total)}</span>
-                  </div>
-
-                  {/* Botão finalizar pagamento */}
-                  {isPending && (
-                    <div className="px-4 pb-4">
-                      <a
-                        href={`/api/checkout/retry/${order.id}`}
-                        className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-[#b2ea0f] text-black font-black text-sm hover:bg-[#c8f040] transition-colors"
-                      >
-                        Finalizar Pagamento
-                      </a>
-                    </div>
-                  )}
-                </div>
                 )
               })}
             </div>
