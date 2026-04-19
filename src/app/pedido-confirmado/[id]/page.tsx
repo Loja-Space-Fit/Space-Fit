@@ -6,6 +6,7 @@ import { CheckCircle, XCircle, Clock, QrCode, MessageCircle, ShoppingBag, Packag
 import Image from 'next/image'
 import Link from 'next/link'
 import type { Order } from '@/types'
+import PaymentStatusPoller from '@/components/store/PaymentStatusPoller'
 
 export const dynamic = 'force-dynamic'
 
@@ -99,6 +100,8 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-16 text-center">
+      {/* Polling automático para PIX e pagamentos pendentes */}
+      {isPending && <PaymentStatusPoller orderId={o.id} />}
       {/* Ícone de status */}
       <div className={`w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-6 ${
         isRejected            ? 'bg-red-500/15 border-2 border-red-500'

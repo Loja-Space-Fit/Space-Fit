@@ -25,6 +25,7 @@ type BundleItemFull = Omit<BundleItem, 'product'> & {
 
 interface BundleDetail extends Bundle {
   images: string[]
+  stock: number
   bundle_items: BundleItemFull[]
 }
 
@@ -53,6 +54,7 @@ export default async function KitDetailPage({ params }: Props) {
   if (!data) notFound()
 
   const bundle = data as unknown as BundleDetail
+  const outOfStock = bundle.stock <= 0
   const images: string[] = bundle.images?.length ? bundle.images : bundle.image_url ? [bundle.image_url] : []
   const itemTotal = bundle.bundle_items?.reduce((s, i) => s + (i.product?.price || 0) * i.quantity, 0) || 0
   const savings = itemTotal > bundle.price ? itemTotal - bundle.price : 0
@@ -71,12 +73,18 @@ export default async function KitDetailPage({ params }: Props) {
           {images.length > 0 ? (
             <>
               <div className="relative w-full aspect-square rounded-2xl overflow-hidden bg-[#1a1a1a] border border-[#2a2a2a]">
-                <Image src={images[0]} alt={bundle.name} fill className="object-cover" priority />
-                {discountPct > 0 && (
+                <Image src={images[0]} alt={bundle.name} fill className={`object-cover ${outOfStock ? 'opacity-40' : ''}`} priority />
+                {outOfStock ? (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="bg-black/70 text-white font-black text-lg px-6 py-3 rounded-full uppercase tracking-wide">
+                      Sem Estoque
+                    </span>
+                  </div>
+                ) : discountPct > 0 ? (
                   <span className="absolute top-4 left-4 bg-[#b2ea0f] text-black text-sm font-black px-3 py-1 rounded-full">
                     -{discountPct}% OFF
                   </span>
-                )}
+                ) : null}
               </div>
               {images.length > 1 && (
                 <div className="flex gap-3">
@@ -157,6 +165,7 @@ export default async function KitDetailPage({ params }: Props) {
             bundleSlug={bundle.slug}
             bundleImage={images[0]}
             bundlePrice={bundle.price}
+            stock={bundle.stock}
           />
         </div>
       </div>

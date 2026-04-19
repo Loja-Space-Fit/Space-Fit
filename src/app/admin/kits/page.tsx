@@ -24,7 +24,7 @@ export default function AdminKitsPage() {
   const [showForm, setShowForm] = useState(false)
   const [editingBundle, setEditingBundle] = useState<BundleWithItems | null>(null)
   const [saving, setSaving]     = useState(false)
-  const [form, setForm]         = useState({ name: '', slug: '', description: '', price: '', image_url: '', active: true })
+  const [form, setForm]         = useState({ name: '', slug: '', description: '', price: '', image_url: '', active: true, stock: '999' })
   const [items, setItems]       = useState<{ product_id: string; quantity: number }[]>([])
 
   const load = useCallback(async () => {
@@ -43,14 +43,14 @@ export default function AdminKitsPage() {
 
   function openCreate() {
     setEditingBundle(null)
-    setForm({ name: '', slug: '', description: '', price: '', image_url: '', active: true })
+    setForm({ name: '', slug: '', description: '', price: '', image_url: '', active: true, stock: '999' })
     setItems([{ product_id: '', quantity: 1 }])
     setShowForm(true)
   }
 
   function openEdit(b: BundleWithItems) {
     setEditingBundle(b)
-    setForm({ name: b.name, slug: b.slug, description: b.description || '', price: String(b.price), image_url: b.image_url || '', active: b.active })
+    setForm({ name: b.name, slug: b.slug, description: b.description || '', price: String(b.price), image_url: b.image_url || '', active: b.active, stock: String((b as BundleWithItems & { stock?: number }).stock ?? 999) })
     setItems(b.bundle_items?.map(i => ({ product_id: i.product_id, quantity: i.quantity })) || [])
     setShowForm(true)
   }
@@ -59,7 +59,7 @@ export default function AdminKitsPage() {
     e.preventDefault()
     setSaving(true)
     const supabase = createClient()
-    const bundleData = { name: form.name, slug: form.slug || slugify(form.name), description: form.description || null, price: parseFloat(form.price), image_url: form.image_url || null, active: form.active }
+    const bundleData = { name: form.name, slug: form.slug || slugify(form.name), description: form.description || null, price: parseFloat(form.price), image_url: form.image_url || null, active: form.active, stock: parseInt(form.stock) || 0 }
 
     let bundleId = editingBundle?.id
     if (editingBundle) {
@@ -119,6 +119,10 @@ export default function AdminKitsPage() {
                   <label className="text-sm text-[#9ca3af] mb-1 block">Preço do Kit (R$) *</label>
                   <input value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))} required type="number" step="0.01" min="0" className="input" placeholder="199.90" />
                 </div>
+              </div>
+              <div>
+                <label className="text-sm text-[#9ca3af] mb-1 block">Estoque disponível *</label>
+                <input value={form.stock} onChange={e => setForm(f => ({ ...f, stock: e.target.value }))} required type="number" min="0" className="input" placeholder="999" />
               </div>
               <div>
                 <label className="text-sm text-[#9ca3af] mb-1 block">Descrição</label>
@@ -194,6 +198,12 @@ export default function AdminKitsPage() {
                   <div>
                     <p className="text-xl font-black text-white">{formatBRL(b.price)}</p>
                     {itemTotal > b.price && <p className="text-xs text-[#b2ea0f]">Economia de {formatBRL(itemTotal - b.price)}</p>}
+                  </div>
+                  <div className="ml-auto text-right">
+                    <p className="text-xs text-[#9ca3af]">Estoque</p>
+                    <p className={`text-sm font-bold ${((b as BundleWithItems & { stock?: number }).stock ?? 999) <= 0 ? 'text-red-400' : 'text-white'}`}>
+                      {(b as BundleWithItems & { stock?: number }).stock ?? 999}
+                    </p>
                   </div>
                 </div>
                 <div className="flex gap-2 pt-3 border-t border-[#2a2a2a] mt-3">

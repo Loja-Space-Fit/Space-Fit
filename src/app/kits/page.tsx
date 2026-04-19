@@ -13,6 +13,7 @@ export const metadata: Metadata = {
 }
 
 interface BundleWithItems extends Bundle {
+  stock: number
   bundle_items: (BundleItem & { product: { name: string; price: number } | null })[]
 }
 
@@ -53,6 +54,7 @@ export default async function KitsPage() {
             const discountPct = itemTotal > bundle.price
               ? Math.round((1 - bundle.price / itemTotal) * 100)
               : 0
+            const outOfStock = bundle.stock <= 0
 
             return (
               <Link
@@ -67,18 +69,22 @@ export default async function KitsPage() {
                       src={bundle.image_url}
                       alt={bundle.name}
                       fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-500"
+                      className={`object-cover transition-transform duration-500 ${outOfStock ? 'opacity-40' : 'group-hover:scale-105'}`}
                     />
                   ) : (
                     <div className="absolute inset-0 flex items-center justify-center">
                       <Package className="w-16 h-16 text-[#333]" />
                     </div>
                   )}
-                  {discountPct > 0 && (
+                  {outOfStock ? (
+                    <span className="absolute top-3 left-3 bg-[#2a2a2a] text-[#9ca3af] text-xs font-black px-2 py-1 rounded-full">
+                      Sem estoque
+                    </span>
+                  ) : discountPct > 0 ? (
                     <span className="absolute top-3 left-3 bg-[#b2ea0f] text-black text-xs font-black px-2 py-1 rounded-full">
                       -{discountPct}% OFF
                     </span>
-                  )}
+                  ) : null}
                 </div>
 
                 {/* Info */}

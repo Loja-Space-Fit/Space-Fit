@@ -28,6 +28,8 @@ export async function POST(req: NextRequest) {
 
     // Validar estoque e guardar valores atuais
     const stockMap = new Map<string, number>()
+    const bundleIds = new Map<string, number>() // bundleId → current stock
+
     for (const item of items) {
       const { data: product } = await supabase
         .from('products')
@@ -35,15 +37,33 @@ export async function POST(req: NextRequest) {
         .eq('id', item.product_id)
         .single()
 
-      if (!product) {
-        return NextResponse.json({ error: `Produto não encontrado: ${item.product_name}` }, { status: 400 })
+      if (product) {
+        // Item é um produto normal
+        if (product.stock < item.quantity) {
+          return NextResponse.json({
+            error: `Estoque insuficiente para "${product.name}". Disponível: ${product.stock}`
+          }, { status: 400 })
+        }
+        stockMap.set(item.product_id, product.stock)
+      } else {
+        // Verifica se é um bundle/kit
+        const { data: bundle } = await supabase
+          .from('bundles')
+          .select('id, name, active, stock')
+          .eq('id', item.product_id)
+          .single()
+
+        if (!bundle) {
+          return NextResponse.json({ error: `Produto não encontrado: ${item.product_name}` }, { status: 400 })
+        }
+        if (!bundle.active) {
+          return NextResponse.json({ error: `O kit "${bundle.name}" não está disponível no momento.` }, { status: 400 })
+        }
+        if (bundle.stock < item.quantity) {
+          return NextResponse.json({ error: `Kit "${bundle.name}" sem estoque suficiente.` }, { status: 400 })
+        }
+        bundleIds.set(item.product_id, bundle.stock)
       }
-      if (product.stock < item.quantity) {
-        return NextResponse.json({
-          error: `Estoque insuficiente para "${product.name}". Disponível: ${product.stock}`
-        }, { status: 400 })
-      }
-      stockMap.set(item.product_id, product.stock)
     }
 
     // Criar pedido
@@ -76,13 +96,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Erro ao salvar pedido' }, { status: 500 })
     }
 
-    // Decrementar estoque
+    // Decrementar estoque (produtos normais e bundles separadamente)
     for (const item of items) {
-      const currentStock = stockMap.get(item.product_id) ?? 0
-      await supabase
-        .from('products')
-        .update({ stock: Math.max(0, currentStock - item.quantity) })
-        .eq('id', item.product_id)
+      if (bundleIds.has(item.product_id)) {
+        const currentStock = bundleIds.get(item.product_id) ?? 0
+        await supabase
+          .from('bundles')
+          .update({ stock: Math.max(0, currentStock - item.quantity) })
+          .eq('id', item.product_id)
+      } else {
+        const currentStock = stockMap.get(item.product_id) ?? 0
+        await supabase
+          .from('products')
+          .update({ stock: Math.max(0, currentStock - item.quantity) })
+          .eq('id', item.product_id)
+      }
     }
 
     // Incrementar uso do cupom
@@ -122,6 +150,10 @@ export async function POST(req: NextRequest) {
             payer: {
               name: customer_name,
               email: customer_email || 'cliente@spacefit.com.br',
+            },
+            payment_methods: {
+              // Exclui saldo da conta MP para evitar erro quando comprador está logado
+              excluded_payment_types: [{ id: 'account_money' }],
             },
             external_reference: order.id,
             back_urls: {
