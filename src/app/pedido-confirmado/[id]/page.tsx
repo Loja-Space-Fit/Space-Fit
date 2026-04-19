@@ -2,7 +2,7 @@ import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { formatBRL, getWhatsAppLink, ORDER_STATUS_LABELS, PAYMENT_METHOD_LABELS } from '@/lib/utils'
 import { processLoyaltyPoints } from '@/lib/loyalty'
-import { CheckCircle, XCircle, Clock, QrCode, MessageCircle, ShoppingBag, Package } from 'lucide-react'
+import { CheckCircle, XCircle, Clock, QrCode, MessageCircle, ShoppingBag, Package, CreditCard } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import type { Order } from '@/types'
@@ -195,6 +195,20 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
               <span className="text-green-400">− {formatBRL(o.discount)}</span>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Botão finalizar pagamento se pendente (permite retomada) */}
+      {isPending && o.payment_method !== 'pickup' && (
+        <div className="bg-[#111111] border border-[#b2ea0f]/30 rounded-2xl p-5 mb-6">
+          <p className="text-sm text-[#9ca3af] mb-3">Seu pedido foi criado mas o pagamento ainda não foi confirmado. Clique abaixo para finalizar.</p>
+          <a
+            href={`/api/checkout/retry/${o.id}`}
+            className="inline-flex w-full items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#b2ea0f] text-black font-black hover:bg-[#c8f040] transition-colors"
+          >
+            <CreditCard className="w-4 h-4" />
+            Finalizar Pagamento
+          </a>
         </div>
       )}
 

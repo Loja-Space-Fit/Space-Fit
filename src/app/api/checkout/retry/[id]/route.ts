@@ -16,8 +16,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     return NextResponse.redirect(new URL('/checkout', process.env.NEXT_PUBLIC_SITE_URL!))
   }
 
-  // Só permite retry em pedidos recusados
-  if (order.payment_status !== 'rejected') {
+  // Só permite retry em pedidos pendentes ou recusados
+  if (order.payment_status !== 'rejected' && order.payment_status !== 'pending') {
     return NextResponse.redirect(
       new URL(`/pedido-confirmado/${id}`, process.env.NEXT_PUBLIC_SITE_URL!)
     )
@@ -25,7 +25,6 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
   try {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
-    const isLocal = siteUrl.includes('localhost')
     const isSandbox = (process.env.MERCADOPAGO_ACCESS_TOKEN || '').startsWith('TEST-')
     const preferenceClient = getPreferenceClient()
 
@@ -40,7 +39,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         }],
         payer: {
           name: order.customer_name,
-          email: order.customer_email || 'cliente@spacefit.com.br',
+          email: 'comprador@spacefit.com.br',
         },
         external_reference: order.id,
         back_urls: {
@@ -49,7 +48,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
           pending: `${siteUrl}/pedido-confirmado/${order.id}`,
         },
         ...(!isSandbox && { auto_return: 'approved' }),
-        ...(!isSandbox && { notification_url: `${siteUrl}/api/payments/webhook` }),
+        notification_url: `${siteUrl}/api/payments/webhook`,
       },
     })
 
