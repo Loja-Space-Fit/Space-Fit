@@ -71,7 +71,7 @@ export default function CadastroPage() {
           <h2 className="text-2xl font-black text-white mb-3">Conta criada!</h2>
           <p className="text-[#9ca3af] mb-2">Bem-vindo(a) à Space Fit,</p>
           <p className="text-white font-semibold mb-4">{name}!</p>
-          <p className="text-[#9ca3af] text-sm mb-6">Você receberá um e-mail de boas-vindas da academia. Agora é só fazer login e aproveitar!</p>
+          <p className="text-[#9ca3af] text-sm mb-6">Agora é só fazer login e aproveitar!</p>
           <Link href="/login" className="btn-green px-6 py-3 inline-block rounded-xl">
             Fazer Login
           </Link>
