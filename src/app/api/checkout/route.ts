@@ -151,10 +151,6 @@ export async function POST(req: NextRequest) {
               name: customer_name,
               email: customer_email || 'cliente@spacefit.com.br',
             },
-            payment_methods: {
-              // Exclui saldo da conta MP para evitar erro quando comprador está logado
-              excluded_payment_types: [{ id: 'account_money' }],
-            },
             external_reference: order.id,
             back_urls: {
               success: `${siteUrl}/pedido-confirmado/${order.id}`,
@@ -178,8 +174,8 @@ export async function POST(req: NextRequest) {
           payment_url: isSandbox ? preference.sandbox_init_point : preference.init_point,
         })
       } catch (mpError) {
-        console.error('Erro ao criar preferência Mercado Pago:', JSON.stringify(mpError, null, 2))
-        // Retorna erro explícito para o frontend saber que o pagamento não foi iniciado
+        const mpMsg = mpError instanceof Error ? mpError.message : JSON.stringify(mpError)
+        console.error('Erro ao criar preferência Mercado Pago:', mpMsg)
         return NextResponse.json(
           { error: 'Não foi possível iniciar o pagamento. Tente novamente em instantes.', order_id: order.id },
           { status: 502 }
