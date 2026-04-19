@@ -43,6 +43,10 @@ export default function CheckoutPage() {
   const [addressError, setAddressError] = useState('')
   const [cepStatus, setCepStatus] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle')
 
+  // Pedido pendente em andamento
+  const [pendingOrder, setPendingOrder] = useState<{ id: string; order_number: string; total: number } | null>(null)
+  const [cancellingOrder, setCancellingOrder] = useState(false)
+
   // Cupom
   const [couponInput, setCouponInput] = useState('')
   const [couponLoading, setCouponLoading] = useState(false)
@@ -92,6 +96,25 @@ export default function CheckoutPage() {
         .then(({ data }) => setLoyaltyPoints(data?.points ?? 0))
     }
   }, [user, profile])
+
+  // Verificar se há pedido pendente em andamento (evita acúmulo de estoque)
+  useEffect(() => {
+    if (!user) return
+    const supabase = createClient()
+    const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString()
+    supabase
+      .from('orders')
+      .select('id, order_number, total')
+      .eq('user_id', user.id)
+      .eq('payment_status', 'pending')
+      .gt('created_at', thirtyMinAgo)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) setPendingOrder(data as { id: string; order_number: string; total: number })
+      })
+  }, [user])
 
   // Redirecionar para login se não autenticado
   useEffect(() => {
@@ -158,6 +181,49 @@ export default function CheckoutPage() {
         <h1 className="text-2xl font-black text-white mb-2">Carrinho vazio</h1>
         <p className="text-[#9ca3af] mb-6">Adicione produtos antes de finalizar a compra.</p>
         <a href="/" className="btn-green">Ver Produtos</a>
+      </div>
+    )
+  }
+
+  async function handleCancelPending() {
+    if (!pendingOrder) return
+    setCancellingOrder(true)
+    try {
+      await fetch(`/api/orders/${pendingOrder.id}/cancel`, { method: 'POST' })
+      setPendingOrder(null)
+    } finally {
+      setCancellingOrder(false)
+    }
+  }
+
+  if (pendingOrder) {
+    return (
+      <div className="max-w-lg mx-auto px-4 py-20 text-center">
+        <div className="w-20 h-20 mx-auto rounded-full bg-yellow-500/15 border-2 border-yellow-400 flex items-center justify-center mb-6">
+          <AlertCircle className="w-10 h-10 text-yellow-400" />
+        </div>
+        <h1 className="text-2xl font-black text-white mb-2">Compra em andamento</h1>
+        <p className="text-[#9ca3af] mb-2">
+          Você já tem o pedido <span className="text-white font-bold">{pendingOrder.order_number}</span> aguardando pagamento.
+        </p>
+        <p className="text-[#9ca3af] mb-8 text-sm">
+          Finalize ou cancele esse pedido antes de iniciar uma nova compra.
+        </p>
+        <div className="flex flex-col gap-3">
+          <a
+            href={`/pedido-confirmado/${pendingOrder.id}`}
+            className="btn-green"
+          >
+            Ir para o pedido — {formatBRL(pendingOrder.total)}
+          </a>
+          <button
+            onClick={handleCancelPending}
+            disabled={cancellingOrder}
+            className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-red-500/40 text-red-400 hover:bg-red-500/10 transition-colors font-bold disabled:opacity-50"
+          >
+            {cancellingOrder ? <><Loader2 className="w-4 h-4 animate-spin" /> Cancelando...</> : 'Cancelar pedido e comprar novamente'}
+          </button>
+        </div>
       </div>
     )
   }

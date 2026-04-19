@@ -49,6 +49,7 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
           mp_payment_id:  mpPaymentId,
         })
         .eq('id', id)
+        .neq('payment_status', 'approved') // nunca rebaixar approved de volta para pending
     } else if (mpStatus === 'rejected' || mpStatus === 'cancelled') {
       await service
         .from('orders')
@@ -85,8 +86,10 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
   const o = order as Order
   const isPix = o.payment_method === 'pix'
 
-  // Se o MP mandou status na URL, usar como fonte da verdade para o display
-  const displayStatus = (mpResult === 'failure' || mpStatus === 'rejected' || mpStatus === 'cancelled') ? 'rejected'
+  // O banco é a fonte da verdade — se já está approved (via webhook), mostrar approved
+  // independente dos params da URL (o MP às vezes redireciona PIX com status=pending mesmo pago)
+  const displayStatus = o.payment_status === 'approved' ? 'approved'
+    : (mpResult === 'failure' || mpStatus === 'rejected' || mpStatus === 'cancelled') ? 'rejected'
     : mpStatus === 'approved' ? 'approved'
     : (mpStatus === 'in_process' || mpStatus === 'pending') ? 'pending'
     : o.payment_status
