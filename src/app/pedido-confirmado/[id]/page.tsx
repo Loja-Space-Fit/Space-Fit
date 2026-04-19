@@ -2,6 +2,7 @@ import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { formatBRL, getWhatsAppLink, ORDER_STATUS_LABELS, PAYMENT_METHOD_LABELS } from '@/lib/utils'
 import { processLoyaltyPoints } from '@/lib/loyalty'
+import { getPaymentClient } from '@/lib/mercadopago'
 import { CheckCircle, XCircle, Clock, QrCode, MessageCircle, ShoppingBag, Package, CreditCard } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -20,44 +21,41 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
   const sp = await searchParams
 
   // Parâmetros enviados pelo Mercado Pago na URL de retorno
-  const mpStatus          = String(sp.status          ?? sp.collection_status ?? '')
-  const mpPaymentId       = String(sp.payment_id      ?? sp.collection_id     ?? '')
-  const mpMerchantOrderId = String(sp.merchant_order_id ?? '')
-  const mpResult          = String(sp.mp_result ?? '')
+  const mpPaymentId = String(sp.payment_id ?? sp.collection_id ?? '')
+  const mpResult    = String(sp.mp_result ?? '')
 
-  // Se o MP retornou status, atualizar o pedido no banco
-  if (mpStatus && mpPaymentId) {
-    const service = createServiceClient()
+  // Quando temos um payment_id, consultar a API do MP diretamente para obter o status real.
+  // O MP frequentemente redireciona PIX com ?status=pending mesmo após pagamento aprovado.
+  let mpRealStatus = String(sp.status ?? sp.collection_status ?? '')
+  if (mpPaymentId && mpPaymentId !== 'undefined') {
+    try {
+      const paymentClient = getPaymentClient()
+      const payment = await paymentClient.get({ id: Number(mpPaymentId) })
+      if (payment?.status) mpRealStatus = payment.status
+    } catch { /* usa o status da URL como fallback */ }
+  }
 
-    if (mpStatus === 'approved') {
+  const service = createServiceClient()
+
+  // Atualizar o pedido no banco com o status real do MP
+  if (mpRealStatus && mpPaymentId && mpPaymentId !== 'undefined') {
+    if (mpRealStatus === 'approved') {
       await service
         .from('orders')
-        .update({
-          payment_status: 'approved',
-          order_status:   'paid',
-          mp_payment_id:  mpPaymentId,
-        })
+        .update({ payment_status: 'approved', order_status: 'paid', mp_payment_id: mpPaymentId })
         .eq('id', id)
         .eq('payment_status', 'pending')
-
       await processLoyaltyPoints(id, service)
-    } else if (mpStatus === 'in_process' || mpStatus === 'pending') {
+    } else if (mpRealStatus === 'in_process' || mpRealStatus === 'pending') {
       await service
         .from('orders')
-        .update({
-          payment_status: 'pending',
-          mp_payment_id:  mpPaymentId,
-        })
+        .update({ payment_status: 'pending', mp_payment_id: mpPaymentId })
         .eq('id', id)
-        .neq('payment_status', 'approved') // nunca rebaixar approved de volta para pending
-    } else if (mpStatus === 'rejected' || mpStatus === 'cancelled') {
+        .neq('payment_status', 'approved')
+    } else if (mpRealStatus === 'rejected' || mpRealStatus === 'cancelled') {
       await service
         .from('orders')
-        .update({
-          payment_status: 'rejected',
-          order_status:   'cancelled',
-          mp_payment_id:  mpPaymentId,
-        })
+        .update({ payment_status: 'rejected', order_status: 'cancelled', mp_payment_id: mpPaymentId })
         .eq('id', id)
         .neq('payment_status', 'approved')
     }
@@ -65,7 +63,6 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
 
   // MP redireciona para failure URL sem params — usar mp_result=failure para detectar
   if (mpResult === 'failure') {
-    const service = createServiceClient()
     await service
       .from('orders')
       .update({ payment_status: 'rejected', order_status: 'cancelled' })
@@ -86,18 +83,16 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
   const o = order as Order
   const isPix = o.payment_method === 'pix'
 
-  // O banco é a fonte da verdade — se já está approved (via webhook), mostrar approved
-  // independente dos params da URL (o MP às vezes redireciona PIX com status=pending mesmo pago)
+  // O banco é a fonte da verdade — se já está approved (via API do MP ou webhook), mostrar approved
   const displayStatus = o.payment_status === 'approved' ? 'approved'
-    : (mpResult === 'failure' || mpStatus === 'rejected' || mpStatus === 'cancelled') ? 'rejected'
-    : mpStatus === 'approved' ? 'approved'
-    : (mpStatus === 'in_process' || mpStatus === 'pending') ? 'pending'
+    : (mpResult === 'failure' || mpRealStatus === 'rejected' || mpRealStatus === 'cancelled') ? 'rejected'
+    : mpRealStatus === 'approved' ? 'approved'
+    : (mpRealStatus === 'in_process' || mpRealStatus === 'pending') ? 'pending'
     : o.payment_status
 
   const isPending             = displayStatus === 'pending'
   const isRejected            = displayStatus === 'rejected'
-  // Pendente vindo do MP (em verificação real) — não é só order recém-criado sem redirect do MP
-  const isPendingVerification = isPending && (mpStatus === 'in_process' || mpStatus === 'pending')
+  const isPendingVerification = isPending && (mpRealStatus === 'in_process' || mpRealStatus === 'pending')
 
   const waMessage = `Olá! Realizei um pedido na Space Fit. Número: ${o.order_number}. Pedido de ${o.customer_name} — ${formatBRL(o.total)}. ${isPix ? 'Aguardando confirmação do PIX.' : ''}`
 
