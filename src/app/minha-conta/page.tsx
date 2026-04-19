@@ -292,9 +292,16 @@ function MinhaContaPageInner() {
             </div>
           ) : (
             <div className="flex flex-col gap-4">
-              {orders.map(order => (
-                <div key={order.id} className="bg-[#111111] border border-[#2a2a2a] rounded-xl p-4">
-                  <div className="flex items-start justify-between mb-3">
+              {orders.map(order => {
+                const isPending = order.payment_status === 'pending'
+                const isRejected = order.payment_status === 'rejected'
+                return (
+                <div key={order.id} className="bg-[#111111] border border-[#2a2a2a] rounded-xl overflow-hidden">
+                  {/* Cabeçalho clicável */}
+                  <Link
+                    href={`/pedido-confirmado/${order.id}`}
+                    className="flex items-start justify-between p-4 hover:bg-[#1a1a1a] transition-colors"
+                  >
                     <div>
                       <span className="text-[#b2ea0f] font-black text-sm">{order.order_number}</span>
                       <p className="text-xs text-[#9ca3af] mt-0.5">
@@ -303,29 +310,50 @@ function MinhaContaPageInner() {
                         })}
                       </p>
                     </div>
-                    <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                      order.payment_status === 'rejected'
-                        ? 'bg-red-500/20 text-red-400'
-                        : orderStatusColor[order.order_status] || 'bg-[#2a2a2a] text-[#9ca3af]'
-                    }`}>
-                      {order.payment_status === 'rejected'
-                        ? 'Recusado'
-                        : orderStatusLabel[order.order_status] || order.order_status}
-                    </span>
-                  </div>
-                  <div className="flex flex-col gap-1 mb-3">
-                    {(order.items as { product_name: string; quantity: number }[]).map((item, i) => (
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                        isRejected
+                          ? 'bg-red-500/20 text-red-400'
+                          : isPending
+                          ? 'bg-yellow-500/20 text-yellow-400'
+                          : orderStatusColor[order.order_status] || 'bg-[#2a2a2a] text-[#9ca3af]'
+                      }`}>
+                        {isRejected ? 'Recusado' : isPending ? 'Aguardando pagamento' : orderStatusLabel[order.order_status] || order.order_status}
+                      </span>
+                      <ChevronRight className="w-4 h-4 text-[#555]" />
+                    </div>
+                  </Link>
+
+                  {/* Itens do pedido */}
+                  <div className="px-4 pb-3 flex flex-col gap-1">
+                    {(order.items as { product_name: string; quantity: number; unit_price: number }[]).map((item, i) => (
                       <p key={i} className="text-sm text-[#9ca3af]">
-                        {item.quantity}x {item.product_name}
+                        {item.quantity}× {item.product_name}
+                        <span className="text-[#555] ml-2">{formatBRL(item.unit_price * item.quantity)}</span>
                       </p>
                     ))}
                   </div>
-                  <div className="flex items-center justify-between pt-3 border-t border-[#2a2a2a]">
+
+                  {/* Rodapé */}
+                  <div className="px-4 pb-4 flex items-center justify-between pt-3 border-t border-[#2a2a2a]">
                     <span className="text-sm text-[#9ca3af]">Total</span>
                     <span className="text-[#b2ea0f] font-black">{formatBRL(order.total)}</span>
                   </div>
+
+                  {/* Botão finalizar pagamento */}
+                  {isPending && (
+                    <div className="px-4 pb-4">
+                      <a
+                        href={`/api/checkout/retry/${order.id}`}
+                        className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-[#b2ea0f] text-black font-black text-sm hover:bg-[#c8f040] transition-colors"
+                      >
+                        Finalizar Pagamento
+                      </a>
+                    </div>
+                  )}
                 </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>
