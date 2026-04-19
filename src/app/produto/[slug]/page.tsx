@@ -103,11 +103,6 @@ export default async function ProductPage({ params }: Props) {
             )}
           </div>
 
-          {/* Parcelamento */}
-          <p className="text-sm text-[#9ca3af] mb-6">
-            ou <strong className="text-white">12x de {formatBRL(p.price / 12)}</strong> no cartão
-          </p>
-
           {/* Estoque */}
           <div className="flex items-center gap-2 mb-6">
             <Package className={`w-4 h-4 ${p.stock > 0 ? 'text-[#b2ea0f]' : 'text-red-400'}`} />

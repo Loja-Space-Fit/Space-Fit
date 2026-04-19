@@ -66,14 +66,14 @@ export default function CadastroPage() {
       <div className="min-h-screen flex items-center justify-center px-4 bg-[#0a0a0a]">
         <div className="text-center max-w-sm">
           <div className="w-20 h-20 mx-auto rounded-full bg-[#b2ea0f]/15 border-2 border-[#b2ea0f] flex items-center justify-center mb-6">
-            <Mail className="w-8 h-8 text-[#b2ea0f]" />
+            <Check className="w-10 h-10 text-[#b2ea0f]" />
           </div>
-          <h2 className="text-2xl font-black text-white mb-3">Verifique seu e-mail!</h2>
-          <p className="text-[#9ca3af] mb-2">Enviamos um link de confirmação para:</p>
-          <p className="text-white font-semibold mb-4">{email}</p>
-          <p className="text-[#9ca3af] text-sm mb-6">Clique no link do e-mail para ativar sua conta e depois faça login.</p>
+          <h2 className="text-2xl font-black text-white mb-3">Conta criada!</h2>
+          <p className="text-[#9ca3af] mb-2">Bem-vindo(a) à Space Fit,</p>
+          <p className="text-white font-semibold mb-4">{name}!</p>
+          <p className="text-[#9ca3af] text-sm mb-6">Você receberá um e-mail de boas-vindas da academia. Agora é só fazer login e aproveitar!</p>
           <Link href="/login" className="btn-green px-6 py-3 inline-block rounded-xl">
-            Ir para o Login
+            Fazer Login
           </Link>
         </div>
       </div>

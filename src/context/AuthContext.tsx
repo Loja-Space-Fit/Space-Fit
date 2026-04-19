@@ -101,11 +101,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       email,
       password,
       options: {
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'}/auth/confirm`,
         data: { full_name: name, phone },
       },
     })
     if (error) return { error: error.message }
+
+    // Enviar email de boas-vindas da academia (via Resend)
+    fetch('/api/auth/send-welcome', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nome: name, email }),
+    }).catch(() => {/* fire-and-forget */})
+
     return { error: null }
   }
 

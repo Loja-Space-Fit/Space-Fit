@@ -218,3 +218,44 @@ export async function enviarEmailStatusAtualizado(
     console.error('[email] Erro ao enviar atualizacao de status:', erro)
   }
 }
+
+// =============================================================================
+// Email 3: Boas-vindas ao novo cliente (substitui confirmação de email da Supabase)
+// =============================================================================
+export async function enviarEmailBoasVindas(nome: string, email: string): Promise<void> {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('[email] RESEND_API_KEY nao configurado — email de boas-vindas ignorado.')
+    return
+  }
+
+  const corpo = `
+    <h2 style="margin:0 0 8px;font-size:22px;font-weight:900;color:#ffffff;">
+      Bem-vindo à Space Fit, ${nome}!
+    </h2>
+    <p style="margin:0 0 24px;font-size:14px;color:#9ca3af;">
+      Sua conta foi criada com sucesso. Agora você pode aproveitar todas as novidades da nossa loja!
+    </p>
+
+    <div style="background:#1a1a1a;border-radius:12px;padding:20px;margin-bottom:24px;text-align:center;">
+      <p style="margin:0 0 8px;font-size:13px;color:#9ca3af;text-transform:uppercase;letter-spacing:1px;">Sua conta</p>
+      <p style="margin:0;font-size:16px;font-weight:700;color:#b2ea0f;">${email}</p>
+    </div>
+
+    <p style="margin:0 0 12px;font-size:14px;color:#d1d5db;">
+      Explore nossa seleção de roupas, suplementos e acessórios fitness com os melhores preços e qualidade.
+    </p>
+    <p style="margin:0;font-size:13px;color:#9ca3af;">
+      Qualquer dúvida, fale com a gente pelo WhatsApp — estamos sempre prontos para ajudar!
+    </p>`
+
+  try {
+    await getResend().emails.send({
+      from:    EMAIL_REMETENTE,
+      to:      email,
+      subject: 'Bem-vindo à Space Fit!',
+      html:    layoutEmail('Bem-vindo à Space Fit', corpo),
+    })
+  } catch (erro) {
+    console.error('[email] Erro ao enviar email de boas-vindas:', erro)
+  }
+}

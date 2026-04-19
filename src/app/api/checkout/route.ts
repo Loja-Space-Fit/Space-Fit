@@ -104,7 +104,6 @@ export async function POST(req: NextRequest) {
     if (payment_method !== 'pickup') {
       try {
         const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
-        const isLocal = siteUrl.includes('localhost')
         const isSandbox = (process.env.MERCADOPAGO_ACCESS_TOKEN || '').startsWith('TEST-')
         const preferenceClient = getPreferenceClient()
 
