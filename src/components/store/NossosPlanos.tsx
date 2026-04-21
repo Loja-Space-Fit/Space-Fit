@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Clock, MapPin, Star, ChevronDown, ChevronUp } from 'lucide-react'
+import { Clock, MapPin, Star } from 'lucide-react'
 import { formatBRL } from '@/lib/utils'
 
 type Plan = {
@@ -37,7 +37,6 @@ export default function NossosPlanos() {
   const [plans, setPlans] = useState<Plan[]>([])
   const [hours, setHours] = useState<Hours[]>([])
   const [loading, setLoading] = useState(true)
-  const [showMap, setShowMap] = useState(false)
 
   useEffect(() => {
     const supabase = createClient()
@@ -60,7 +59,7 @@ export default function NossosPlanos() {
   const familyPlans = regionPlans.filter(p => ['Família', 'Casal'].includes(p.name))
 
   return (
-    <section className="bg-[#0a0a0a] border-t border-[#1a1a1a] py-20">
+    <section id="nossos-planos" className="bg-[#0a0a0a] border-t border-[#1a1a1a] py-20">
       <div className="max-w-7xl mx-auto px-4">
 
         {/* Header */}
@@ -81,7 +80,7 @@ export default function NossosPlanos() {
           {REGIONS.map(r => (
             <button
               key={r.value}
-              onClick={() => { setActiveRegion(r.value); setShowMap(false) }}
+              onClick={() => setActiveRegion(r.value)}
               className={`px-6 py-3 rounded-xl font-bold text-sm transition-all border-2 ${
                 activeRegion === r.value
                   ? 'bg-[#b2ea0f] text-black border-[#b2ea0f]'
@@ -214,35 +213,22 @@ export default function NossosPlanos() {
 
               {/* Localização */}
               <div className="bg-[#111111] border border-[#2a2a2a] rounded-2xl overflow-hidden">
-                <button
-                  onClick={() => setShowMap(v => !v)}
-                  className="w-full bg-[#b2ea0f]/10 border-b border-[#2a2a2a] px-5 py-4 flex items-center justify-between hover:bg-[#b2ea0f]/15 transition-colors"
-                >
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-[#b2ea0f]" />
-                    <h3 className="font-black text-white text-sm uppercase tracking-wide">
-                      {regionInfo.label}
-                    </h3>
-                  </div>
-                  {showMap ? <ChevronUp className="w-4 h-4 text-[#9ca3af]" /> : <ChevronDown className="w-4 h-4 text-[#9ca3af]" />}
-                </button>
-                {showMap && (
-                  <iframe
-                    src={regionInfo.mapSrc}
-                    width="100%"
-                    height="280"
-                    style={{ border: 0, display: 'block' }}
-                    allowFullScreen
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
-                    title={`Mapa ${regionInfo.label}`}
-                  />
-                )}
-                {!showMap && (
-                  <div className="px-5 py-3 text-sm text-[#9ca3af]">
-                    Clique para ver no mapa
-                  </div>
-                )}
+                <div className="bg-[#b2ea0f]/10 border-b border-[#2a2a2a] px-5 py-4 flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-[#b2ea0f]" />
+                  <h3 className="font-black text-white text-sm uppercase tracking-wide">
+                    {regionInfo.label}
+                  </h3>
+                </div>
+                <iframe
+                  src={regionInfo.mapSrc}
+                  width="100%"
+                  height="280"
+                  style={{ border: 0, display: 'block' }}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title={`Mapa ${regionInfo.label}`}
+                />
               </div>
 
             </div>
