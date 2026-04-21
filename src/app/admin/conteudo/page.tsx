@@ -135,8 +135,8 @@ export default function AdminContentPage() {
         </div>
 
         {showForm && (
-          <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-            <div className="w-full max-w-lg bg-[#111111] border border-[#2a2a2a] rounded-2xl">
+          <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 overflow-y-auto">
+            <div className="w-full max-w-lg bg-[#111111] border border-[#2a2a2a] rounded-2xl my-auto max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between p-5 border-b border-[#2a2a2a]">
                 <h2 className="font-black text-white">{editing ? 'Editar Banner' : 'Novo Banner'}</h2>
                 <button onClick={() => setShowForm(false)}><X className="w-5 h-5 text-[#9ca3af]" /></button>

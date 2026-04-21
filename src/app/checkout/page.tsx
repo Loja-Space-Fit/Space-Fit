@@ -17,18 +17,19 @@ import type { Coupon } from '@/types'
 import { createClient } from '@/lib/supabase/client'
 
 const schema = z.object({
-  customer_name:  z.string().min(2, 'Nome obrigatório'),
-  customer_phone: z.string().min(10, 'Telefone obrigatório'),
-  customer_email: z.string().email('E-mail inválido').optional().or(z.literal('')),
-  delivery_type:  z.enum(['delivery', 'pickup']),
-  cep:            z.string().optional(),
-  street:         z.string().optional(),
-  number:         z.string().optional(),
-  complement:     z.string().optional(),
-  neighborhood:   z.string().optional(),
-  city:           z.string().optional(),
-  state:          z.string().optional(),
-  payment_method: z.enum(['pix', 'credit_card', 'pickup']),
+  customer_name:    z.string().min(2, 'Nome obrigatório'),
+  customer_phone:   z.string().min(10, 'Telefone obrigatório'),
+  customer_email:   z.string().email('E-mail inválido').optional().or(z.literal('')),
+  delivery_type:    z.enum(['delivery', 'pickup']),
+  pickup_location:  z.enum(['conceicao', 'guaira']).optional(),
+  cep:              z.string().optional(),
+  street:           z.string().optional(),
+  number:           z.string().optional(),
+  complement:       z.string().optional(),
+  neighborhood:     z.string().optional(),
+  city:             z.string().optional(),
+  state:            z.string().optional(),
+  payment_method:   z.enum(['pix', 'credit_card', 'pickup']),
 })
 
 type FormData = z.infer<typeof schema>
@@ -57,10 +58,31 @@ export default function CheckoutPage() {
   const [pointsToUse, setPointsToUse] = useState(0)
   const [usePoints, setUsePoints] = useState(false)
 
+  // Frete
+  const [shippingCost, setShippingCost] = useState(0)
+  const [shippingLoading, setShippingLoading] = useState(false)
+  const [shippingInfo, setShippingInfo] = useState<{ price: number; free: boolean; min_days: number; max_days: number; threshold: number; original_price?: number } | null>(null)
+
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: { delivery_type: 'delivery', payment_method: 'credit_card' },
   })
+
+  const calcularFrete = useCallback(async (uf: string, sub: number) => {
+    if (!uf) return
+    setShippingLoading(true)
+    try {
+      const res = await fetch(`/api/shipping?uf=${uf}&subtotal=${sub}`)
+      const data = await res.json()
+      setShippingInfo(data)
+      setShippingCost(data.price ?? 0)
+    } catch {
+      setShippingInfo(null)
+      setShippingCost(0)
+    } finally {
+      setShippingLoading(false)
+    }
+  }, [])
 
   const buscarCep = useCallback(async (cep: string) => {
     const digits = cep.replace(/\D/g, '')
@@ -75,6 +97,8 @@ export default function CheckoutPage() {
         form.setValue('neighborhood', '')
         form.setValue('city', '')
         form.setValue('state', '')
+        setShippingInfo(null)
+        setShippingCost(0)
       } else {
         setCepStatus('ok')
         form.setValue('street',       data.logradouro || '')
@@ -82,11 +106,12 @@ export default function CheckoutPage() {
         form.setValue('city',         data.localidade || '')
         form.setValue('state',        data.uf         || '')
         form.setValue('cep',          digits)
+        calcularFrete(data.uf, subtotal)
       }
     } catch {
       setCepStatus('error')
     }
-  }, [form])
+  }, [form, calcularFrete, subtotal])
 
   // Buscar pontos do cliente
   useEffect(() => {
@@ -144,11 +169,13 @@ export default function CheckoutPage() {
     }
   }, [profile, user, form])
 
-  const deliveryType   = form.watch('delivery_type')
-  const paymentMethod  = form.watch('payment_method')
+  const deliveryType    = form.watch('delivery_type')
+  const paymentMethod   = form.watch('payment_method')
+  const pickupLocation  = form.watch('pickup_location')
 
   const pointsDiscount = usePoints ? pointsToUse : 0
-  const finalTotal     = Math.max(0, total - pointsDiscount)
+  const shippingValue  = deliveryType === 'pickup' ? 0 : shippingCost
+  const finalTotal     = Math.max(0, total - pointsDiscount + shippingValue)
 
   async function handleApplyCoupon() {
     if (!couponInput.trim()) return
@@ -256,17 +283,20 @@ export default function CheckoutPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          customer_name:  data.customer_name,
-          customer_phone: data.customer_phone,
-          customer_email: data.customer_email,
+          customer_name:    data.customer_name,
+          customer_phone:   data.customer_phone,
+          customer_email:   data.customer_email,
           address,
-          items:          orderItems,
+          items:            orderItems,
           subtotal,
           discount,
-          total:          finalTotal,
-          payment_method: data.delivery_type === 'pickup' ? 'pickup' : data.payment_method,
-          coupon_code:    couponCode || undefined,
-          points_to_use:  pointsToUse,
+          shipping:         shippingValue,
+          total:            finalTotal,
+          payment_method:   data.payment_method === 'pickup' ? 'credit_card' : data.payment_method,
+          coupon_code:      couponCode || undefined,
+          points_to_use:    pointsToUse,
+          delivery_type:    data.delivery_type,
+          pickup_location:  data.pickup_location || null,
         }),
       })
 
@@ -369,7 +399,7 @@ export default function CheckoutPage() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => { form.setValue('delivery_type', 'pickup'); form.setValue('payment_method', 'pickup') }}
+                    onClick={() => { form.setValue('delivery_type', 'pickup'); form.setValue('payment_method', 'credit_card'); setShippingCost(0); setShippingInfo(null) }}
                     className={`p-4 rounded-xl border-2 text-left transition-all ${
                       deliveryType === 'pickup' ? 'border-[#b2ea0f] bg-[#b2ea0f]/10' : 'border-[#2a2a2a]'
                     }`}
@@ -378,9 +408,34 @@ export default function CheckoutPage() {
                       <Store className="w-4 h-4 text-[#b2ea0f]" />
                       <p className="font-bold text-white">Retirar na Academia</p>
                     </div>
-                    <p className="text-xs text-[#9ca3af] mt-0.5">Grátis — Combine por WhatsApp</p>
+                    <p className="text-xs text-[#9ca3af] mt-0.5">Sem frete — Pague online e retire</p>
                   </button>
                 </div>
+
+                {deliveryType === 'pickup' && (
+                  <div className="mb-4">
+                    <p className="text-sm text-[#9ca3af] mb-2 font-semibold">Escolha a unidade para retirada:</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {[
+                        { value: 'conceicao', label: 'Conceição das Alagoas', sub: 'Conceição das Alagoas – MG' },
+                        { value: 'guaira',    label: 'Guaíra',                sub: 'Guaíra – SP' },
+                      ].map(opt => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => form.setValue('pickup_location', opt.value as 'conceicao' | 'guaira')}
+                          className={`p-3 rounded-xl border-2 text-left transition-all ${
+                            pickupLocation === opt.value ? 'border-[#b2ea0f] bg-[#b2ea0f]/10' : 'border-[#2a2a2a] hover:border-[#b2ea0f]/40'
+                          }`}
+                        >
+                          <p className="font-bold text-white text-sm">{opt.label}</p>
+                          <p className="text-xs text-[#9ca3af]">{opt.sub}</p>
+                        </button>
+                      ))}
+                    </div>
+                    {!pickupLocation && <p className="text-red-400 text-xs mt-1">Selecione a unidade de retirada.</p>}
+                  </div>
+                )}
 
                 {deliveryType === 'delivery' && (
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -496,6 +551,10 @@ export default function CheckoutPage() {
                               return
                             }
                           }
+                          if (deliveryType === 'pickup' && !form.getValues('pickup_location')) {
+                            setAddressError('Selecione a unidade para retirada.')
+                            return
+                          }
                           setAddressError('')
                           setStep(3)
                         }}
@@ -517,9 +576,23 @@ export default function CheckoutPage() {
                 </h2>
 
                 {deliveryType === 'pickup' ? (
-                  <div className="p-4 bg-[#b2ea0f]/10 border border-[#b2ea0f]/30 rounded-xl text-sm text-[#d1d5db]">
-                    <p className="font-bold text-[#b2ea0f]">Pagamento na Academia</p>
-                    <p className="mt-1">Pague na hora da retirada (dinheiro, Pix ou cartão).</p>
+                  <div className="space-y-4">
+                    <div className="p-4 bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl text-sm text-[#d1d5db]">
+                      <p className="font-bold text-[#b2ea0f] mb-1 flex items-center gap-2">
+                        <Store className="w-4 h-4" />
+                        Retirada em: {pickupLocation === 'conceicao' ? 'Conceição das Alagoas – MG' : pickupLocation === 'guaira' ? 'Guaíra – SP' : '—'}
+                      </p>
+                      <p className="text-[#9ca3af] text-xs">Aguardaremos você na unidade escolhida.</p>
+                    </div>
+                    <div className="p-4 rounded-xl border-2 border-[#b2ea0f] bg-[#b2ea0f]/10 flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-lg bg-[#b2ea0f]/20 flex items-center justify-center shrink-0">
+                        <CreditCard className="w-5 h-5 text-[#b2ea0f]" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-white">Pagar com Mercado Pago</p>
+                        <p className="text-xs text-[#9ca3af]">PIX, cartão, boleto e mais • pague agora, retire depois</p>
+                      </div>
+                    </div>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -708,6 +781,30 @@ export default function CheckoutPage() {
                     <span className="flex items-center gap-1"><Star className="w-3 h-3" /> Space Points</span>
                     <span>− {formatBRL(pointsToUse)}</span>
                   </div>
+                )}
+                <div className="flex justify-between text-sm text-[#9ca3af]">
+                  <span className="flex items-center gap-1">
+                    Frete
+                    {shippingLoading && <Loader2 className="w-3 h-3 animate-spin" />}
+                  </span>
+                  <span>
+                    {deliveryType === 'pickup'
+                      ? <span className="text-[#b2ea0f]">Grátis</span>
+                      : shippingInfo
+                        ? shippingInfo.free
+                          ? <span className="text-[#b2ea0f]">Grátis</span>
+                          : formatBRL(shippingInfo.price)
+                        : <span className="text-[#555]">— informe o CEP</span>
+                    }
+                  </span>
+                </div>
+                {shippingInfo && !shippingInfo.free && deliveryType === 'delivery' && (
+                  <p className="text-xs text-[#555]">
+                    Prazo estimado: {shippingInfo.min_days}–{shippingInfo.max_days} dias úteis
+                  </p>
+                )}
+                {shippingInfo && shippingInfo.free && deliveryType === 'delivery' && (
+                  <p className="text-xs text-[#b2ea0f]">✓ Frete grátis aplicado</p>
                 )}
                 <div className="flex justify-between font-black text-white text-lg pt-2 border-t border-[#2a2a2a]">
                   <span>Total</span>

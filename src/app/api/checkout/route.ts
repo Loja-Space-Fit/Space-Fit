@@ -7,8 +7,9 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const {
       customer_name, customer_phone, customer_email,
-      address, items, subtotal, discount, total,
+      address, items, subtotal, discount, shipping, total,
       payment_method, coupon_code, points_to_use,
+      delivery_type, pickup_location,
     } = body
 
     // Validação básica
@@ -77,7 +78,7 @@ export async function POST(req: NextRequest) {
         items,
         subtotal,
         discount: discount || 0,
-        shipping: 0,
+        shipping: shipping || 0,
         total,
         payment_method,
         payment_status: 'pending',
@@ -87,6 +88,7 @@ export async function POST(req: NextRequest) {
         points_to_use: points_to_use || 0,
         points_earned: Math.round(total * 0.01 * 100) / 100,
         points_processed: false,
+        pickup_location: pickup_location || null,
       })
       .select('id, order_number')
       .single()
