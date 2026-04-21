@@ -32,8 +32,8 @@ export default function PlanosPage() {
           </h1>
 
           <p className="text-[#9ca3af] text-lg max-w-xl mx-auto">
-            Duas unidades, uma missão: transformar sua vida através do esporte.
-            Escolha o plano ideal para você.
+            Expansão contínua, qualidade sem abrir mão.
+            Escolha a unidade mais próxima e comece hoje.
           </p>
 
           {/* Separador decorativo */}

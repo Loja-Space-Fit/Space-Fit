@@ -90,20 +90,23 @@ export default function NossosPlanos({ hideHero = false }: { hideHero?: boolean 
         )}
 
         {/* Seletor de unidade */}
-        <div className="flex justify-center gap-3 mb-10">
-          {REGIONS.map(r => (
-            <button
-              key={r.value}
-              onClick={() => setActiveRegion(r.value)}
-              className={`px-6 py-3 rounded-xl font-bold text-sm transition-all border-2 ${
-                activeRegion === r.value
-                  ? 'bg-[#b2ea0f] text-black border-[#b2ea0f]'
-                  : 'bg-transparent text-[#9ca3af] border-[#2a2a2a] hover:border-[#b2ea0f]/50 hover:text-white'
-              }`}
+        <div className="flex justify-center mb-10">
+          <div className="relative">
+            <select
+              value={activeRegion}
+              onChange={e => setActiveRegion(e.target.value)}
+              className="appearance-none bg-[#111111] border-2 border-[#b2ea0f]/50 hover:border-[#b2ea0f] text-white font-black text-sm rounded-xl px-6 py-3 pr-10 cursor-pointer focus:outline-none focus:border-[#b2ea0f] transition-colors"
             >
-              {r.label} <span className="opacity-60 font-normal ml-1">– {r.state}</span>
-            </button>
-          ))}
+              {REGIONS.map(r => (
+                <option key={r.value} value={r.value} className="bg-[#111111]">
+                  {r.label} – {r.state}
+                </option>
+              ))}
+            </select>
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#b2ea0f]">
+              ▾
+            </span>
+          </div>
         </div>
 
         {loading ? (
