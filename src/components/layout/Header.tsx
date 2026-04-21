@@ -213,14 +213,14 @@ export default function Cabecalho() {
               </Link>
               {/* Link fixo de Planos */}
               <Link
-                href="/#nossos-planos"
+                href="/planos"
                 className={`shrink-0 flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wide whitespace-nowrap transition-all ${
-                  paginaAtual === '/#nossos-planos'
+                  paginaAtual.startsWith('/planos')
                     ? 'bg-[#b2ea0f] text-black shadow-[0_0_14px_rgba(178,234,15,0.4)]'
                     : 'text-[#6b7280] hover:text-white hover:bg-white/10'
                 }`}
               >
-                <Dumbbell className="w-3.5 h-3.5 shrink-0 text-[#b2ea0f]" />
+                <Dumbbell className={`w-3.5 h-3.5 shrink-0 ${paginaAtual.startsWith('/planos') ? 'text-black' : 'text-[#b2ea0f]'}`} />
                 Planos
               </Link>
             </div>
@@ -283,10 +283,17 @@ export default function Cabecalho() {
           </Link>
           {/* Planos no mobile */}
           <Link
-            href="/#nossos-planos"
-            className="flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-bold text-[#9ca3af] hover:text-white hover:bg-white/5 transition-all duration-150"
+            href="/planos"
+            className={`flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold transition-all duration-150 ${
+              paginaAtual.startsWith('/planos')
+                ? 'bg-[#b2ea0f]/10 text-[#b2ea0f] border border-[#b2ea0f]/20'
+                : 'text-[#9ca3af] hover:text-white hover:bg-white/5'
+            }`}
           >
-            <Dumbbell className="w-4 h-4 text-[#b2ea0f]" /> Planos
+            <span className="flex items-center gap-2">
+              <Dumbbell className="w-4 h-4 text-[#b2ea0f]" /> Planos
+            </span>
+            {paginaAtual.startsWith('/planos') && <span className="w-1.5 h-1.5 rounded-full bg-[#b2ea0f]" />}
           </Link>
 
           <div className="border-t border-white/5 mt-2 pt-2 flex flex-col gap-1">

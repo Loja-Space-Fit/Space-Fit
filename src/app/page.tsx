@@ -5,7 +5,6 @@ import ProductCard from '@/components/store/ProductCard'
 import CategoryCards from '@/components/store/CategoryCards'
 import TestimonialsSection from '@/components/store/TestimonialsSection'
 import Link from 'next/link'
-import NossosPlanos from '@/components/store/NossosPlanos'
 import { ArrowRight, Zap, Flame, Shield, Trophy, Users } from 'lucide-react'
 
 export default async function HomePage() {
@@ -94,9 +93,6 @@ export default async function HomePage() {
 
       {/* Depoimentos */}
       <TestimonialsSection />
-
-      {/* Nossos Planos */}
-      <NossosPlanos />
 
       {/* Sobre */}
       <section className="relative overflow-hidden bg-[#0d0d0d] border-y border-[#1a1a1a] py-20">

@@ -28,11 +28,23 @@ type Hours = {
 }
 
 const REGIONS = [
-  { value: 'conceicao', label: 'Conceição das Alagoas', state: 'MG', mapSrc: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15002.123!2d-47.0344!3d-19.9167!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94af1a2e2e2e2e2d%3A0x0!2sConcei%C3%A7%C3%A3o%20das%20Alagoas%2C%20MG!5e0!3m2!1spt-BR!2sbr!4v1700000000000!5m2!1spt-BR!2sbr' },
-  { value: 'guaira',    label: 'Guaíra',                state: 'SP', mapSrc: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15002.123!2d-48.3167!3d-20.3167!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94bdf0000000000%3A0x0!2sGua%C3%ADra%2C%20SP!5e0!3m2!1spt-BR!2sbr!4v1700000000000!5m2!1spt-BR!2sbr' },
+  {
+    value: 'conceicao',
+    label: 'Conceição das Alagoas',
+    state: 'MG',
+    address: 'R. Veríssimo, 500 - Centro, Conceição das Alagoas - MG, 38120-000',
+    mapSrc: 'https://maps.google.com/maps?q=R.+Ver%C3%ADssimo%2C+500%2C+Centro%2C+Concei%C3%A7%C3%A3o+das+Alagoas%2C+MG%2C+38120-000&output=embed&z=17&hl=pt-BR',
+  },
+  {
+    value: 'guaira',
+    label: 'Guaíra',
+    state: 'SP',
+    address: 'Av. Acácia Guairense, 1466 - Jardim Alegria, Guaíra - SP, 14791-286',
+    mapSrc: 'https://maps.google.com/maps?q=Av.+Ac%C3%A1cia+Guairense%2C+1466%2C+Jardim+Alegria%2C+Gu%C3%A1ira%2C+SP%2C+14791-286&output=embed&z=17&hl=pt-BR',
+  },
 ]
 
-export default function NossosPlanos() {
+export default function NossosPlanos({ hideHero = false }: { hideHero?: boolean }) {
   const [activeRegion, setActiveRegion] = useState('conceicao')
   const [plans, setPlans] = useState<Plan[]>([])
   const [hours, setHours] = useState<Hours[]>([])
@@ -59,10 +71,11 @@ export default function NossosPlanos() {
   const familyPlans = regionPlans.filter(p => ['Família', 'Casal'].includes(p.name))
 
   return (
-    <section id="nossos-planos" className="bg-[#0a0a0a] border-t border-[#1a1a1a] py-20">
+    <section id="nossos-planos" className={`bg-[#0a0a0a] py-20 ${hideHero ? '' : 'border-t border-[#1a1a1a]'}`}>
       <div className="max-w-7xl mx-auto px-4">
 
         {/* Header */}
+        {!hideHero && (
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 mb-3">
             <span className="w-8 h-px bg-[#b2ea0f]" />
@@ -74,6 +87,7 @@ export default function NossosPlanos() {
           </h2>
           <p className="text-[#9ca3af] mt-3 text-lg">Escolha o plano ideal para sua evolução</p>
         </div>
+        )}
 
         {/* Seletor de unidade */}
         <div className="flex justify-center gap-3 mb-10">
@@ -229,6 +243,10 @@ export default function NossosPlanos() {
                   referrerPolicy="no-referrer-when-downgrade"
                   title={`Mapa ${regionInfo.label}`}
                 />
+                <div className="px-5 py-3 flex items-start gap-2">
+                  <MapPin className="w-3.5 h-3.5 text-[#b2ea0f] shrink-0 mt-0.5" />
+                  <p className="text-[#9ca3af] text-xs leading-relaxed">{regionInfo.address}</p>
+                </div>
               </div>
 
             </div>
