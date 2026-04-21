@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Clock, MapPin, Star } from 'lucide-react'
 import { formatBRL } from '@/lib/utils'
@@ -49,6 +49,18 @@ export default function NossosPlanos({ hideHero = false }: { hideHero?: boolean 
   const [plans, setPlans] = useState<Plan[]>([])
   const [hours, setHours] = useState<Hours[]>([])
   const [loading, setLoading] = useState(true)
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
 
   useEffect(() => {
     const supabase = createClient()
@@ -91,21 +103,33 @@ export default function NossosPlanos({ hideHero = false }: { hideHero?: boolean 
 
         {/* Seletor de unidade */}
         <div className="flex justify-center mb-10">
-          <div className="relative">
-            <select
-              value={activeRegion}
-              onChange={e => setActiveRegion(e.target.value)}
-              className="appearance-none bg-[#111111] border-2 border-[#b2ea0f]/50 hover:border-[#b2ea0f] text-white font-black text-sm rounded-xl px-6 py-3 pr-10 cursor-pointer focus:outline-none focus:border-[#b2ea0f] transition-colors"
+          <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={() => setDropdownOpen(o => !o)}
+              className="flex items-center gap-3 bg-[#111111] border-2 border-[#b2ea0f] text-white font-black text-sm rounded-xl px-6 py-3 cursor-pointer focus:outline-none transition-colors min-w-[260px] justify-between"
             >
-              {REGIONS.map(r => (
-                <option key={r.value} value={r.value} className="bg-[#111111]">
-                  {r.label} – {r.state}
-                </option>
-              ))}
-            </select>
-            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#b2ea0f]">
-              ▾
-            </span>
+              <span>{REGIONS.find(r => r.value === activeRegion)?.label} – {REGIONS.find(r => r.value === activeRegion)?.state}</span>
+              <svg className={`w-4 h-4 text-[#b2ea0f] transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            {dropdownOpen && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-[#111111] border-2 border-[#b2ea0f]/60 rounded-xl overflow-hidden z-30 shadow-[0_8px_30px_rgba(178,234,15,0.15)]">
+                {REGIONS.map(r => (
+                  <button
+                    key={r.value}
+                    onClick={() => { setActiveRegion(r.value); setDropdownOpen(false) }}
+                    className={`w-full text-left px-6 py-3 text-sm font-bold transition-colors ${
+                      activeRegion === r.value
+                        ? 'bg-[#b2ea0f] text-black'
+                        : 'text-white hover:bg-[#b2ea0f]/15'
+                    }`}
+                  >
+                    {r.label} – {r.state}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
