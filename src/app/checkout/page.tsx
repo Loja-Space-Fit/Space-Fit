@@ -782,29 +782,34 @@ export default function CheckoutPage() {
                     <span>− {formatBRL(pointsToUse)}</span>
                   </div>
                 )}
-                <div className="flex justify-between text-sm text-[#9ca3af]">
-                  <span className="flex items-center gap-1">
+                <div className="flex justify-between items-center rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] px-3 py-2.5">
+                  <span className="flex items-center gap-1.5 text-sm font-bold text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-[#b2ea0f]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" /></svg>
                     Frete
-                    {shippingLoading && <Loader2 className="w-3 h-3 animate-spin" />}
+                    {shippingLoading && <Loader2 className="w-3 h-3 animate-spin text-[#9ca3af]" />}
                   </span>
-                  <span>
+                  <span className="font-black text-base">
                     {deliveryType === 'pickup'
                       ? <span className="text-[#b2ea0f]">Grátis</span>
                       : shippingInfo
                         ? shippingInfo.free
                           ? <span className="text-[#b2ea0f]">Grátis</span>
-                          : formatBRL(shippingInfo.price)
-                        : <span className="text-[#555]">— informe o CEP</span>
+                          : <span className="text-white">{formatBRL(shippingInfo.price)}</span>
+                        : <span className="text-[#555] text-sm font-normal">— informe o CEP</span>
                     }
                   </span>
                 </div>
                 {shippingInfo && !shippingInfo.free && deliveryType === 'delivery' && (
-                  <p className="text-xs text-[#555]">
-                    Prazo estimado: {shippingInfo.min_days}–{shippingInfo.max_days} dias úteis
-                  </p>
+                  <div className="flex items-center gap-1.5 text-xs text-[#9ca3af] -mt-1 px-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><circle cx="12" cy="12" r="10" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2" /></svg>
+                    Prazo estimado: <strong className="text-white">{shippingInfo.min_days}–{shippingInfo.max_days} dias úteis</strong>
+                  </div>
                 )}
                 {shippingInfo && shippingInfo.free && deliveryType === 'delivery' && (
-                  <p className="text-xs text-[#b2ea0f]">✓ Frete grátis aplicado</p>
+                  <div className="flex items-center gap-1.5 text-xs text-[#b2ea0f] -mt-1 px-1 font-bold">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    Frete grátis aplicado
+                  </div>
                 )}
                 <div className="flex justify-between font-black text-white text-lg pt-2 border-t border-[#2a2a2a]">
                   <span>Total</span>
