@@ -27,25 +27,20 @@ type Hours = {
   display_order: number
 }
 
-const REGIONS = [
-  {
-    value: 'conceicao',
-    label: 'Conceição das Alagoas',
-    state: 'MG',
-    address: 'R. Veríssimo, 500 - Centro, Conceição das Alagoas - MG, 38120-000',
-    mapSrc: 'https://maps.google.com/maps?q=R.+Ver%C3%ADssimo%2C+500%2C+Centro%2C+Concei%C3%A7%C3%A3o+das+Alagoas%2C+MG%2C+38120-000&output=embed&z=17&hl=pt-BR',
-  },
-  {
-    value: 'guaira',
-    label: 'Guaíra',
-    state: 'SP',
-    address: 'Av. Acácia Guairense, 1466 - Jardim Alegria, Guaíra - SP, 14791-286',
-    mapSrc: 'https://maps.google.com/maps?q=Av.+Ac%C3%A1cia+Guairense%2C+1466%2C+Jardim+Alegria%2C+Gu%C3%A1ira%2C+SP%2C+14791-286&output=embed&z=17&hl=pt-BR',
-  },
-]
+type Region = {
+  id: string
+  value: string
+  label: string
+  state: string
+  address: string
+  display_order: number
+  active: boolean
+}
+
 
 export default function NossosPlanos({ hideHero = false }: { hideHero?: boolean }) {
-  const [activeRegion, setActiveRegion] = useState('conceicao')
+  const [activeRegion, setActiveRegion] = useState('')
+  const [regions, setRegions] = useState<Region[]>([])
   const [plans, setPlans] = useState<Plan[]>([])
   const [hours, setHours] = useState<Hours[]>([])
   const [loading, setLoading] = useState(true)
@@ -65,9 +60,13 @@ export default function NossosPlanos({ hideHero = false }: { hideHero?: boolean 
   useEffect(() => {
     const supabase = createClient()
     Promise.all([
+      supabase.from('academy_regions').select('*').eq('active', true).order('display_order'),
       supabase.from('academy_plans').select('*').eq('active', true).order('display_order'),
       supabase.from('academy_hours').select('*').order('display_order'),
-    ]).then(([{ data: p }, { data: h }]) => {
+    ]).then(([{ data: r }, { data: p }, { data: h }]) => {
+      const regs = (r || []) as Region[]
+      setRegions(regs)
+      if (regs.length > 0) setActiveRegion(regs[0].value)
       setPlans((p || []) as Plan[])
       setHours((h || []) as Hours[])
       setLoading(false)
@@ -76,7 +75,10 @@ export default function NossosPlanos({ hideHero = false }: { hideHero?: boolean 
 
   const regionPlans = plans.filter(p => p.region === activeRegion)
   const regionHours = hours.filter(h => h.region === activeRegion)
-  const regionInfo  = REGIONS.find(r => r.value === activeRegion)!
+  const regionInfo  = regions.find(r => r.value === activeRegion)
+  const mapSrc = regionInfo?.address
+    ? `https://maps.google.com/maps?q=${encodeURIComponent(regionInfo.address)}&output=embed&z=17&hl=pt-BR`
+    : ''
 
   const mainPlans   = regionPlans.filter(p => !['Família', 'Casal'].includes(p.name) && !p.highlight)
   const premiumPlan = regionPlans.find(p => p.highlight)
@@ -108,14 +110,14 @@ export default function NossosPlanos({ hideHero = false }: { hideHero?: boolean 
               onClick={() => setDropdownOpen(o => !o)}
               className="flex items-center gap-3 bg-[#111111] border-2 border-[#b2ea0f] text-white font-black text-sm rounded-xl px-6 py-3 cursor-pointer focus:outline-none transition-colors min-w-[260px] justify-between"
             >
-              <span>{REGIONS.find(r => r.value === activeRegion)?.label} – {REGIONS.find(r => r.value === activeRegion)?.state}</span>
+              <span>{regions.find(r => r.value === activeRegion)?.label} – {regions.find(r => r.value === activeRegion)?.state}</span>
               <svg className={`w-4 h-4 text-[#b2ea0f] transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
               </svg>
             </button>
             {dropdownOpen && (
               <div className="absolute top-full left-0 right-0 mt-2 bg-[#111111] border-2 border-[#b2ea0f]/60 rounded-xl overflow-hidden z-30 shadow-[0_8px_30px_rgba(178,234,15,0.15)]">
-                {REGIONS.map(r => (
+                {regions.map(r => (
                   <button
                     key={r.value}
                     onClick={() => { setActiveRegion(r.value); setDropdownOpen(false) }}
@@ -257,22 +259,24 @@ export default function NossosPlanos({ hideHero = false }: { hideHero?: boolean 
                 <div className="bg-[#b2ea0f]/10 border-b border-[#2a2a2a] px-5 py-4 flex items-center gap-2">
                   <MapPin className="w-4 h-4 text-[#b2ea0f]" />
                   <h3 className="font-black text-white text-sm uppercase tracking-wide">
-                    {regionInfo.label}
+                    {regionInfo?.label}
                   </h3>
                 </div>
-                <iframe
-                  src={regionInfo.mapSrc}
-                  width="100%"
-                  height="280"
-                  style={{ border: 0, display: 'block' }}
-                  allowFullScreen
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                  title={`Mapa ${regionInfo.label}`}
-                />
+                {mapSrc && (
+                  <iframe
+                    src={mapSrc}
+                    width="100%"
+                    height="280"
+                    style={{ border: 0, display: 'block' }}
+                    allowFullScreen
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    title={`Mapa ${regionInfo?.label}`}
+                  />
+                )}
                 <div className="px-5 py-3 flex items-start gap-2">
                   <MapPin className="w-3.5 h-3.5 text-[#b2ea0f] shrink-0 mt-0.5" />
-                  <p className="text-[#9ca3af] text-xs leading-relaxed">{regionInfo.address}</p>
+                  <p className="text-[#9ca3af] text-xs leading-relaxed">{regionInfo?.address}</p>
                 </div>
               </div>
 
