@@ -248,38 +248,16 @@ export default function Cabecalho() {
         </div>
       )}
 
-      {/* === SIDEBAR MOBILE === */}
-      {/* Backdrop */}
-      <div
-        className={`md:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity duration-300 ${menuMobileAberto ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
-        onClick={() => setMenuMobileAberto(false)}
-      />
+      {/* === MENU MOBILE === */}
+      <div className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${menuMobileAberto ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0'}`}>
+        <div className="border-t border-white/5 bg-[#0a0a0a] px-4 py-4 flex flex-col gap-1">
 
-      {/* Painel lateral */}
-      <div className={`md:hidden fixed top-0 right-0 bottom-0 z-50 w-72 bg-[#0a0a0a] border-l border-[#1a1a1a] flex flex-col shadow-2xl transition-transform duration-300 ease-in-out ${menuMobileAberto ? 'translate-x-0' : 'translate-x-full'}`}>
-
-        {/* Topo do painel */}
-        <div className="flex items-center justify-between px-4 h-[64px] border-b border-[#1a1a1a] shrink-0">
-          <Image src="/imagens/logo.png" alt="Space Fit" width={160} height={60} className="h-9 w-auto" />
-          <button
-            onClick={() => setMenuMobileAberto(false)}
-            className="w-9 h-9 flex items-center justify-center rounded-full border border-white/10 bg-white/5 text-[#9ca3af] hover:text-white transition-colors"
-            aria-label="Fechar menu"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-
-        {/* Links de navegação */}
-        <nav className="flex-1 overflow-y-auto px-3 py-4 flex flex-col gap-0.5">
-
-          {/* Categorias */}
-          <p className="text-[#555] text-[10px] font-black uppercase tracking-widest px-3 pt-1 pb-2">Categorias</p>
+          {/* Categorias no mobile */}
           {categorias.map(cat => (
             <Link
               key={cat.id}
               href={`/categoria/${cat.slug}`}
-              className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-bold transition-all ${
+              className={`flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold transition-all duration-150 ${
                 ehPaginaAtiva(`/categoria/${cat.slug}`)
                   ? 'bg-[#b2ea0f]/10 text-[#b2ea0f] border border-[#b2ea0f]/20'
                   : 'text-[#9ca3af] hover:text-white hover:bg-white/5'
@@ -289,13 +267,10 @@ export default function Cabecalho() {
               {ehPaginaAtiva(`/categoria/${cat.slug}`) && <span className="w-1.5 h-1.5 rounded-full bg-[#b2ea0f]" />}
             </Link>
           ))}
-
-          <div className="my-2 border-t border-white/5" />
-          <p className="text-[#555] text-[10px] font-black uppercase tracking-widest px-3 pt-1 pb-2">Academia</p>
-
+          {/* Kits & Combos no mobile */}
           <Link
             href="/kits"
-            className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-bold transition-all ${
+            className={`flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold transition-all duration-150 ${
               paginaAtual.startsWith('/kits')
                 ? 'bg-[#b2ea0f]/10 text-[#b2ea0f] border border-[#b2ea0f]/20'
                 : 'text-[#9ca3af] hover:text-white hover:bg-white/5'
@@ -304,83 +279,91 @@ export default function Cabecalho() {
             Kits &amp; Combos
             {paginaAtual.startsWith('/kits') && <span className="w-1.5 h-1.5 rounded-full bg-[#b2ea0f]" />}
           </Link>
+          {/* Ofertas no mobile */}
           <Link
             href="/ofertas"
-            className={`flex items-center gap-2 justify-between px-3 py-2.5 rounded-xl text-sm font-bold transition-all ${
+            className={`flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold transition-all duration-150 ${
               paginaAtual.startsWith('/ofertas')
                 ? 'bg-[#b2ea0f]/10 text-[#b2ea0f] border border-[#b2ea0f]/20'
                 : 'text-[#9ca3af] hover:text-white hover:bg-white/5'
             }`}
           >
-            <span className="flex items-center gap-2"><Tag className="w-4 h-4 text-[#b2ea0f]" /> Ofertas</span>
+            <span className="flex items-center gap-2">
+              <Tag className="w-4 h-4 text-[#b2ea0f]" /> Ofertas
+            </span>
             {paginaAtual.startsWith('/ofertas') && <span className="w-1.5 h-1.5 rounded-full bg-[#b2ea0f]" />}
           </Link>
+          {/* Planos no mobile */}
           <Link
             href="/planos"
-            className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-bold transition-all ${
+            className={`flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold transition-all duration-150 ${
               paginaAtual.startsWith('/planos')
                 ? 'bg-[#b2ea0f]/10 text-[#b2ea0f] border border-[#b2ea0f]/20'
                 : 'text-[#9ca3af] hover:text-white hover:bg-white/5'
             }`}
           >
-            <span className="flex items-center gap-2"><Dumbbell className="w-4 h-4 text-[#b2ea0f]" /> Planos</span>
+            <span className="flex items-center gap-2">
+              <Dumbbell className="w-4 h-4 text-[#b2ea0f]" /> Planos
+            </span>
             {paginaAtual.startsWith('/planos') && <span className="w-1.5 h-1.5 rounded-full bg-[#b2ea0f]" />}
           </Link>
+          {/* Franquias no mobile */}
           <Link
             href="/franquias"
-            className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-bold transition-all ${
+            className={`flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold transition-all duration-150 ${
               paginaAtual.startsWith('/franquias')
                 ? 'bg-[#b2ea0f]/10 text-[#b2ea0f] border border-[#b2ea0f]/20'
                 : 'text-[#9ca3af] hover:text-white hover:bg-white/5'
             }`}
           >
-            <span className="flex items-center gap-2"><Building2 className="w-4 h-4 text-[#b2ea0f]" /> Franquias</span>
+            <span className="flex items-center gap-2">
+              <Building2 className="w-4 h-4 text-[#b2ea0f]" /> Franquias
+            </span>
             {paginaAtual.startsWith('/franquias') && <span className="w-1.5 h-1.5 rounded-full bg-[#b2ea0f]" />}
           </Link>
-        </nav>
 
-        {/* Rodapé: conta */}
-        <div className="border-t border-[#1a1a1a] px-3 py-4 flex flex-col gap-0.5 shrink-0">
-          {usuarioLogado ? (
-            <>
-              <div className="flex items-center gap-3 px-3 py-2 mb-1">
-                <span className="w-8 h-8 rounded-full bg-[#b2ea0f] flex items-center justify-center text-black shrink-0">
-                  <User className="w-4 h-4" />
-                </span>
-                <div>
-                  <p className="text-xs text-[#9ca3af]">Logado como</p>
-                  <p className="text-sm text-white font-semibold">{primeiroNome}</p>
+          <div className="border-t border-white/5 mt-2 pt-2 flex flex-col gap-1">
+            {usuarioLogado ? (
+              <>
+                <div className="flex items-center gap-3 px-4 py-3 mb-1">
+                  <span className="w-8 h-8 rounded-full bg-[#b2ea0f] flex items-center justify-center text-black shrink-0">
+                    <User className="w-4 h-4" />
+                  </span>
+                  <div>
+                    <p className="text-xs text-[#9ca3af]">Logado como</p>
+                    <p className="text-sm text-white font-semibold">{primeiroNome}</p>
+                  </div>
                 </div>
-              </div>
-              <Link href="/minha-conta" className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-[#9ca3af] hover:text-white hover:bg-white/5 transition-colors">
-                <User className="w-4 h-4 text-[#b2ea0f]" /> Minha Conta
-              </Link>
-              <Link href="/minha-conta?tab=pedidos" className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-[#9ca3af] hover:text-white hover:bg-white/5 transition-colors">
-                <Package className="w-4 h-4 text-[#b2ea0f]" /> Meus Pedidos
-              </Link>
-              <Link href="/minha-conta?tab=favoritos" className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-[#9ca3af] hover:text-white hover:bg-white/5 transition-colors">
-                <Heart className="w-4 h-4 text-[#b2ea0f]" /> Meus Favoritos
-              </Link>
-              {perfil?.is_admin && (
-                <Link href="/admin" className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-[#b2ea0f] hover:text-[#c8f040] hover:bg-[#b2ea0f]/5 transition-colors">
-                  <LayoutDashboard className="w-4 h-4" /> Painel Admin
+                <Link href="/minha-conta" className="flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm font-semibold text-[#9ca3af] hover:text-white hover:bg-white/5 transition-colors">
+                  <User className="w-4 h-4 text-[#b2ea0f]" /> Minha Conta
                 </Link>
-              )}
-              <button
-                onClick={() => { sair(); setMenuMobileAberto(false) }}
-                className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-red-400 hover:text-red-300 hover:bg-red-500/5 transition-colors w-full text-left mt-1"
+                <Link href="/minha-conta?tab=pedidos" className="flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm font-semibold text-[#9ca3af] hover:text-white hover:bg-white/5 transition-colors">
+                  <Package className="w-4 h-4 text-[#b2ea0f]" /> Meus Pedidos
+                </Link>
+                <Link href="/minha-conta?tab=favoritos" className="flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm font-semibold text-[#9ca3af] hover:text-white hover:bg-white/5 transition-colors">
+                  <Heart className="w-4 h-4 text-[#b2ea0f]" /> Meus Favoritos
+                </Link>
+                {perfil?.is_admin && (
+                  <Link href="/admin" className="flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm font-semibold text-[#b2ea0f] hover:text-[#c8f040] hover:bg-[#b2ea0f]/5 transition-colors">
+                    <LayoutDashboard className="w-4 h-4" /> Painel Admin
+                  </Link>
+                )}
+                <button
+                  onClick={() => { sair(); setMenuMobileAberto(false) }}
+                  className="flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm font-semibold text-red-400 hover:text-red-300 hover:bg-red-500/5 transition-colors w-full text-left"
+                >
+                  <LogOut className="w-4 h-4" /> Sair da conta
+                </button>
+              </>
+            ) : (
+              <Link
+                href="/login"
+                className="flex items-center justify-center gap-2 py-3 rounded-xl bg-[#b2ea0f] text-black text-sm font-bold hover:bg-[#c8f040] transition-colors"
               >
-                <LogOut className="w-4 h-4" /> Sair da conta
-              </button>
-            </>
-          ) : (
-            <Link
-              href="/login"
-              className="flex items-center justify-center gap-2 py-3 rounded-xl bg-[#b2ea0f] text-black text-sm font-bold hover:bg-[#c8f040] transition-colors"
-            >
-              <User className="w-4 h-4" /> Entrar / Cadastrar
-            </Link>
-          )}
+                <User className="w-4 h-4" /> Entrar / Cadastrar
+              </Link>
+            )}
+          </div>
         </div>
       </div>
     </header>
