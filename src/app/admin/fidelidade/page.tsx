@@ -23,6 +23,13 @@ interface LoyaltyTransaction {
   created_at: string
 }
 
+function formatPhone(phone: string): string {
+  const d = phone.replace(/\D/g, '')
+  if (d.length === 11) return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`
+  if (d.length === 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`
+  return phone
+}
+
 export default function AdminLoyaltyPage() {
   const [accounts, setAccounts] = useState<LoyaltyAccount[]>([])
   const [transactions, setTransactions] = useState<LoyaltyTransaction[]>([])
@@ -91,7 +98,7 @@ export default function AdminLoyaltyPage() {
                   >
                     <td className="px-5 py-3">
                       <p className="text-sm font-semibold text-white">{a.customer_name}</p>
-                      <p className="text-xs text-[#9ca3af]">{a.customer_phone}</p>
+                      <p className="text-xs text-[#9ca3af]">{formatPhone(a.customer_phone)}</p>
                     </td>
                     <td className="px-5 py-3 text-right">
                       <span className="font-bold text-[#b2ea0f]">{a.points.toLocaleString('pt-BR')} pts</span>

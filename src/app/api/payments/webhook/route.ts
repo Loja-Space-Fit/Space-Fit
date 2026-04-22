@@ -104,8 +104,8 @@ export async function POST(req: NextRequest) {
           })
           .eq('id', orderId)
 
-        // Só dispara loyalty e email na transição pending → approved (evita duplicatas em retries)
-        if (mapped.payment_status === 'approved' && pedidoAtual?.payment_status !== 'approved') {
+        // Só dispara loyalty, email e baixa de estoque na transição pending → approved
+          if (mapped.payment_status === 'approved' && pedidoAtual?.payment_status !== 'approved') {
           const { data: pedidoCompleto } = await supabase
             .from('orders')
             .select('*')
@@ -118,6 +118,34 @@ export async function POST(req: NextRequest) {
             enviarEmailConfirmacaoPedido(pedidoCompleto as Order).catch(e =>
               console.error('[webhook] Falha ao enviar email de confirmacao:', e)
             )
+
+            // Decrementar estoque dos itens do pedido
+            const orderItems = (pedidoCompleto.items || []) as Array<{ product_id: string; quantity: number }>
+            for (const item of orderItems) {
+              const { data: bundle } = await supabase
+                .from('bundles')
+                .select('id, stock')
+                .eq('id', item.product_id)
+                .maybeSingle()
+              if (bundle) {
+                await supabase
+                  .from('bundles')
+                  .update({ stock: Math.max(0, bundle.stock - item.quantity) })
+                  .eq('id', item.product_id)
+              } else {
+                const { data: product } = await supabase
+                  .from('products')
+                  .select('id, stock')
+                  .eq('id', item.product_id)
+                  .maybeSingle()
+                if (product) {
+                  await supabase
+                    .from('products')
+                    .update({ stock: Math.max(0, product.stock - item.quantity) })
+                    .eq('id', item.product_id)
+                }
+              }
+            }
           }
         }
       }

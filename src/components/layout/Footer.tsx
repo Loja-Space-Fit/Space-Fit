@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { MapPin, Phone } from 'lucide-react'
+import { MapPin, Phone, Mail } from 'lucide-react'
 
 export default function Footer() {
   const whatsapp = process.env.NEXT_PUBLIC_WHATSAPP || '5534998853794'
@@ -27,6 +27,12 @@ export default function Footer() {
             >
               <Phone className="w-4 h-4" />
               (34) 99885-3794
+            </a>
+          </div>
+          <div className="mt-2 flex items-center gap-2 text-sm text-[#9ca3af]">
+            <Mail className="w-4 h-4 shrink-0 text-[#b2ea0f]" />
+            <a href="mailto:spacefitacademias@gmail.com" className="hover:text-[#b2ea0f] transition-colors">
+              spacefitacademias@gmail.com
             </a>
           </div>
           <div className="mt-2 flex items-start gap-2 text-sm text-[#9ca3af]">
