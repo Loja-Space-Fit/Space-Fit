@@ -177,7 +177,7 @@ export default function FranquiasClient({ regions, franchises }: Props) {
                   </div>
 
                   {franchise?.history ? (
-                    <p className="text-[#e5e7eb] text-[15px] leading-[1.85] whitespace-pre-wrap flex-1">
+                    <p className="text-[#e5e7eb] text-[19px] leading-[1.85] whitespace-pre-wrap flex-1">
                       {franchise.history}
                     </p>
                   ) : (
