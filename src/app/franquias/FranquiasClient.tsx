@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { MapPin, Building2, ChevronRight, ChevronLeft, ImageOff } from 'lucide-react'
+import { MapPin, Building2, ChevronRight, ChevronLeft, ImageOff, MessageCircle } from 'lucide-react'
 
 type Region = {
   id: string
@@ -130,7 +130,7 @@ export default function FranquiasClient({ regions, franchises }: Props) {
                 })}
               </div>
 
-              <div className="mt-6 hidden lg:block">
+              <div className="mt-6 hidden lg:block space-y-3">
                 <Link
                   href="/planos"
                   className="flex items-center gap-2 text-xs text-[#9ca3af] hover:text-[#b2ea0f] transition-colors font-semibold"
@@ -138,6 +138,15 @@ export default function FranquiasClient({ regions, franchises }: Props) {
                   <span className="w-1.5 h-1.5 rounded-full bg-[#b2ea0f]" />
                   Ver planos desta unidade
                 </Link>
+                <a
+                  href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP || '5534998853794'}?text=${encodeURIComponent('Olá! Tenho interesse em ser um franqueado da Space Fit Academia. Pode me passar mais informações?')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-xs text-[#b2ea0f] hover:text-[#c8f040] transition-colors font-bold"
+                >
+                  <MessageCircle className="w-3.5 h-3.5" />
+                  Ser um franqueado
+                </a>
               </div>
             </aside>
 
@@ -249,6 +258,32 @@ export default function FranquiasClient({ regions, franchises }: Props) {
                       <p className="text-xs italic">Nenhuma imagem cadastrada.</p>
                     </div>
                   )}
+                </div>
+              </div>
+
+              {/* CTA Franqueado */}
+              <div className="relative bg-gradient-to-br from-[#b2ea0f]/15 to-[#b2ea0f]/5 border border-[#b2ea0f]/30 rounded-2xl p-7 overflow-hidden">
+                <div className="absolute right-0 top-0 bottom-0 w-1 bg-[#b2ea0f] rounded-l-full" />
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
+                  <div>
+                    <p className="text-[#b2ea0f] text-xs font-black uppercase tracking-[0.2em] mb-1">Oportunidade de negócio</p>
+                    <h3 className="text-white text-xl font-black uppercase leading-tight">
+                      Quero ser um <span className="text-[#b2ea0f]">franqueado</span>
+                    </h3>
+                    <p className="text-[#9ca3af] text-sm mt-2 max-w-sm">
+                      Faça parte da rede Space Fit e leve a academia para a sua cidade.
+                      Entre em contato e saiba como funciona.
+                    </p>
+                  </div>
+                  <a
+                    href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP || '5534998853794'}?text=${encodeURIComponent('Olá! Tenho interesse em ser um franqueado da Space Fit Academia. Pode me passar mais informações?')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="shrink-0 flex items-center gap-2.5 px-6 py-3 rounded-xl bg-[#b2ea0f] hover:bg-[#c8f040] text-black font-black text-sm transition-all shadow-[0_0_20px_rgba(178,234,15,0.3)] hover:shadow-[0_0_28px_rgba(178,234,15,0.5)]"
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    Falar no WhatsApp
+                  </a>
                 </div>
               </div>
 
