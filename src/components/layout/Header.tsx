@@ -4,7 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useCart } from '@/context/CartContext'
 import { useAuth } from '@/context/AuthContext'
-import { ShoppingCart, Menu, X, User, LogOut, Package, ChevronDown, LayoutDashboard, ChevronRight, MessageCircle, Heart, Tag, Dumbbell } from 'lucide-react'
+import { ShoppingCart, Menu, X, User, LogOut, Package, ChevronDown, LayoutDashboard, ChevronRight, MessageCircle, Heart, Tag, Dumbbell, Building2 } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -223,6 +223,18 @@ export default function Cabecalho() {
                 <Dumbbell className={`w-3.5 h-3.5 shrink-0 ${paginaAtual.startsWith('/planos') ? 'text-black' : 'text-[#b2ea0f]'}`} />
                 Planos
               </Link>
+              {/* Link fixo de Franquias */}
+              <Link
+                href="/franquias"
+                className={`shrink-0 flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wide whitespace-nowrap transition-all ${
+                  paginaAtual.startsWith('/franquias')
+                    ? 'bg-[#b2ea0f] text-black shadow-[0_0_14px_rgba(178,234,15,0.4)]'
+                    : 'text-[#6b7280] hover:text-white hover:bg-white/10'
+                }`}
+              >
+                <Building2 className={`w-3.5 h-3.5 shrink-0 ${paginaAtual.startsWith('/franquias') ? 'text-black' : 'text-[#b2ea0f]'}`} />
+                Franquias
+              </Link>
             </div>
 
             <button
@@ -294,6 +306,20 @@ export default function Cabecalho() {
               <Dumbbell className="w-4 h-4 text-[#b2ea0f]" /> Planos
             </span>
             {paginaAtual.startsWith('/planos') && <span className="w-1.5 h-1.5 rounded-full bg-[#b2ea0f]" />}
+          </Link>
+          {/* Franquias no mobile */}
+          <Link
+            href="/franquias"
+            className={`flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold transition-all duration-150 ${
+              paginaAtual.startsWith('/franquias')
+                ? 'bg-[#b2ea0f]/10 text-[#b2ea0f] border border-[#b2ea0f]/20'
+                : 'text-[#9ca3af] hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              <Building2 className="w-4 h-4 text-[#b2ea0f]" /> Franquias
+            </span>
+            {paginaAtual.startsWith('/franquias') && <span className="w-1.5 h-1.5 rounded-full bg-[#b2ea0f]" />}
           </Link>
 
           <div className="border-t border-white/5 mt-2 pt-2 flex flex-col gap-1">

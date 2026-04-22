@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Clock, MapPin, Star } from 'lucide-react'
+import { Clock, Star } from 'lucide-react'
 import { formatBRL } from '@/lib/utils'
 
 type Plan = {
@@ -75,10 +75,6 @@ export default function NossosPlanos({ hideHero = false }: { hideHero?: boolean 
 
   const regionPlans = plans.filter(p => p.region === activeRegion)
   const regionHours = hours.filter(h => h.region === activeRegion)
-  const regionInfo  = regions.find(r => r.value === activeRegion)
-  const mapSrc = regionInfo?.address
-    ? `https://maps.google.com/maps?q=${encodeURIComponent(regionInfo.address)}&output=embed&z=17&hl=pt-BR`
-    : ''
 
   const mainPlans   = regionPlans.filter(p => !['Família', 'Casal'].includes(p.name) && !p.highlight)
   const premiumPlan = regionPlans.find(p => p.highlight)
@@ -251,32 +247,6 @@ export default function NossosPlanos({ hideHero = false }: { hideHero?: boolean 
                       </span>
                     </div>
                   ))}
-                </div>
-              </div>
-
-              {/* Localização */}
-              <div className="bg-[#111111] border border-[#2a2a2a] rounded-2xl overflow-hidden">
-                <div className="bg-[#b2ea0f]/10 border-b border-[#2a2a2a] px-5 py-4 flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-[#b2ea0f]" />
-                  <h3 className="font-black text-white text-sm uppercase tracking-wide">
-                    {regionInfo?.label}
-                  </h3>
-                </div>
-                {mapSrc && (
-                  <iframe
-                    src={mapSrc}
-                    width="100%"
-                    height="280"
-                    style={{ border: 0, display: 'block' }}
-                    allowFullScreen
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
-                    title={`Mapa ${regionInfo?.label}`}
-                  />
-                )}
-                <div className="px-5 py-3 flex items-start gap-2">
-                  <MapPin className="w-3.5 h-3.5 text-[#b2ea0f] shrink-0 mt-0.5" />
-                  <p className="text-[#9ca3af] text-xs leading-relaxed">{regionInfo?.address}</p>
                 </div>
               </div>
 
