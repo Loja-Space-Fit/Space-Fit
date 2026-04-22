@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { MapPin, Building2, ChevronRight, ImageOff } from 'lucide-react'
+import { MapPin, Building2, ChevronRight, ChevronLeft, ImageOff } from 'lucide-react'
 
 type Region = {
   id: string
@@ -26,13 +26,41 @@ interface Props {
 
 export default function FranquiasClient({ regions, franchises }: Props) {
   const [activeRegion, setActiveRegion] = useState(regions[0]?.value ?? '')
+  const [slideIndex, setSlideIndex] = useState(0)
+  const [resetKey, setResetKey] = useState(0)
 
   const franchise = franchises.find(f => f.region_value === activeRegion)
   const region = regions.find(r => r.value === activeRegion)
+  const images = franchise?.images ?? []
 
   const mapSrc = region?.address
     ? `https://maps.google.com/maps?q=${encodeURIComponent(region.address)}&output=embed&z=17&hl=pt-BR`
     : ''
+
+  // Reinicia slide ao trocar de região
+  useEffect(() => {
+    setSlideIndex(0)
+    setResetKey(0)
+  }, [activeRegion])
+
+  // Avança automaticamente a cada 3 segundos; reinicia timer ao resetKey mudar
+  useEffect(() => {
+    if (images.length <= 1) return
+    const timer = setInterval(() => {
+      setSlideIndex(i => (i + 1) % images.length)
+    }, 3000)
+    return () => clearInterval(timer)
+  }, [images.length, resetKey, activeRegion])
+
+  const goNext = useCallback(() => {
+    setSlideIndex(i => (i + 1) % images.length)
+    setResetKey(k => k + 1)
+  }, [images.length])
+
+  const goPrev = useCallback(() => {
+    setSlideIndex(i => (i - 1 + images.length) % images.length)
+    setResetKey(k => k + 1)
+  }, [images.length])
 
   return (
     <main className="min-h-screen bg-[#0a0a0a]">
@@ -75,7 +103,7 @@ export default function FranquiasClient({ regions, franchises }: Props) {
         <div className="max-w-7xl mx-auto px-4 py-12">
           <div className="flex flex-col lg:flex-row gap-8">
 
-            {/* Sidebar: city list */}
+            {/* Sidebar: lista de cidades */}
             <aside className="lg:w-64 shrink-0">
               <p className="text-[#9ca3af] text-xs font-bold uppercase tracking-widest mb-3 px-1">Selecionar unidade</p>
               <div className="flex flex-row lg:flex-col gap-2 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0">
@@ -102,7 +130,6 @@ export default function FranquiasClient({ regions, franchises }: Props) {
                 })}
               </div>
 
-              {/* Link to plans */}
               <div className="mt-6 hidden lg:block">
                 <Link
                   href="/planos"
@@ -114,16 +141,16 @@ export default function FranquiasClient({ regions, franchises }: Props) {
               </div>
             </aside>
 
-            {/* Main content */}
+            {/* Conteúdo principal */}
             <div className="flex-1 min-w-0 space-y-8">
 
-              {/* Region header */}
+              {/* Cabeçalho da região */}
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <Building2 className="w-5 h-5 text-[#b2ea0f]" />
                   <h2 className="text-2xl md:text-3xl font-black text-white uppercase">
                     {region?.label}
-                    <span className="text-[#b2ea0f] ml-2">– {region?.state}</span>
+                    <span className="text-[#b2ea0f] ml-2">— {region?.state}</span>
                   </h2>
                 </div>
                 {region?.address && (
@@ -134,56 +161,98 @@ export default function FranquiasClient({ regions, franchises }: Props) {
                 )}
               </div>
 
-              {/* History */}
-              {franchise?.history ? (
-                <div className="bg-[#111111] border border-[#2a2a2a] rounded-2xl p-6">
-                  <h3 className="text-[#b2ea0f] font-black text-sm uppercase tracking-wider mb-4">
-                    Nossa História
-                  </h3>
-                  <div className="text-[#d1d5db] leading-relaxed whitespace-pre-wrap text-sm">
-                    {franchise.history}
-                  </div>
-                </div>
-              ) : (
-                <div className="bg-[#111111] border border-[#2a2a2a] rounded-2xl p-6">
-                  <h3 className="text-[#b2ea0f] font-black text-sm uppercase tracking-wider mb-3">
-                    Nossa História
-                  </h3>
-                  <p className="text-[#555] text-sm italic">Conteúdo em breve.</p>
-                </div>
-              )}
+              {/* História (esquerda) + Slideshow (direita) */}
+              <div className="grid lg:grid-cols-2 gap-6 items-stretch">
 
-              {/* Images gallery */}
-              {franchise?.images && franchise.images.length > 0 ? (
-                <div>
-                  <h3 className="text-[#b2ea0f] font-black text-sm uppercase tracking-wider mb-4">
-                    Galeria de Fotos
-                  </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                    {franchise.images.map((url, i) => (
-                      <div
-                        key={i}
-                        className="relative aspect-video rounded-xl overflow-hidden bg-[#111111] border border-[#2a2a2a] group"
-                      >
-                        <Image
-                          src={url}
-                          alt={`${region?.label} foto ${i + 1}`}
-                          fill
-                          className="object-cover group-hover:scale-105 transition-transform duration-300"
-                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div className="bg-[#111111] border border-[#2a2a2a] rounded-2xl p-8 text-center">
-                  <ImageOff className="w-8 h-8 text-[#333] mx-auto mb-2" />
-                  <p className="text-[#555] text-sm italic">Nenhuma imagem cadastrada para esta unidade.</p>
-                </div>
-              )}
+                {/* História — destaque */}
+                <div className="relative bg-gradient-to-br from-[#141414] to-[#111111] border border-[#2a2a2a] rounded-2xl p-7 flex flex-col overflow-hidden">
+                  {/* Barra de destaque verde à esquerda */}
+                  <div className="absolute left-0 top-6 bottom-6 w-1 bg-[#b2ea0f] rounded-r-full" />
 
-              {/* Map */}
+                  <div className="flex items-center gap-2 mb-5">
+                    <span className="w-5 h-px bg-[#b2ea0f]" />
+                    <h3 className="text-[#b2ea0f] font-black text-xs uppercase tracking-[0.2em]">
+                      Nossa História
+                    </h3>
+                  </div>
+
+                  {franchise?.history ? (
+                    <p className="text-[#e5e7eb] text-[15px] leading-[1.85] whitespace-pre-wrap flex-1">
+                      {franchise.history}
+                    </p>
+                  ) : (
+                    <p className="text-[#555] text-sm italic flex-1">Conteúdo em breve.</p>
+                  )}
+                </div>
+
+                {/* Slideshow de imagens */}
+                <div className="relative bg-[#111111] border border-[#2a2a2a] rounded-2xl overflow-hidden aspect-video lg:aspect-auto min-h-[260px]">
+                  {images.length > 0 ? (
+                    <>
+                      {/* Imagem atual */}
+                      <Image
+                        key={`${activeRegion}-${slideIndex}`}
+                        src={images[slideIndex]}
+                        alt={`${region?.label} — foto ${slideIndex + 1}`}
+                        fill
+                        className="object-cover transition-opacity duration-500"
+                        sizes="(max-width: 1024px) 100vw, 50vw"
+                      />
+
+                      {/* Overlay escuro suave nas bordas */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
+
+                      {/* Setas de navegação */}
+                      {images.length > 1 && (
+                        <>
+                          <button
+                            onClick={goPrev}
+                            aria-label="Foto anterior"
+                            className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center rounded-full bg-black/60 hover:bg-black/80 text-white border border-white/10 transition-all hover:scale-110 z-10"
+                          >
+                            <ChevronLeft className="w-5 h-5" />
+                          </button>
+                          <button
+                            onClick={goNext}
+                            aria-label="Próxima foto"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center rounded-full bg-black/60 hover:bg-black/80 text-white border border-white/10 transition-all hover:scale-110 z-10"
+                          >
+                            <ChevronRight className="w-5 h-5" />
+                          </button>
+
+                          {/* Indicadores (pontos) */}
+                          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-10">
+                            {images.map((_, i) => (
+                              <button
+                                key={i}
+                                onClick={() => { setSlideIndex(i); setResetKey(k => k + 1) }}
+                                aria-label={`Ir para foto ${i + 1}`}
+                                className={`rounded-full transition-all ${
+                                  i === slideIndex
+                                    ? 'w-5 h-2 bg-[#b2ea0f]'
+                                    : 'w-2 h-2 bg-white/40 hover:bg-white/70'
+                                }`}
+                              />
+                            ))}
+                          </div>
+
+                          {/* Contador */}
+                          <div className="absolute top-3 right-3 bg-black/60 text-white text-xs font-bold px-2.5 py-1 rounded-full z-10">
+                            {slideIndex + 1} / {images.length}
+                          </div>
+                        </>
+                      )}
+                    </>
+                  ) : (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center text-[#555]">
+                      <ImageOff className="w-8 h-8 mb-2" />
+                      <p className="text-xs italic">Nenhuma imagem cadastrada.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Mapa */}
               {mapSrc && (
                 <div className="bg-[#111111] border border-[#2a2a2a] rounded-2xl overflow-hidden">
                   <div className="bg-[#b2ea0f]/10 border-b border-[#2a2a2a] px-5 py-4 flex items-center gap-2">

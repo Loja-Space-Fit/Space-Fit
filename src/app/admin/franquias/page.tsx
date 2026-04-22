@@ -198,7 +198,7 @@ export default function AdminFranquiasPage() {
                   )}
                   {content?.images && content.images.length > 0 && (
                     <p className="text-[#b2ea0f] text-xs font-semibold">
-                      {content.images.length} imagem{content.images.length !== 1 ? 'ns' : ''}
+                      {content.images.length} {content.images.length !== 1 ? 'imagens' : 'imagem'}
                     </p>
                   )}
                 </div>
