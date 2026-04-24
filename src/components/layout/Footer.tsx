@@ -23,11 +23,11 @@ export default function Footer() {
           {Array.from({ length: 6 }).map((_, i) => (
             <span key={i} className="flex items-center gap-6 text-[#2a2a2a] text-xs font-black uppercase tracking-[0.3em]">
               <span className="text-[#b2ea0f]/40">◆</span>
-              <span>Discipline</span>
+              <span>Disciplina</span>
               <span className="text-[#b2ea0f]/40">◆</span>
-              <span>Energy</span>
+              <span>Energia</span>
               <span className="text-[#b2ea0f]/40">◆</span>
-              <span>Results</span>
+              <span>Resultados</span>
               <span className="text-[#b2ea0f]/40">◆</span>
               <span>Space Fit</span>
             </span>
@@ -72,7 +72,7 @@ export default function Footer() {
               spacefitacademias@gmail.com
             </a>
             <a
-              href="https://instagram.com/spacefitacademia"
+              href="https://instagram.com/spacefit.academia"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2.5 text-sm text-[#9ca3af] hover:text-[#b2ea0f] transition-colors group"
@@ -80,7 +80,7 @@ export default function Footer() {
               <span className="w-7 h-7 rounded-lg bg-[#b2ea0f]/10 flex items-center justify-center group-hover:bg-[#b2ea0f]/20 transition-colors">
                 <InstagramIcon className="w-3.5 h-3.5 text-[#b2ea0f]" />
               </span>
-              @spacefitacademia
+              @spacefit.academia
             </a>
             <div className="flex items-start gap-2.5 text-sm text-[#6b7280]">
               <span className="w-7 h-7 rounded-lg bg-[#b2ea0f]/10 flex items-center justify-center shrink-0">
@@ -137,7 +137,7 @@ export default function Footer() {
           <div className="mt-8">
             <h3 className="text-white font-black mb-4 text-xs uppercase tracking-[0.2em]">Redes Sociais</h3>
             <a
-              href="https://instagram.com/spacefitacademia"
+              href="https://instagram.com/spacefit.academia"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-br from-[#833ab4]/20 via-[#fd1d1d]/20 to-[#fcb045]/20 border border-white/10 hover:border-[#b2ea0f]/40 text-[#9ca3af] hover:text-white transition-all text-xs font-bold"
