@@ -4,6 +4,7 @@ import BannerSlider from '@/components/store/BannerSlider'
 import ProductCard from '@/components/store/ProductCard'
 import CategoryCards from '@/components/store/CategoryCards'
 import TestimonialsSection from '@/components/store/TestimonialsSection'
+import FadeIn from '@/components/ui/FadeIn'
 import Link from 'next/link'
 import { ArrowRight, Zap, Flame, Shield, Trophy, Users, Truck, ShieldCheck, Package, MessageCircle } from 'lucide-react'
 
@@ -60,7 +61,8 @@ export default async function HomePage() {
 
       {/* Categorias */}
       <section className="max-w-7xl mx-auto px-4 py-14 md:py-20">
-        <div className="flex items-end justify-between mb-10">
+        <FadeIn>
+          <div className="flex items-end justify-between mb-10">
           <div className="flex items-start gap-4">
             <span className="w-1 h-10 bg-[#b2ea0f] rounded-full shrink-0 mt-1" />
             <div>
@@ -75,13 +77,17 @@ export default async function HomePage() {
             </div>
           </div>
         </div>
-        <CategoryCards categories={(categories || []) as Category[]} />
+        </FadeIn>
+        <FadeIn delay={150}>
+          <CategoryCards categories={(categories || []) as Category[]} />
+        </FadeIn>
       </section>
 
       {/* Produtos em destaque */}
       <section className="bg-[#0d0d0d] border-y border-[#1a1a1a]">
         <div className="max-w-7xl mx-auto px-4 py-14 md:py-20">
-          <div className="flex items-end justify-between mb-10">
+          <FadeIn>
+            <div className="flex items-end justify-between mb-10">
             <div className="flex items-start gap-4">
               <span className="w-1 h-10 bg-[#b2ea0f] rounded-full shrink-0 mt-1" />
               <div>
@@ -102,23 +108,30 @@ export default async function HomePage() {
               Ver todos <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
+          </FadeIn>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <FadeIn delay={100}>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {(featured || []).map(product => (
               <ProductCard key={product.id} product={product as unknown as Product} />
             ))}
           </div>
+          </FadeIn>
 
-          <div className="mt-8 text-center md:hidden">
-            <Link href="/categoria/roupas" className="btn-outline">
-              Ver Todos os Produtos <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
+          <FadeIn delay={150}>
+            <div className="mt-8 text-center md:hidden">
+              <Link href="/categoria/roupas" className="btn-outline">
+                Ver Todos os Produtos <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </FadeIn>
         </div>
       </section>
 
       {/* Depoimentos */}
-      <TestimonialsSection />
+      <FadeIn>
+        <TestimonialsSection />
+      </FadeIn>
 
       {/* Sobre */}
       <section className="relative overflow-hidden bg-[#0a0a0a] py-20">
@@ -129,6 +142,7 @@ export default async function HomePage() {
         <div className="relative max-w-7xl mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-12 lg:gap-20 items-center">
             {/* Texto */}
+            <FadeIn direction="left">
             <div>
               <div className="flex items-center gap-2 mb-5">
                 <span className="w-8 h-px bg-[#b2ea0f]" />
@@ -153,8 +167,10 @@ export default async function HomePage() {
                 Fale com a gente <ArrowRight className="w-4 h-4" />
               </a>
             </div>
+            </FadeIn>
 
             {/* Cards de valores */}
+            <FadeIn direction="right" delay={100}>
             <div className="grid grid-cols-2 gap-4">
               {[
                 { icon: Flame, title: 'Intensidade', desc: 'Produtos para treinos de verdade, sem moleza.' },
@@ -174,9 +190,11 @@ export default async function HomePage() {
                 </div>
               ))}
             </div>
+            </FadeIn>
           </div>
 
           {/* Stats */}
+          <FadeIn delay={50}>
           <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
               { num: '500+', label: 'Produtos disponíveis' },
@@ -191,6 +209,7 @@ export default async function HomePage() {
               </div>
             ))}
           </div>
+          </FadeIn>
         </div>
       </section>
 

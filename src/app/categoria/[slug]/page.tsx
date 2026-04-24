@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Package } from 'lucide-react'
+import { Package, ChevronRight, Home } from 'lucide-react'
 import { formatBRL } from '@/lib/utils'
 import { Suspense } from 'react'
 import CategoryControls from '@/components/store/CategoryControls'
@@ -51,18 +51,36 @@ export default async function CategoryPage({ params, searchParams: spPromise }: 
     const list = (bundles || []) as unknown as BundleWithItems[]
 
     return (
-      <div className="max-w-7xl mx-auto px-4 py-10">
-        <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tight">
-            {category.name}
-          </h1>
-          {category.description && (
-            <p className="text-[#9ca3af] mt-2">{category.description}</p>
+      <div>
+        {/* Hero header */}
+        <div className="relative h-44 md:h-56 overflow-hidden bg-[#111111]">
+          {category.image_url && (
+            <Image src={category.image_url} alt={category.name} fill className="object-cover" />
           )}
-          <p className="text-[#b2ea0f] text-sm font-semibold mt-1">
+          <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/70 to-black/30" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-transparent via-[#b2ea0f] to-transparent" />
+          <div className="absolute inset-0 flex flex-col justify-end px-6 md:px-10 pb-6 max-w-7xl mx-auto">
+            <div className="flex items-center gap-1.5 text-xs text-[#9ca3af] mb-3">
+              <Link href="/" className="hover:text-[#b2ea0f] transition-colors flex items-center gap-1">
+                <Home className="w-3 h-3" /> Início
+              </Link>
+              <ChevronRight className="w-3 h-3 text-[#555]" />
+              <span className="text-[#b2ea0f] font-bold">{category.name}</span>
+            </div>
+            <h1 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tight leading-none">
+              {category.name}
+            </h1>
+            {category.description && (
+              <p className="text-[#9ca3af] mt-2 text-sm max-w-md">{category.description}</p>
+            )}
+          </div>
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <p className="text-[#b2ea0f] text-sm font-semibold mb-6">
             {list.length} kit{list.length !== 1 ? 's' : ''} disponív{list.length !== 1 ? 'eis' : 'el'}
           </p>
-        </div>
 
         {!list.length ? (
           <div className="py-20 text-center text-[#9ca3af]">
@@ -135,6 +153,7 @@ export default async function CategoryPage({ params, searchParams: spPromise }: 
             })}
           </div>
         )}
+        </div>
       </div>
     )
   }
@@ -168,16 +187,34 @@ export default async function CategoryPage({ params, searchParams: spPromise }: 
   const { data: products, count } = await query.range(from, to)
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-10">
-      <div className="mb-6">
-        <h1 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tight">
-          {category.name}
-        </h1>
-        {category.description && (
-          <p className="text-[#9ca3af] mt-2">{category.description}</p>
+    <div>
+      {/* Hero header da categoria */}
+      <div className="relative h-44 md:h-56 overflow-hidden bg-[#111111]">
+        {category.image_url && (
+          <Image src={category.image_url} alt={category.name} fill className="object-cover" />
         )}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/70 to-black/30" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+        <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-transparent via-[#b2ea0f] to-transparent" />
+        <div className="absolute inset-0 flex flex-col justify-end px-6 md:px-10 pb-6 max-w-7xl mx-auto">
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-1.5 text-xs text-[#9ca3af] mb-3">
+            <Link href="/" className="hover:text-[#b2ea0f] transition-colors flex items-center gap-1">
+              <Home className="w-3 h-3" /> Início
+            </Link>
+            <ChevronRight className="w-3 h-3 text-[#555]" />
+            <span className="text-[#b2ea0f] font-bold">{category.name}</span>
+          </div>
+          <h1 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tight leading-none">
+            {category.name}
+          </h1>
+          {category.description && (
+            <p className="text-[#9ca3af] mt-2 text-sm max-w-md">{category.description}</p>
+          )}
+        </div>
       </div>
 
+      <div className="max-w-7xl mx-auto px-4 py-8">
       <Suspense fallback={<div className="h-12 bg-[#111111] rounded-xl animate-pulse mb-6" />}>
         <CategoryControls
           categoryId={category.id}
@@ -188,6 +225,7 @@ export default async function CategoryPage({ params, searchParams: spPromise }: 
           initialQ={q}
         />
       </Suspense>
+      </div>
     </div>
   )
 }
