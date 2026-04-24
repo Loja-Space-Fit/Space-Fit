@@ -22,8 +22,8 @@
   --color-surface-2: var(--surface-2);
   --color-border: var(--border);
   --color-muted: var(--muted);
-  --font-sans: var(--font-rajdhani);
-  --font-mono: var(--font-rajdhani);
+  --font-sans: var(--font-oswald);
+  --font-mono: var(--font-oswald);
 }
 
 * {
@@ -38,7 +38,7 @@ html {
 body {
   background-color: var(--background);
   color: var(--foreground);
-  font-family: var(--font-rajdhani), var(--font-oswald), system-ui, sans-serif;
+  font-family: var(--font-oswald), var(--font-rajdhani), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
