@@ -76,7 +76,9 @@ export default function BannerSlider({ banners }: { banners: Banner[] }) {
             <h1 className="text-3xl md:text-5xl lg:text-6xl font-black text-white uppercase tracking-tight leading-none mb-4">
               {banner.title.split(' ').map((word, i) => (
                 <span key={i}>
-                  {i % 3 === 1 ? <span className="text-[#b2ea0f]">{word}</span> : word}
+                  {(banner.highlighted_words || []).includes(i)
+                    ? <span style={{ color: banner.highlight_color || '#b2ea0f' }}>{word}</span>
+                    : word}
                   {' '}
                 </span>
               ))}
@@ -89,7 +91,7 @@ export default function BannerSlider({ banners }: { banners: Banner[] }) {
             href={banner.link || '/categoria/roupas'}
             className="btn-green shadow-[0_0_24px_rgba(178,234,15,0.35)] hover:shadow-[0_0_32px_rgba(178,234,15,0.5)] flex items-center gap-2 w-fit"
           >
-            Comprar Agora <ChevronRight className="w-4 h-4" />
+            {banner.button_text || 'Comprar Agora'} <ChevronRight className="w-4 h-4" />
           </Link>
         </div>
       </div>

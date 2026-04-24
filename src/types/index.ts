@@ -51,6 +51,9 @@ export interface Banner {
   link?: string;
   active: boolean;
   display_order: number;
+  highlighted_words?: number[];
+  highlight_color?: string;
+  button_text?: string;
   created_at: string;
 }
 

@@ -17,7 +17,7 @@ export default function AdminContentPage() {
   const [savingFeatured, setSavingFeatured] = useState(false)
   const [uploading, setUploading]   = useState(false)
   const [cropSrc, setCropSrc]       = useState<string | null>(null)
-  const [form, setForm] = useState({ title: '', subtitle: '', image_url: '', link: '', active: true, display_order: 1 })
+  const [form, setForm] = useState({ title: '', subtitle: '', image_url: '', link: '', active: true, display_order: 1, highlighted_words: [] as number[], highlight_color: '#b2ea0f', button_text: 'Comprar Agora' })
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -37,13 +37,13 @@ export default function AdminContentPage() {
 
   function openCreate() {
     setEditing(null)
-    setForm({ title: '', subtitle: '', image_url: '', link: '', active: true, display_order: banners.length + 1 })
+    setForm({ title: '', subtitle: '', image_url: '', link: '', active: true, display_order: banners.length + 1, highlighted_words: [], highlight_color: '#b2ea0f', button_text: 'Comprar Agora' })
     setShowForm(true)
   }
 
   function openEdit(b: Banner) {
     setEditing(b)
-    setForm({ title: b.title, subtitle: b.subtitle || '', image_url: b.image_url, link: b.link || '', active: b.active, display_order: b.display_order })
+    setForm({ title: b.title, subtitle: b.subtitle || '', image_url: b.image_url, link: b.link || '', active: b.active, display_order: b.display_order, highlighted_words: b.highlighted_words || [], highlight_color: b.highlight_color || '#b2ea0f', button_text: b.button_text || 'Comprar Agora' })
     setShowForm(true)
   }
 
@@ -146,98 +146,225 @@ export default function AdminContentPage() {
 
         {showForm && (
           <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 overflow-y-auto">
-            <div className="w-full max-w-lg bg-[#111111] border border-[#2a2a2a] rounded-2xl my-auto max-h-[90vh] overflow-y-auto">
+            <div className="w-full max-w-4xl bg-[#111111] border border-[#2a2a2a] rounded-2xl my-auto">
               <div className="flex items-center justify-between p-5 border-b border-[#2a2a2a]">
                 <h2 className="font-black text-white">{editing ? 'Editar Banner' : 'Novo Banner'}</h2>
                 <button onClick={() => setShowForm(false)}><X className="w-5 h-5 text-[#9ca3af]" /></button>
               </div>
-              <form onSubmit={handleSave} className="p-5 space-y-4">
-                <div>
-                  <label className="text-sm text-[#9ca3af] mb-1 block">Título *</label>
-                  <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} required className="input" placeholder="Ex: Coleção Verão 2025" />
-                </div>
-                <div>
-                  <label className="text-sm text-[#9ca3af] mb-1 block">Subtítulo</label>
-                  <input value={form.subtitle} onChange={e => setForm(f => ({ ...f, subtitle: e.target.value }))} className="input" placeholder="Ex: Roupas para arrasar na academia" />
-                </div>
-                <div>
-                  <label className="text-sm text-[#9ca3af] mb-1 block">Imagem do banner <span className="text-[#555] text-xs">(1920×820px · proporção 21:9)</span></label>
-                  {form.image_url ? (
-                    <div className="relative w-full h-36 rounded-xl overflow-hidden border border-[#2a2a2a] bg-[#1a1a1a]">
-                      <img src={form.image_url} alt="Banner" className="w-full h-full object-cover" />
-                      <button
-                        type="button"
-                        onClick={handleRemoveImage}
-                        className="absolute top-2 right-2 p-1 rounded-full bg-black/70 text-white hover:bg-red-600 transition-colors"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  ) : (
-                    <label className={`flex flex-col items-center justify-center gap-2 w-full h-28 rounded-xl border-2 border-dashed border-[#2a2a2a] cursor-pointer hover:border-[#b2ea0f]/50 transition-colors ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
-                      {uploading ? (
-                        <Loader2 className="w-5 h-5 text-[#9ca3af] animate-spin" />
-                      ) : (
-                        <>
-                          <ImageIcon className="w-6 h-6 text-[#555]" />
-                          <span className="text-xs text-[#555] flex items-center gap-1"><Upload className="w-3 h-3" /> Enviar imagem</span>
-                        </>
-                      )}
-                      <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleFileChange} />
-                    </label>
-                  )}
-                </div>
-                <div>
-                  <label className="text-sm text-[#9ca3af] mb-1 block">Ao clicar no banner</label>
-                  <select
-                    value={form.link}
-                    onChange={e => setForm(f => ({ ...f, link: e.target.value }))}
-                    className="input"
-                  >
-                    <option value="">Não fazer nada</option>
-                    {categories.map(cat => (
-                      <option key={cat.slug} value={`/categoria/${cat.slug}`}>
-                        Ir para: {cat.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col lg:flex-row">
+                {/* Coluna esquerda: formulário */}
+                <form onSubmit={handleSave} className="flex-1 p-5 space-y-4 overflow-y-auto max-h-[80vh]">
                   <div>
-                    <label className="text-sm text-[#9ca3af] mb-1 block">Ordem</label>
+                    <label className="text-sm text-[#9ca3af] mb-1 block">Título *</label>
+                    <input
+                      value={form.title}
+                      onChange={e => setForm(f => ({ ...f, title: e.target.value, highlighted_words: [] }))}
+                      required
+                      className="input"
+                      placeholder="Ex: Coleção Verão 2025"
+                    />
+                    {/* Word chips */}
+                    {form.title.trim() && (
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {form.title.trim().split(/\s+/).map((word, i) => {
+                          const active = form.highlighted_words.includes(i)
+                          return (
+                            <button
+                              key={i}
+                              type="button"
+                              onClick={() => setForm(f => ({
+                                ...f,
+                                highlighted_words: f.highlighted_words.includes(i)
+                                  ? f.highlighted_words.filter(n => n !== i)
+                                  : [...f.highlighted_words, i]
+                              }))}
+                              style={active ? {
+                                backgroundColor: `${form.highlight_color}22`,
+                                borderColor: form.highlight_color,
+                                color: form.highlight_color,
+                              } : {}}
+                              className={`px-2 py-0.5 rounded text-xs font-bold border transition-all ${active ? '' : 'border-[#2a2a2a] text-[#9ca3af] bg-[#1a1a1a]'}`}
+                            >
+                              {word}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    )}
+                    {form.title.trim() && (
+                      <p className="text-[#555] text-xs mt-1">Clique nas palavras para destacar</p>
+                    )}
+                  </div>
+
+                  {/* Color selector */}
+                  {form.title.trim() && (
+                    <div>
+                      <label className="text-sm text-[#9ca3af] mb-2 block">Cor do destaque</label>
+                      <div className="flex items-center gap-3">
+                        {([['#b2ea0f', 'Verde'], ['#ffffff', 'Branco']] as const).map(([color, label]) => (
+                          <button
+                            key={color}
+                            type="button"
+                            onClick={() => setForm(f => ({ ...f, highlight_color: color }))}
+                            className={`flex flex-col items-center gap-1 group`}
+                          >
+                            <span
+                              className={`w-7 h-7 rounded-full block border-2 transition-all ${form.highlight_color === color ? 'outline outline-2 outline-offset-2 outline-[#b2ea0f]' : 'border-[#2a2a2a]'}`}
+                              style={{ backgroundColor: color }}
+                            />
+                            <span className="text-xs text-[#9ca3af]">{label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="text-sm text-[#9ca3af] mb-1 block">Subtítulo</label>
+                    <input value={form.subtitle} onChange={e => setForm(f => ({ ...f, subtitle: e.target.value }))} className="input" placeholder="Ex: Roupas para arrasar na academia" />
+                  </div>
+
+                  <div>
+                    <label className="text-sm text-[#9ca3af] mb-1 block">Texto do botão</label>
+                    <input
+                      value={form.button_text}
+                      onChange={e => setForm(f => ({ ...f, button_text: e.target.value }))}
+                      className="input"
+                      placeholder="Comprar Agora"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm text-[#9ca3af] mb-1 block">Imagem do banner <span className="text-[#555] text-xs">(1920×820px · proporção 21:9)</span></label>
+                    {form.image_url ? (
+                      <div className="relative w-full h-36 rounded-xl overflow-hidden border border-[#2a2a2a] bg-[#1a1a1a]">
+                        <img src={form.image_url} alt="Banner" className="w-full h-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={handleRemoveImage}
+                          className="absolute top-2 right-2 p-1 rounded-full bg-black/70 text-white hover:bg-red-600 transition-colors"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <label className={`flex flex-col items-center justify-center gap-2 w-full h-28 rounded-xl border-2 border-dashed border-[#2a2a2a] cursor-pointer hover:border-[#b2ea0f]/50 transition-colors ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                        {uploading ? (
+                          <Loader2 className="w-5 h-5 text-[#9ca3af] animate-spin" />
+                        ) : (
+                          <>
+                            <ImageIcon className="w-6 h-6 text-[#555]" />
+                            <span className="text-xs text-[#555] flex items-center gap-1"><Upload className="w-3 h-3" /> Enviar imagem</span>
+                          </>
+                        )}
+                        <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleFileChange} />
+                      </label>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="text-sm text-[#9ca3af] mb-1 block">Ao clicar no banner</label>
                     <select
-                      value={form.display_order}
-                      onChange={e => setForm(f => ({ ...f, display_order: parseInt(e.target.value) }))}
+                      value={form.link}
+                      onChange={e => setForm(f => ({ ...f, link: e.target.value }))}
                       className="input"
                     >
-                      {Array.from(
-                        { length: editing ? banners.length : banners.length + 1 },
-                        (_, i) => i + 1
-                      ).map(n => {
-                        const ocupado = banners.find(b => b.display_order === n && b.id !== editing?.id)
-                        const isAtual = editing && n === editing.display_order
-                        return (
-                          <option key={n} value={n}>
-                            {`Posição ${n}`}{isAtual ? ' (atual)' : ocupado ? ` ⇄ ${ocupado.title}` : ''}
-                          </option>
-                        )
-                      })}
+                      <option value="">Não fazer nada</option>
+                      {categories.map(cat => (
+                        <option key={cat.slug} value={`/categoria/${cat.slug}`}>
+                          Ir para: {cat.name}
+                        </option>
+                      ))}
                     </select>
                   </div>
-                  <div className="flex items-end pb-2">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input type="checkbox" checked={form.active} onChange={e => setForm(f => ({ ...f, active: e.target.checked }))} className="w-4 h-4 accent-[#b2ea0f]" />
-                      <span className="text-sm text-white">Banner ativo</span>
-                    </label>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-sm text-[#9ca3af] mb-1 block">Ordem</label>
+                      <select
+                        value={form.display_order}
+                        onChange={e => setForm(f => ({ ...f, display_order: parseInt(e.target.value) }))}
+                        className="input"
+                      >
+                        {Array.from(
+                          { length: editing ? banners.length : banners.length + 1 },
+                          (_, i) => i + 1
+                        ).map(n => {
+                          const ocupado = banners.find(b => b.display_order === n && b.id !== editing?.id)
+                          const isAtual = editing && n === editing.display_order
+                          return (
+                            <option key={n} value={n}>
+                              {`Posição ${n}`}{isAtual ? ' (atual)' : ocupado ? ` ⇄ ${ocupado.title}` : ''}
+                            </option>
+                          )
+                        })}
+                      </select>
+                    </div>
+                    <div className="flex items-end pb-2">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" checked={form.active} onChange={e => setForm(f => ({ ...f, active: e.target.checked }))} className="w-4 h-4 accent-[#b2ea0f]" />
+                        <span className="text-sm text-white">Banner ativo</span>
+                      </label>
+                    </div>
                   </div>
+
+                  <div className="flex gap-3">
+                    <button type="button" onClick={() => setShowForm(false)} className="btn-outline">Cancelar</button>
+                    <button type="submit" disabled={saving} className="btn-green flex-1">
+                      {saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Salvando...</> : (editing ? 'Salvar' : 'Criar Banner')}
+                    </button>
+                  </div>
+                </form>
+
+                {/* Coluna direita: preview */}
+                <div className="lg:w-72 shrink-0 p-5 border-t lg:border-t-0 lg:border-l border-[#2a2a2a]">
+                  <p className="text-sm text-[#9ca3af] mb-3 font-semibold">Prévia</p>
+                  <div className="aspect-[21/9] relative overflow-hidden rounded-xl bg-[#1a1a1a]">
+                    {form.image_url && (
+                      <img src={form.image_url} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                    )}
+                    {!form.image_url && (
+                      <div className="absolute inset-0 bg-gradient-to-br from-[#111] to-[#0a0a0a]" />
+                    )}
+                    {/* Overlays */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-black/20" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60" />
+                    {/* Accent line */}
+                    <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-[#b2ea0f]" />
+                    {/* Content */}
+                    <div className="absolute inset-0 flex flex-col justify-center px-3 py-2">
+                      {/* Badge */}
+                      <div className="inline-flex items-center gap-1 bg-[#b2ea0f]/15 border border-[#b2ea0f]/40 rounded-full px-1.5 py-0.5 mb-1.5 w-fit">
+                        <span className="w-1 h-1 rounded-full bg-[#b2ea0f]" />
+                        <span className="text-[#b2ea0f] text-[9px] font-bold uppercase tracking-wider">Space Fit</span>
+                      </div>
+                      {form.title ? (
+                        <h3 className="text-white font-black text-[10px] uppercase leading-tight mb-1">
+                          {form.title.trim().split(/\s+/).map((word, i) => (
+                            <span key={i}>
+                              {form.highlighted_words.includes(i)
+                                ? <span style={{ color: form.highlight_color }}>{word}</span>
+                                : word}
+                              {' '}
+                            </span>
+                          ))}
+                        </h3>
+                      ) : (
+                        <div className="h-3 w-20 bg-white/20 rounded mb-1" />
+                      )}
+                      {form.subtitle ? (
+                        <p className="text-[#d1d5db] text-[8px] mb-1.5 leading-tight">{form.subtitle}</p>
+                      ) : (
+                        <div className="h-2 w-14 bg-white/10 rounded mb-1.5" />
+                      )}
+                      <div className="bg-[#b2ea0f] text-black font-black text-[8px] px-2 py-0.5 rounded w-fit">
+                        {form.button_text || 'Comprar Agora'}
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-[#555] text-[10px] mt-1.5 text-center">Prévia aproximada · tamanho real é maior</p>
                 </div>
-                <div className="flex gap-3">
-                  <button type="button" onClick={() => setShowForm(false)} className="btn-outline">Cancelar</button>
-                  <button type="submit" disabled={saving} className="btn-green flex-1">
-                    {saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Salvando...</> : (editing ? 'Salvar' : 'Criar Banner')}
-                  </button>
-                </div>
-              </form>
+              </div>
             </div>
           </div>
         )}
