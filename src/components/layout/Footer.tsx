@@ -12,7 +12,7 @@ export default function Footer() {
         {/* Marca */}
         <div className="md:col-span-2">
           <div className="mb-4">
-            <Image src="/imagens/logo.png" alt="Space Fit" width={420} height={160} className="h-36 w-auto" />
+            <Image src="/imagens/logo.png" alt="Space Fit" width={420} height={160} className="h-16 md:h-20 w-auto" />
           </div>
           <p className="text-[#9ca3af] text-sm leading-relaxed max-w-xs">
             A melhor loja fitness do Brasil. Roupas, suplementos e acessórios

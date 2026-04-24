@@ -52,7 +52,9 @@ export default function AdminSidebar() {
     <div className="flex flex-col h-full">
       {/* Logo */}
       <div className="px-4 py-5 border-b border-[#2a2a2a]">
-        <Image src="/imagens/logo.png" alt="Space Fit" width={200} height={80} className="h-20 w-auto" />
+        <Link href="/" className="block hover:opacity-80 transition-opacity">
+          <Image src="/imagens/logo.png" alt="Space Fit" width={200} height={80} className="h-20 w-auto" />
+        </Link>
         <p className="text-xs text-[#9ca3af] mt-1">Painel Admin</p>
       </div>
 

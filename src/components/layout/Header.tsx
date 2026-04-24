@@ -59,7 +59,7 @@ export default function Cabecalho() {
         {/* Logo + WhatsApp */}
         <div className="flex items-center gap-3 shrink-0">
           <Link href="/" className="flex items-center">
-            <Image src="/imagens/logo.png" alt="Space Fit" width={420} height={160} className="h-36 w-auto" />
+            <Image src="/imagens/logo.png" alt="Space Fit" width={420} height={160} className="h-14 md:h-16 w-auto" />
           </Link>
           <a
             href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP || '5534998853794'}?text=${encodeURIComponent('Olá! Vim pelo site da Space Fit e preciso de ajuda.')}`}

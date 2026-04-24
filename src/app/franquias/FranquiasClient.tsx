@@ -64,22 +64,22 @@ export default function FranquiasClient({ regions, franchises }: Props) {
   const nextIdx = (slideIndex + 1) % images.length
 
   return (
-    <main className="min-h-screen bg-[#0a0a0a]">
+    <main className="min-h-screen bg-[#0a0a0a] overflow-x-hidden">
 
       {/* Hero */}
       <div className="relative overflow-hidden bg-[#0a0a0a] border-b border-[#1a1a1a]">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[300px] bg-[#b2ea0f]/8 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-transparent via-[#b2ea0f]/60 to-transparent" />
         <div className="absolute right-0 top-0 bottom-0 w-1 bg-gradient-to-b from-transparent via-[#b2ea0f]/30 to-transparent" />
-        <div className="max-w-7xl mx-auto px-4 py-16 text-center relative z-10">
-          <div className="inline-flex items-center gap-2.5 bg-[#b2ea0f]/10 border border-[#b2ea0f]/30 rounded-full px-5 py-2 mb-6">
-            <Building2 className="w-4 h-4 text-[#b2ea0f]" />
-            <span className="text-[#b2ea0f] text-sm font-black uppercase tracking-widest">Space Fit Academia</span>
+        <div className="max-w-7xl mx-auto px-4 py-10 md:py-16 text-center relative z-10">
+          <div className="inline-flex items-center gap-2 bg-[#b2ea0f]/10 border border-[#b2ea0f]/30 rounded-full px-4 py-1.5 mb-5">
+            <Building2 className="w-3.5 h-3.5 text-[#b2ea0f]" />
+            <span className="text-[#b2ea0f] text-xs font-black uppercase tracking-widest">Space Fit Academia</span>
           </div>
-          <h1 className="text-4xl md:text-6xl font-black text-white uppercase leading-none mb-4">
+          <h1 className="text-3xl md:text-6xl font-black text-white uppercase leading-none mb-4">
             Nossas <span className="text-[#b2ea0f]">Franquias</span>
           </h1>
-          <p className="text-[#9ca3af] text-lg max-w-xl mx-auto">
+          <p className="text-[#9ca3af] text-base md:text-lg max-w-xl mx-auto px-2">
             Presença em múltiplas cidades, sempre com a mesma excelência.
             Conheça a história de cada unidade.
           </p>
@@ -97,20 +97,20 @@ export default function FranquiasClient({ regions, franchises }: Props) {
           <p className="text-[#9ca3af] text-lg">Nenhuma franquia cadastrada ainda.</p>
         </div>
       ) : (
-        <div className="max-w-7xl mx-auto px-4 py-12">
-          <div className="flex flex-col lg:flex-row gap-8">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 py-6 md:py-12">
+          <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
 
             {/* Sidebar */}
             <aside className="lg:w-64 shrink-0">
               <p className="text-[#9ca3af] text-xs font-bold uppercase tracking-widest mb-3 px-1">Selecionar unidade</p>
-              <div className="flex flex-row lg:flex-col gap-2 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0">
+              <div className="flex flex-row lg:flex-col gap-2 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0 scrollbar-hide">
                 {regions.map(r => {
                   const isActive = r.value === activeRegion
                   return (
                     <button
                       key={r.value}
                       onClick={() => setActiveRegion(r.value)}
-                      className={`shrink-0 flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-left transition-all border ${
+                      className={`shrink-0 flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-left transition-all border ${
                         isActive
                           ? 'bg-[#b2ea0f]/15 border-[#b2ea0f]/40 text-[#b2ea0f]'
                           : 'bg-[#111111] border-[#2a2a2a] text-[#9ca3af] hover:text-white hover:border-[#3a3a3a]'
@@ -149,11 +149,11 @@ export default function FranquiasClient({ regions, franchises }: Props) {
               {/* Cabeçalho da região */}
               <div className="flex items-start justify-between flex-wrap gap-3">
                 <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <Building2 className="w-5 h-5 text-[#b2ea0f]" />
-                    <h2 className="text-2xl md:text-3xl font-black text-white uppercase">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <Building2 className="w-5 h-5 text-[#b2ea0f] shrink-0" />
+                    <h2 className="text-xl md:text-3xl font-black text-white uppercase leading-tight">
                       {region?.label}
-                      <span className="text-[#b2ea0f] ml-2">— {region?.state}</span>
+                      <span className="text-[#b2ea0f] ml-1.5">— {region?.state}</span>
                     </h2>
                   </div>
                   {region?.address && (
@@ -173,7 +173,7 @@ export default function FranquiasClient({ regions, franchises }: Props) {
                 {/* Linha verde topo */}
                 <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#b2ea0f] via-[#b2ea0f]/40 to-transparent" />
 
-                <div className="relative p-8 md:p-10">
+                <div className="relative p-5 sm:p-8 md:p-10">
                   {/* Badge */}
                   <div className="inline-flex items-center gap-2 bg-[#b2ea0f]/15 border border-[#b2ea0f]/30 rounded-full px-4 py-1.5 mb-6">
                     <span className="w-1.5 h-1.5 rounded-full bg-[#b2ea0f]" />
@@ -184,7 +184,7 @@ export default function FranquiasClient({ regions, franchises }: Props) {
                   <Quote className="w-10 h-10 text-[#b2ea0f]/20 mb-3 -ml-1" />
 
                   {franchise?.history ? (
-                    <p className="text-[#e5e7eb] text-[19px] leading-[1.9] whitespace-pre-wrap">
+                    <p className="text-[#e5e7eb] text-base md:text-[19px] leading-[1.8] md:leading-[1.9] whitespace-pre-wrap">
                       {franchise.history}
                     </p>
                   ) : (
@@ -309,7 +309,7 @@ export default function FranquiasClient({ regions, franchises }: Props) {
               </div>
 
               {/* CTA Franqueado */}
-              <div className="relative bg-gradient-to-br from-[#b2ea0f]/15 to-[#b2ea0f]/5 border border-[#b2ea0f]/30 rounded-2xl p-7 overflow-hidden">
+              <div className="relative bg-gradient-to-br from-[#b2ea0f]/15 to-[#b2ea0f]/5 border border-[#b2ea0f]/30 rounded-2xl p-5 sm:p-7 overflow-hidden">
                 <div className="absolute right-0 top-0 bottom-0 w-1 bg-[#b2ea0f] rounded-l-full" />
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
                   <div>

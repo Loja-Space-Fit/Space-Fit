@@ -37,7 +37,7 @@ export default async function HomePage() {
 
       {/* Barra de benefícios */}
       <div className="bg-[#b2ea0f] text-black py-3">
-        <div className="max-w-7xl mx-auto px-4 flex flex-wrap justify-center gap-6 text-sm font-bold">
+        <div className="max-w-7xl mx-auto px-4 grid grid-cols-2 md:flex md:flex-wrap justify-center gap-y-2 gap-x-6 text-xs md:text-sm font-bold text-center">
           <span>⚡ Frete Grátis acima de R$299</span>
           <span>🔒 Pagamento 100% Seguro</span>
           <span>📦 Entrega Rápida</span>
