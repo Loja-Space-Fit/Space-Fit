@@ -5,7 +5,7 @@ import ProductCard from '@/components/store/ProductCard'
 import CategoryCards from '@/components/store/CategoryCards'
 import TestimonialsSection from '@/components/store/TestimonialsSection'
 import Link from 'next/link'
-import { ArrowRight, Zap, Flame, Shield, Trophy, Users } from 'lucide-react'
+import { ArrowRight, Zap, Flame, Shield, Trophy, Users, Truck, ShieldCheck, Package, MessageCircle } from 'lucide-react'
 
 export default async function HomePage() {
   const supabase = await createClient()
@@ -36,18 +36,23 @@ export default async function HomePage() {
       <BannerSlider banners={(banners || []) as Banner[]} />
 
       {/* Barra de benefícios */}
-      <div className="bg-[#0d0d0d] border-b border-[#1a1a1a]">
-        <div className="max-w-7xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 divide-x divide-[#1a1a1a]">
+      <div className="relative bg-[#0d0d0d] border-b border-[#1a1a1a] overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#b2ea0f]/40 to-transparent" />
+        <div className="max-w-7xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4">
           {[
-            { icon: '⚡', title: 'Frete Grátis', sub: 'acima de R$299' },
-            { icon: '🔒', title: 'Pagamento Seguro', sub: '100% protegido' },
-            { icon: '📦', title: 'Entrega Rápida', sub: 'para todo Brasil' },
-            { icon: '💬', title: 'Suporte', sub: 'via WhatsApp' },
-          ].map((b, i) => (
-            <div key={i} className="flex flex-col items-center justify-center gap-0.5 py-4 px-3 text-center">
-              <span className="text-2xl leading-none">{b.icon}</span>
-              <span className="text-white font-black text-xs uppercase tracking-wide mt-1.5">{b.title}</span>
-              <span className="text-[#9ca3af] text-[10px] font-medium">{b.sub}</span>
+            { Icon: Truck, title: 'Frete Grátis', sub: 'acima de R$299' },
+            { Icon: ShieldCheck, title: 'Pagamento Seguro', sub: '100% protegido' },
+            { Icon: Package, title: 'Entrega Rápida', sub: 'para todo Brasil' },
+            { Icon: MessageCircle, title: 'Suporte', sub: 'via WhatsApp' },
+          ].map(({ Icon, title, sub }, i) => (
+            <div key={i} className="relative flex items-center gap-3 py-4 px-4 group [&:not(:last-child)]:border-r [&:not(:last-child)]:border-[#1a1a1a]">
+              <div className="w-9 h-9 rounded-lg bg-[#b2ea0f]/10 border border-[#b2ea0f]/20 flex items-center justify-center shrink-0 group-hover:bg-[#b2ea0f]/20 group-hover:shadow-[0_0_12px_rgba(178,234,15,0.2)] transition-all">
+                <Icon className="w-4 h-4 text-[#b2ea0f]" />
+              </div>
+              <div>
+                <span className="text-white font-black text-xs uppercase tracking-wide block">{title}</span>
+                <span className="text-[#9ca3af] text-[10px] font-medium">{sub}</span>
+              </div>
             </div>
           ))}
         </div>
@@ -59,7 +64,10 @@ export default async function HomePage() {
           <div className="flex items-start gap-4">
             <span className="w-1 h-10 bg-[#b2ea0f] rounded-full shrink-0 mt-1" />
             <div>
-              <span className="text-[#b2ea0f] text-xs font-black uppercase tracking-[0.25em] block mb-1">Explore</span>
+              <div className="flex items-center gap-2 mb-1">
+                <Package className="w-4 h-4 text-[#b2ea0f]" />
+                <span className="text-[#b2ea0f] text-xs font-black uppercase tracking-[0.25em]">Explore</span>
+              </div>
               <h2 className="text-2xl md:text-4xl font-black text-white uppercase tracking-tight leading-none">
                 Nossas <span className="text-[#b2ea0f]">Categorias</span>
               </h2>
@@ -84,6 +92,7 @@ export default async function HomePage() {
                 <h2 className="text-2xl md:text-4xl font-black text-white uppercase tracking-tight leading-none">
                   Produtos em <span className="text-[#b2ea0f]">Destaque</span>
                 </h2>
+                <p className="text-[#9ca3af] text-sm mt-2">Os mais queridos pelos nossos clientes</p>
               </div>
             </div>
             <Link

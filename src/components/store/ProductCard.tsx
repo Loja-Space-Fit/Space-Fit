@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { Heart } from 'lucide-react'
+import { Heart, ShoppingCart } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import type { Product } from '@/types'
 import { formatBRL, getDiscount } from '@/lib/utils'
@@ -12,6 +12,7 @@ import { useAuth } from '@/context/AuthContext'
 export default function ProductCard({ product }: { product: Product }) {
   const discount = product.compare_price ? getDiscount(product.price, product.compare_price) : 0
   const mainImage = product.images?.[0]
+  const hoverImage = product.images?.[1]
   const { toggle, isFavorite } = useFavorites()
   const { user } = useAuth()
   const router = useRouter()
@@ -29,18 +30,31 @@ export default function ProductCard({ product }: { product: Product }) {
       {/* Imagem */}
       <Link href={`/produto/${product.slug}`} className="block relative aspect-square overflow-hidden bg-[#1a1a1a] rounded-t-xl">
         {mainImage ? (
-          <Image
-            src={mainImage}
-            alt={product.name}
-            fill
-            className="object-cover group-hover:scale-105 transition-transform duration-300"
-            sizes="(max-width: 768px) 50vw, 25vw"
-          />
+          <>
+            <Image
+              src={mainImage}
+              alt={product.name}
+              fill
+              className={`object-cover transition-all duration-500 ${hoverImage ? 'group-hover:opacity-0' : 'group-hover:scale-105'}`}
+              sizes="(max-width: 768px) 50vw, 25vw"
+            />
+            {hoverImage && (
+              <Image
+                src={hoverImage}
+                alt={product.name}
+                fill
+                className="object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                sizes="(max-width: 768px) 50vw, 25vw"
+              />
+            )}
+          </>
         ) : (
           <div className="w-full h-full flex items-center justify-center text-[#9ca3af] text-sm">
             Sem imagem
           </div>
         )}
+        {/* Top accent line animada */}
+        <div className="absolute top-0 left-0 right-0 h-0.5 bg-[#b2ea0f] scale-x-0 group-hover:scale-x-100 transition-transform duration-400 origin-left z-10" />
         {discount > 0 && (
           <span className="absolute top-2 left-2 bg-[#b2ea0f] text-black text-xs font-black px-2 py-1 rounded-md">
             -{discount}%
@@ -53,6 +67,12 @@ export default function ProductCard({ product }: { product: Product }) {
               Produto Esgotado
             </span>
           </>
+        )}
+        {/* Badge de categoria */}
+        {product.category?.name && (
+          <span className="absolute bottom-2 left-2 bg-black/70 backdrop-blur-sm border border-white/10 text-white text-[10px] font-bold px-2 py-0.5 rounded-full z-10 leading-none">
+            {product.category.name}
+          </span>
         )}
         {/* Botão favoritar */}
         <button
@@ -90,8 +110,9 @@ export default function ProductCard({ product }: { product: Product }) {
         {product.stock > 0 ? (
           <Link
             href={`/produto/${product.slug}`}
-            className="w-full py-2 text-sm font-bold rounded-lg flex items-center justify-center gap-1.5 transition-all bg-[#b2ea0f] text-black hover:bg-[#c8f040]"
+            className="w-full py-2 text-sm font-bold rounded-lg flex items-center justify-center gap-1.5 transition-all bg-[#b2ea0f] text-black hover:bg-[#c8f040] hover:shadow-[0_0_14px_rgba(178,234,15,0.45)]"
           >
+            <ShoppingCart className="w-3.5 h-3.5" />
             Comprar
           </Link>
         ) : (
