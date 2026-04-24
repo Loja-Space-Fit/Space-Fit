@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Orbitron, Rajdhani } from "next/font/google";
+import { Orbitron, Rajdhani, Oswald } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
 import { AuthProvider } from "@/context/AuthContext";
@@ -16,6 +16,12 @@ const orbitron = Orbitron({
 
 const rajdhani = Rajdhani({
   variable: "--font-rajdhani",
+  subsets: ["latin", "latin-ext"],
+  weight: ["600", "700"],
+});
+
+const oswald = Oswald({
+  variable: "--font-oswald",
   subsets: ["latin", "latin-ext"],
   weight: ["600", "700"],
 });
@@ -43,7 +49,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR" className={`${orbitron.variable} ${rajdhani.variable} h-full antialiased`}>
+    <html lang="pt-BR" className={`${orbitron.variable} ${rajdhani.variable} ${oswald.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-[#0a0a0a] text-white">
         <AuthProvider>
           <FavoritesProvider>
