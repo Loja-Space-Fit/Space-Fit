@@ -265,21 +265,23 @@ export default function PlanosAdminPage() {
         /* ---- ABA PLANOS ---- */
         <div className="space-y-3">
           {regionPlans.map(plan => (
-            <div key={plan.id} className={`bg-[#111111] border rounded-xl p-4 flex items-center gap-4 ${plan.highlight ? 'border-[#b2ea0f]/40' : 'border-[#2a2a2a]'}`}>
+            <div key={plan.id} className={`bg-[#111111] border rounded-xl p-3 sm:p-4 flex items-center gap-3 ${plan.highlight ? 'border-[#b2ea0f]/40' : 'border-[#2a2a2a]'}`}>
               <GripVertical className="w-4 h-4 text-[#555] shrink-0" />
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-1.5 flex-wrap">
                   <span className={`font-black text-sm ${plan.highlight ? 'text-[#b2ea0f]' : 'text-white'}`}>{plan.name}</span>
-                  {plan.highlight && <span className="text-xs bg-[#b2ea0f]/20 text-[#b2ea0f] px-2 py-0.5 rounded-full font-bold">Premium</span>}
-                  {!plan.active && <span className="text-xs bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full font-bold">Inativo</span>}
+                  {plan.highlight && <span className="text-[10px] bg-[#b2ea0f]/20 text-[#b2ea0f] px-1.5 py-0.5 rounded-full font-bold">Premium</span>}
+                  {!plan.active && <span className="text-[10px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded-full font-bold">Inativo</span>}
                 </div>
-                <div className="flex items-center gap-4 mt-0.5">
-                  <span className="text-white font-black">{formatBRL(plan.price)}</span>
-                  {plan.price_total && <span className="text-[#9ca3af] text-xs">{plan.installments}x = {formatBRL(plan.price_total)}</span>}
+                <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 mt-0.5">
+                  <span className="text-white font-black text-sm">{formatBRL(plan.price)}</span>
                   <span className="text-[#555] text-xs">{plan.period_label}</span>
+                  {plan.price_total && (
+                    <span className="text-[#9ca3af] text-xs">{plan.installments}x = {formatBRL(plan.price_total)}</span>
+                  )}
                 </div>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-1.5 shrink-0">
                 <button onClick={() => toggleActive(plan)} title={plan.active ? 'Desativar' : 'Ativar'} className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${plan.active ? 'bg-green-500/20 text-green-400 hover:bg-green-500/30' : 'bg-[#2a2a2a] text-[#555] hover:bg-[#333]'}`}>
                   <Check className="w-4 h-4" />
                 </button>

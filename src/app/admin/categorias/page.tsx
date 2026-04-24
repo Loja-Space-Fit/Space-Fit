@@ -270,10 +270,11 @@ export default function AdminCategoriesPage() {
         <ImageCropEditor imageSrc={cropSrc} onDone={handleCropDone} onCancel={handleCropCancel} initialAspect={cropContext === 'bundle' ? 1 : 16 / 9} />
       )}
 
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-black text-white">Categorias</h1>
-        <button onClick={() => setStep('type-select')} className="btn-green gap-2">
-          <Plus className="w-4 h-4" /> Nova Categoria
+      <div className="mb-6 flex items-center justify-between gap-3">
+        <h1 className="text-xl md:text-2xl font-black text-white">Categorias</h1>
+        <button onClick={() => setStep('type-select')} className="btn-green !px-3 !py-2 md:!px-5 md:!py-3 flex items-center gap-1.5 shrink-0">
+          <Plus className="w-4 h-4 shrink-0" />
+          <span className="hidden sm:inline">Nova Categoria</span>
         </button>
       </div>
 
