@@ -128,10 +128,63 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Depoimentos */}
-      <FadeIn>
-        <TestimonialsSection />
-      </FadeIn>
+
+      {/* Diferenciais Space Fit */}
+      <section className="relative bg-[#0a0a0a] py-20 overflow-hidden">
+        {/* Glow decorativo */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-[#b2ea0f]/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="relative max-w-5xl mx-auto px-4">
+          <FadeIn>
+            <div className="flex flex-col items-center text-center mb-12">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="w-8 h-px bg-[#b2ea0f]" />
+                <span className="text-[#b2ea0f] text-xs font-black uppercase tracking-[0.25em]">Por que comprar aqui?</span>
+                <span className="w-8 h-px bg-[#b2ea0f]" />
+              </div>
+              <h2 className="text-2xl md:text-4xl font-black text-white uppercase tracking-tight leading-none">
+                Experiência <span className="text-[#b2ea0f]">sem complicação</span>
+              </h2>
+              <p className="text-[#9ca3af] mt-3 text-sm max-w-md">Tudo pensado para você comprar com confiança e praticidade.</p>
+            </div>
+          </FadeIn>
+          <FadeIn delay={100}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+              {/* Troca fácil */}
+              <div className="relative rounded-2xl bg-[#111111] border border-[#1f1f1f] hover:border-[#b2ea0f]/40 p-7 flex flex-col items-center text-center shadow-[0_0_30px_rgba(178,234,15,0.04)] group transition-all duration-300">
+                <div className="w-12 h-12 rounded-full bg-[#b2ea0f]/10 flex items-center justify-center mb-4 group-hover:bg-[#b2ea0f]/20 transition-colors">
+                  <svg className="w-6 h-6 text-[#b2ea0f]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M2.5 17.5V21h3.5M21.5 6.5V3h-3.5M7 21c-2.5-2-4-4.5-4-7.5C3 7.5 7.5 3 12 3s9 4.5 9 10.5c0 3-1.5 5.5-4 7.5" /></svg>
+                </div>
+                <h3 className="text-white font-black uppercase text-sm mb-1.5">30 dias para troca</h3>
+                <p className="text-[#6b7280] text-sm leading-snug">Sem burocracia, sem estresse.</p>
+              </div>
+              {/* Entrega Brasil */}
+              <div className="relative rounded-2xl bg-[#111111] border border-[#1f1f1f] hover:border-[#b2ea0f]/40 p-7 flex flex-col items-center text-center shadow-[0_0_30px_rgba(178,234,15,0.04)] group transition-all duration-300">
+                <div className="w-12 h-12 rounded-full bg-[#b2ea0f]/10 flex items-center justify-center mb-4 group-hover:bg-[#b2ea0f]/20 transition-colors">
+                  <Truck className="w-6 h-6 text-[#b2ea0f]" />
+                </div>
+                <h3 className="text-white font-black uppercase text-sm mb-1.5">Entrega para todo Brasil</h3>
+                <p className="text-[#6b7280] text-sm leading-snug">Correios e transportadoras parceiras.</p>
+              </div>
+              {/* Suporte WhatsApp */}
+              <div className="relative rounded-2xl bg-[#111111] border border-[#1f1f1f] hover:border-[#b2ea0f]/40 p-7 flex flex-col items-center text-center shadow-[0_0_30px_rgba(178,234,15,0.04)] group transition-all duration-300">
+                <div className="w-12 h-12 rounded-full bg-[#b2ea0f]/10 flex items-center justify-center mb-4 group-hover:bg-[#b2ea0f]/20 transition-colors">
+                  <MessageCircle className="w-6 h-6 text-[#b2ea0f]" />
+                </div>
+                <h3 className="text-white font-black uppercase text-sm mb-1.5">Suporte via WhatsApp</h3>
+                <p className="text-[#6b7280] text-sm leading-snug">Fale com a gente, resposta rápida.</p>
+              </div>
+              {/* Compra segura */}
+              <div className="relative rounded-2xl bg-[#111111] border border-[#1f1f1f] hover:border-[#b2ea0f]/40 p-7 flex flex-col items-center text-center shadow-[0_0_30px_rgba(178,234,15,0.04)] group transition-all duration-300">
+                <div className="w-12 h-12 rounded-full bg-[#b2ea0f]/10 flex items-center justify-center mb-4 group-hover:bg-[#b2ea0f]/20 transition-colors">
+                  <ShieldCheck className="w-6 h-6 text-[#b2ea0f]" />
+                </div>
+                <h3 className="text-white font-black uppercase text-sm mb-1.5">Compra 100% segura</h3>
+                <p className="text-[#6b7280] text-sm leading-snug">Seus dados protegidos, sempre.</p>
+              </div>
+            </div>
+          </FadeIn>
+        </div>
+      </section>
 
       {/* Sobre */}
       <section className="relative overflow-hidden bg-[#0a0a0a] py-20">
@@ -193,23 +246,7 @@ export default async function HomePage() {
             </FadeIn>
           </div>
 
-          {/* Stats */}
-          <FadeIn delay={50}>
-          <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              { num: '500+', label: 'Produtos disponíveis' },
-              { num: '2k+', label: 'Clientes satisfeitos' },
-              { num: '4.9★', label: 'Avaliação média' },
-              { num: '24h', label: 'Suporte no WhatsApp' },
-            ].map(({ num, label }) => (
-              <div key={label} className="relative border border-[#1f1f1f] hover:border-[#b2ea0f]/40 rounded-2xl p-6 text-center bg-[#111111] overflow-hidden group transition-all duration-300">
-                <div className="absolute inset-0 bg-[#b2ea0f]/0 group-hover:bg-[#b2ea0f]/5 transition-colors duration-300" />
-                <p className="text-3xl md:text-4xl font-black text-[#b2ea0f] mb-1 relative">{num}</p>
-                <p className="text-[#6b7280] text-xs font-bold uppercase tracking-wide relative">{label}</p>
-              </div>
-            ))}
-          </div>
-          </FadeIn>
+          {/* ...existing code... */}
         </div>
       </section>
 
