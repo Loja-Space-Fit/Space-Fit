@@ -124,13 +124,14 @@ export default function AdminContentPage() {
       )}
       {/* === BANNERS === */}
       <section>
-        <div className="mb-5 flex items-center justify-between">
+        <div className="mb-5 flex items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-black text-white">Conteúdo do Site</h1>
+            <h1 className="text-xl md:text-2xl font-black text-white">Conteúdo do Site</h1>
             <p className="text-[#9ca3af] text-sm">Banners do carrossel e produtos em destaque</p>
           </div>
-          <button onClick={openCreate} className="btn-green gap-2">
-            <Plus className="w-4 h-4" /> Novo Banner
+          <button onClick={openCreate} className="btn-green !px-3 !py-2 md:!px-5 md:!py-3 flex items-center gap-1.5 shrink-0">
+            <Plus className="w-4 h-4 shrink-0" />
+            <span className="hidden sm:inline">Novo Banner</span>
           </button>
         </div>
 
