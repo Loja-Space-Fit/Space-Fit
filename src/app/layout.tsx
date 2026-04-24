@@ -28,14 +28,14 @@ const oswald = Oswald({
 
 export const metadata: Metadata = {
   title: {
-    default: "Space Fit — Loja Fitness",
+    default: "Space Fit | Loja Fitness",
     template: "%s | Space Fit",
   },
   description:
-    "A melhor academia de Conceição das Alagoas, MG. Roupas, suplementos e acessórios para sua academia. Space Fit — Discipline, Energy, Results.",
+    "A melhor academia de Conceição das Alagoas, MG. Roupas, suplementos e acessórios para sua academia. Space Fit: Discipline, Energy, Results.",
   keywords: ["academia", "fitness", "suplementos", "roupas fitness", "Space Fit", "musculação", "Conceição das Alagoas"],
   openGraph: {
-    title: "Space Fit — Loja Fitness",
+    title: "Space Fit | Loja Fitness",
     description: "Roupas, suplementos e acessórios fitness. Compre online com segurança.",
     type: "website",
     locale: "pt_BR",

@@ -317,7 +317,7 @@ export default function AdminProductsPage() {
                       })}
                     </div>
                     {selectedSizes.length === 0 && (
-                      <p className="text-xs text-yellow-500 mt-1">Nenhum tamanho selecionado — o produto não terá opção de tamanho.</p>
+                      <p className="text-xs text-yellow-500 mt-1">Nenhum tamanho selecionado · o produto não terá opção de tamanho.</p>
                     )}
                   </div>
                 )}

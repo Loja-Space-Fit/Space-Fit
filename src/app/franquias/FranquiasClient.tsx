@@ -153,7 +153,7 @@ export default function FranquiasClient({ regions, franchises }: Props) {
                     <Building2 className="w-5 h-5 text-[#b2ea0f] shrink-0" />
                     <h2 className="text-xl md:text-3xl font-black text-white uppercase leading-tight">
                       {region?.label}
-                      <span className="text-[#b2ea0f] ml-1.5">— {region?.state}</span>
+                      <span className="text-[#b2ea0f] ml-1.5">· {region?.state}</span>
                     </h2>
                   </div>
                   {region?.address && (
@@ -340,7 +340,7 @@ export default function FranquiasClient({ regions, franchises }: Props) {
                   <div className="bg-[#b2ea0f]/10 border-b border-[#2a2a2a] px-5 py-4 flex items-center gap-2">
                     <MapPin className="w-4 h-4 text-[#b2ea0f]" />
                     <h3 className="font-black text-white text-sm uppercase tracking-wide">
-                      Localização — {region?.label}
+                      Localização: {region?.label}
                     </h3>
                   </div>
                   <iframe

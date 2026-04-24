@@ -366,7 +366,7 @@ export default function AdminCategoriesPage() {
                 >
                   {Array.from({ length: editingCat ? categories.length : categories.length + 1 }, (_, i) => i + 1).map(n => (
                     <option key={n} value={n}>
-                      {n}{categories.find(c => c.display_order === n && c.id !== editingCat?.id) ? ` — (atual: ${categories.find(c => c.display_order === n && c.id !== editingCat?.id)!.name})` : ''}
+                      {n}{categories.find(c => c.display_order === n && c.id !== editingCat?.id) ? ` (atual: ${categories.find(c => c.display_order === n && c.id !== editingCat?.id)!.name})` : ''}
                     </option>
                   ))}
                 </select>

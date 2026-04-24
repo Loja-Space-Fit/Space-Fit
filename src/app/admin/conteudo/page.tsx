@@ -52,6 +52,15 @@ export default function AdminContentPage() {
     setSaving(true)
     const supabase = createClient()
     if (editing) {
+      const newOrder = form.display_order
+      const oldOrder = editing.display_order
+      if (newOrder !== oldOrder) {
+        // Swap: banner que estava na posição alvo assume a posição anterior
+        const displaced = banners.find(b => b.display_order === newOrder && b.id !== editing.id)
+        if (displaced) {
+          await supabase.from('banners').update({ display_order: oldOrder }).eq('id', displaced.id)
+        }
+      }
       await supabase.from('banners').update(form).eq('id', editing.id)
     } else {
       await supabase.from('banners').insert(form)
@@ -196,7 +205,24 @@ export default function AdminContentPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="text-sm text-[#9ca3af] mb-1 block">Ordem</label>
-                    <input value={form.display_order} onChange={e => setForm(f => ({ ...f, display_order: parseInt(e.target.value) || 1 }))} type="number" min="1" className="input" />
+                    <select
+                      value={form.display_order}
+                      onChange={e => setForm(f => ({ ...f, display_order: parseInt(e.target.value) }))}
+                      className="input"
+                    >
+                      {Array.from(
+                        { length: editing ? banners.length : banners.length + 1 },
+                        (_, i) => i + 1
+                      ).map(n => {
+                        const ocupado = banners.find(b => b.display_order === n && b.id !== editing?.id)
+                        const isAtual = editing && n === editing.display_order
+                        return (
+                          <option key={n} value={n}>
+                            {`Posição ${n}`}{isAtual ? ' (atual)' : ocupado ? ` ⇄ ${ocupado.title}` : ''}
+                          </option>
+                        )
+                      })}
+                    </select>
                   </div>
                   <div className="flex items-end pb-2">
                     <label className="flex items-center gap-2 cursor-pointer">

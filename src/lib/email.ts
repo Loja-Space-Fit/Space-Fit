@@ -137,7 +137,7 @@ export async function enviarEmailConfirmacaoPedido(pedido: Order): Promise<void>
     <div style="margin-top:24px;background:#1a1a1a;border-radius:12px;padding:16px;">
       <p style="margin:0 0 8px;font-size:12px;color:#9ca3af;text-transform:uppercase;letter-spacing:1px;">Endereco de entrega</p>
       <p style="margin:0;font-size:14px;color:#d1d5db;">
-        ${pedido.address.street}, ${pedido.address.number}${pedido.address.complement ? ` — ${pedido.address.complement}` : ''}<br/>
+        ${pedido.address.street}, ${pedido.address.number}${pedido.address.complement ? `, ${pedido.address.complement}` : ''}<br/>
         ${pedido.address.neighborhood}, ${pedido.address.city}/${pedido.address.state}<br/>
         CEP ${pedido.address.cep}
       </p>
@@ -151,7 +151,7 @@ export async function enviarEmailConfirmacaoPedido(pedido: Order): Promise<void>
     await getResend().emails.send({
       from:    EMAIL_REMETENTE,
       to:      pedido.customer_email,
-      subject: `Pedido ${pedido.order_number} confirmado — Space Fit`,
+      subject: `Pedido ${pedido.order_number} confirmado | Space Fit`,
       html:    layoutEmail('Pedido confirmado', corpo),
     })
   } catch (erro) {
@@ -170,7 +170,7 @@ const MENSAGENS_STATUS: Record<string, { assunto: string; titulo: string; descri
     descricao:  'Seu pedido foi despachado e esta a caminho do seu endereco. Fique de olho no rastreamento.',
   },
   delivered: {
-    assunto:    'Pedido entregue — obrigado por comprar na Space Fit!',
+    assunto:    'Pedido entregue: obrigado por comprar na Space Fit!',
     titulo:     'Pedido entregue!',
     descricao:  'Seu pedido foi entregue. Esperamos que voce curta muito sua compra!',
   },
@@ -211,7 +211,7 @@ export async function enviarEmailStatusAtualizado(
     await getResend().emails.send({
       from:    EMAIL_REMETENTE,
       to:      pedido.customer_email,
-      subject: `${msg.assunto} — Pedido ${pedido.order_number}`,
+      subject: `${msg.assunto} | Pedido ${pedido.order_number}`,
       html:    layoutEmail(msg.titulo, corpo),
     })
   } catch (erro) {
@@ -245,7 +245,7 @@ export async function enviarEmailBoasVindas(nome: string, email: string): Promis
       Explore nossa seleção de roupas, suplementos e acessórios fitness com os melhores preços e qualidade.
     </p>
     <p style="margin:0;font-size:13px;color:#9ca3af;">
-      Qualquer dúvida, fale com a gente pelo WhatsApp — estamos sempre prontos para ajudar!
+      Qualquer dúvida, fale com a gente pelo WhatsApp, estamos sempre prontos para ajudar!
     </p>`
 
   try {

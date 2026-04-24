@@ -241,7 +241,7 @@ export default function CheckoutPage() {
             href={`/pedido-confirmado/${pendingOrder.id}`}
             className="btn-green"
           >
-            Ir para o pedido — {formatBRL(pendingOrder.total)}
+            Ir para o pedido: {formatBRL(pendingOrder.total)}
           </a>
           <button
             onClick={handleCancelPending}
@@ -408,7 +408,7 @@ export default function CheckoutPage() {
                       <Store className="w-4 h-4 text-[#b2ea0f]" />
                       <p className="font-bold text-white">Retirar na Academia</p>
                     </div>
-                    <p className="text-xs text-[#9ca3af] mt-0.5">Sem frete — Pague online e retire</p>
+                    <p className="text-xs text-[#9ca3af] mt-0.5">Sem frete · Pague online e retire</p>
                   </button>
                 </div>
 
@@ -580,7 +580,7 @@ export default function CheckoutPage() {
                     <div className="p-4 bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl text-sm text-[#d1d5db]">
                       <p className="font-bold text-[#b2ea0f] mb-1 flex items-center gap-2">
                         <Store className="w-4 h-4" />
-                        Retirada em: {pickupLocation === 'conceicao' ? 'Conceição das Alagoas – MG' : pickupLocation === 'guaira' ? 'Guaíra – SP' : '—'}
+                        Retirada em: {pickupLocation === 'conceicao' ? 'Conceição das Alagoas – MG' : pickupLocation === 'guaira' ? 'Guaíra – SP' : 'selecione acima'}
                       </p>
                       <p className="text-[#9ca3af] text-xs">Aguardaremos você na unidade escolhida.</p>
                     </div>
@@ -650,7 +650,7 @@ export default function CheckoutPage() {
                     {loading ? (
                       <><Loader2 className="w-4 h-4 animate-spin" /> Processando...</>
                     ) : (
-                      `Confirmar Pedido — ${formatBRL(finalTotal)}`
+                      `Confirmar Pedido: ${formatBRL(finalTotal)}`
                     )}
                   </button>
                 </div>
@@ -694,7 +694,7 @@ export default function CheckoutPage() {
                     <div className="flex items-center justify-between p-3 bg-[#b2ea0f]/10 border border-[#b2ea0f]/30 rounded-xl">
                       <div className="flex items-center gap-2 text-[#b2ea0f] text-sm font-bold">
                         <Tag className="w-4 h-4" />
-                        {couponCode} — {coupon.type === 'percent' ? `${coupon.value}% OFF` : `${formatBRL(coupon.value)} OFF`}
+                        {couponCode}: {coupon.type === 'percent' ? `${coupon.value}% OFF` : `${formatBRL(coupon.value)} OFF`}
                       </div>
                       <button type="button" onClick={removeCoupon} className="text-[#9ca3af] hover:text-red-400 transition-colors">
                         <X className="w-4 h-4" />
@@ -738,7 +738,7 @@ export default function CheckoutPage() {
                           <p className="text-xs text-[#9ca3af]">
                             {loyaltyPoints > 0
                               ? usePoints
-                                ? `Usando todos — desconto de ${formatBRL(pointsToUse)}`
+                                ? `Usando todos: desconto de ${formatBRL(pointsToUse)}`
                                 : `Disponível: ${formatBRL(loyaltyPoints)} de desconto`
                               : 'Acumule 1% em cada compra'}
                           </p>
@@ -795,7 +795,7 @@ export default function CheckoutPage() {
                         ? shippingInfo.free
                           ? <span className="text-[#b2ea0f]">Grátis</span>
                           : <span className="text-white">{formatBRL(shippingInfo.price)}</span>
-                        : <span className="text-[#555] text-sm font-normal">— informe o CEP</span>
+                        : <span className="text-[#555] text-sm font-normal">informe o CEP</span>
                     }
                   </span>
                 </div>

@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
     const result = await resend.emails.send({
       from,
       to,
-      subject: 'Teste de email — Space Fit',
+      subject: 'Teste de email | Space Fit',
       html: '<p>Se você recebeu este email, o Resend está configurado corretamente! 🎉</p>',
     })
 
