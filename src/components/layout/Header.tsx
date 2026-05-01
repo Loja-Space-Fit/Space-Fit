@@ -249,7 +249,7 @@ export default function Cabecalho() {
       )}
 
       {/* === MENU MOBILE === */}
-      <div className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${menuMobileAberto ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0'}`}>
+      <div className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out bg-[#0a0a0a] ${menuMobileAberto ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0'}`}>
         <div className="border-t border-white/5 bg-[#0a0a0a] px-4 py-4 flex flex-col gap-1">
 
           {/* Categorias no mobile */}

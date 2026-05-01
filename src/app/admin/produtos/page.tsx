@@ -408,12 +408,12 @@ export default function AdminProductsPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-[#2a2a2a] text-xs text-[#9ca3af] uppercase tracking-wider">
-                  <th className="text-left px-5 py-3">Produto</th>
+                  <th className="text-left px-3 sm:px-5 py-3">Produto</th>
                   <th className="text-left px-5 py-3 hidden sm:table-cell">Categoria</th>
-                  <th className="text-right px-5 py-3">Preço</th>
+                  <th className="text-right px-5 py-3 hidden sm:table-cell">Preço</th>
                   <th className="text-center px-5 py-3 hidden sm:table-cell">Estoque</th>
                   <th className="text-center px-5 py-3 hidden sm:table-cell">Status</th>
-                  <th className="text-right px-5 py-3">Ações</th>
+                  <th className="text-right px-3 sm:px-5 py-3">Ações</th>
                 </tr>
               </thead>
               <tbody>
@@ -421,7 +421,7 @@ export default function AdminProductsPage() {
                   .filter(p => activeTab === 'todos' || p.category_id === activeTab)
                   .map(p => (
                   <tr key={p.id} onClick={() => openEdit(p)} className="border-b border-[#1a1a1a] hover:bg-[#1a1a1a] transition-colors cursor-pointer">
-                    <td className="px-5 py-3">
+                    <td className="px-3 sm:px-5 py-3">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-[#2a2a2a] flex items-center justify-center shrink-0 overflow-hidden">
                           {p.images?.[0] ? (
@@ -431,16 +431,20 @@ export default function AdminProductsPage() {
                           )}
                         </div>
                         <div>
-                          <p className="text-sm font-semibold text-white">{p.name}</p>
+                          <p className="text-sm font-semibold text-white leading-tight">{p.name}</p>
                           {p.featured && <span className="text-xs text-[#b2ea0f]">★ Destaque</span>}
                           <p className="text-xs text-[#9ca3af] sm:hidden">{(p.category as unknown as {name:string})?.name || '—'}</p>
+                          <div className="sm:hidden mt-0.5">
+                            <span className="text-sm font-bold text-white">{formatBRL(p.price)}</span>
+                            {p.compare_price && <span className="text-xs text-[#9ca3af] line-through ml-1">{formatBRL(p.compare_price)}</span>}
+                          </div>
                         </div>
                       </div>
                     </td>
                     <td className="px-5 py-3 text-sm text-[#9ca3af] hidden sm:table-cell">
                       {(p.category as unknown as {name:string})?.name || '—'}
                     </td>
-                    <td className="px-5 py-3 text-right">
+                    <td className="px-5 py-3 text-right hidden sm:table-cell">
                       <p className="text-sm font-bold text-white">{formatBRL(p.price)}</p>
                       {p.compare_price && <p className="text-xs text-[#9ca3af] line-through">{formatBRL(p.compare_price)}</p>}
                     </td>
@@ -454,13 +458,13 @@ export default function AdminProductsPage() {
                         {p.active ? 'Ativo' : 'Inativo'}
                       </span>
                     </td>
-                    <td className="px-5 py-3 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button onClick={e => { e.stopPropagation(); openEdit(p) }} className="w-10 h-10 rounded-lg bg-[#1a1a1a] text-[#9ca3af] hover:text-[#b2ea0f] hover:bg-[#b2ea0f]/10 flex items-center justify-center transition-all">
-                          <Pencil className="w-4 h-4" />
+                    <td className="px-3 sm:px-5 py-3 text-right">
+                      <div className="flex items-center justify-end gap-1.5 sm:gap-2">
+                        <button onClick={e => { e.stopPropagation(); openEdit(p) }} className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-[#1a1a1a] text-[#9ca3af] hover:text-[#b2ea0f] hover:bg-[#b2ea0f]/10 flex items-center justify-center transition-all">
+                          <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                         </button>
-                        <button onClick={e => { e.stopPropagation(); handleDelete(p.id, p.name) }} className="w-10 h-10 rounded-lg bg-[#1a1a1a] text-[#9ca3af] hover:text-red-400 hover:bg-red-900/10 flex items-center justify-center transition-all">
-                          <Trash2 className="w-4 h-4" />
+                        <button onClick={e => { e.stopPropagation(); handleDelete(p.id, p.name) }} className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-[#1a1a1a] text-[#9ca3af] hover:text-red-400 hover:bg-red-900/10 flex items-center justify-center transition-all">
+                          <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                         </button>
                       </div>
                     </td>

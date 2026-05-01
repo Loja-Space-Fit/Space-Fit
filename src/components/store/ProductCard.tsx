@@ -99,10 +99,10 @@ export default function ProductCard({ product }: { product: Product }) {
         </Link>
 
         {/* Preço */}
-        <div className="flex items-baseline gap-2 mt-auto">
-          <span className="text-lg font-black text-[#b2ea0f]">{formatBRL(product.price)}</span>
+        <div className="flex flex-col mt-auto">
+          <span className="text-lg font-black text-[#b2ea0f] leading-tight">{formatBRL(product.price)}</span>
           {product.compare_price && product.compare_price > product.price && (
-            <span className="text-sm text-[#9ca3af] line-through">{formatBRL(product.compare_price)}</span>
+            <span className="text-xs text-[#9ca3af] line-through">{formatBRL(product.compare_price)}</span>
           )}
         </div>
 
