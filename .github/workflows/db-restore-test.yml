@@ -1,0 +1,51 @@
+﻿name: Testar Restauração do Backup
+
+on:
+  workflow_dispatch:
+
+jobs:
+  restore-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: testdb
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Instalar postgresql-client 17
+        run: |
+          sudo apt-get install -y gnupg curl
+          curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /usr/share/keyrings/postgresql.gpg
+          echo "deb [signed-by=/usr/share/keyrings/postgresql.gpg] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client-17
+
+      - name: Baixar backup do Supabase
+        run: |
+          /usr/lib/postgresql/17/bin/pg_dump "${{ secrets.SUPABASE_DB_URL }}?sslmode=require" \
+            --format=custom --no-acl --no-owner \
+            -f backup-test.dump
+
+      - name: Restaurar no banco temporário
+        run: |
+          /usr/lib/postgresql/17/bin/pg_restore \
+            -d "postgresql://postgres:testpass@localhost:5432/testdb" \
+            --no-owner --no-privileges \
+            backup-test.dump || true
+
+      - name: Verificar tabelas restauradas
+        run: |
+          psql "postgresql://postgres:testpass@localhost:5432/testdb" \
+            -c "\dt" \
+            -c "SELECT COUNT(*) as total_produtos FROM products;" \
+            -c "SELECT COUNT(*) as total_pedidos FROM orders;"
