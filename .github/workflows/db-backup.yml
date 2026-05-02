@@ -26,6 +26,21 @@ jobs:
             --no-owner \
             -f "backup-$(date +%Y%m%d).dump"
 
+      - name: Verificar registros salvos no backup
+        run: |
+          DB="${{ secrets.SUPABASE_DB_URL }}?sslmode=require"
+          echo "=== TABELAS NO BANCO ==="
+          psql "$DB" -c "\dt public.*"
+          echo ""
+          echo "=== REGISTROS POR TABELA ==="
+          psql "$DB" -t -c "SELECT tablename FROM pg_tables WHERE schemaname='public' ORDER BY tablename;" | while read -r table; do
+            table=$(echo "$table" | xargs)
+            [ -z "$table" ] && continue
+            count=$(psql "$DB" -t -c "SELECT COUNT(*) FROM \"$table\";")
+            count=$(echo "$count" | xargs)
+            echo "$table: $count registros"
+          done
+
       - name: Salvar artifact
         uses: actions/upload-artifact@v4
         with:
