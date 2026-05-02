@@ -45,7 +45,15 @@ jobs:
 
       - name: Verificar tabelas restauradas
         run: |
-          psql "postgresql://postgres:testpass@localhost:5432/testdb" \
-            -c "\dt" \
-            -c "SELECT COUNT(*) as total_produtos FROM products;" \
-            -c "SELECT COUNT(*) as total_pedidos FROM orders;"
+          DB="postgresql://postgres:testpass@localhost:5432/testdb"
+          echo "=== TABELAS RESTAURADAS ==="
+          psql "$DB" -c "\dt"
+          echo ""
+          echo "=== REGISTROS POR TABELA ==="
+          psql "$DB" -t -c "SELECT tablename FROM pg_tables WHERE schemaname='public' ORDER BY tablename;" | while read -r table; do
+            table=$(echo "$table" | xargs)
+            [ -z "$table" ] && continue
+            count=$(psql "$DB" -t -c "SELECT COUNT(*) FROM \"$table\";")
+            count=$(echo "$count" | xargs)
+            echo "$table: $count registros"
+          done
