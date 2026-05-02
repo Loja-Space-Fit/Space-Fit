@@ -20,7 +20,7 @@ jobs:
 
       - name: Executar pg_dump
         run: |
-          pg_dump "${{ secrets.SUPABASE_DB_URL }}?sslmode=require" \
+          /usr/lib/postgresql/17/bin/pg_dump "${{ secrets.SUPABASE_DB_URL }}?sslmode=require" \
             --format=custom \
             --no-acl \
             --no-owner \
