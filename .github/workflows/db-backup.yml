@@ -1,0 +1,31 @@
+name: Backup do Banco de Dados
+
+on:
+  schedule:
+    - cron: '0 3 * * *'   # 03:00 UTC = 00:00 Brasília (todo dia)
+  workflow_dispatch:        # permite rodar manualmente pelo GitHub
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Instalar postgresql-client
+        run: sudo apt-get install -y postgresql-client
+
+      - name: Executar pg_dump
+        env:
+          PGPASSWORD: ''   # senha já está embutida na URL
+        run: |
+          pg_dump "${{ secrets.SUPABASE_DB_URL }}" \
+            --format=custom \
+            --no-acl \
+            --no-owner \
+            -f "backup-$(date +%Y%m%d).dump"
+
+      - name: Salvar artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: "db-backup-${{ github.run_number }}"
+          path: "backup-*.dump"
+          retention-days: 30
