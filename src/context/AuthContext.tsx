@@ -102,6 +102,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       password,
       options: {
         data: { full_name: name, phone },
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm?next=/minha-conta`,
       },
     })
     if (error) return { error: error.message }

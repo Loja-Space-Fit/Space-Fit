@@ -259,3 +259,85 @@ export async function enviarEmailBoasVindas(nome: string, email: string): Promis
     console.error('[email] Erro ao enviar email de boas-vindas:', erro)
   }
 }
+
+// =============================================================================
+// Email 4: Confirmação de conta (enviado no cadastro via Resend)
+// =============================================================================
+export async function enviarEmailConfirmacaoConta(nome: string, email: string, confirmUrl: string): Promise<void> {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('[email] RESEND_API_KEY nao configurado — email de confirmacao ignorado.')
+    return
+  }
+
+  const corpo = `
+    <h2 style="margin:0 0 8px;font-size:22px;font-weight:900;color:#ffffff;">
+      Confirme sua conta
+    </h2>
+    <p style="margin:0 0 24px;font-size:14px;color:#9ca3af;">
+      Ola, ${nome}! Clique no botao abaixo para ativar sua conta na Space Fit.
+    </p>
+
+    <div style="text-align:center;margin:32px 0;">
+      <a href="${confirmUrl}"
+        style="display:inline-block;background:#b2ea0f;color:#000000;font-size:15px;font-weight:900;text-decoration:none;padding:14px 32px;border-radius:12px;letter-spacing:0.5px;">
+        CONFIRMAR MINHA CONTA
+      </a>
+    </div>
+
+    <p style="margin:0;font-size:12px;color:#6b7280;text-align:center;">
+      Se voce nao criou uma conta na Space Fit, ignore este email.
+      O link expira em 24 horas.
+    </p>`
+
+  try {
+    await getResend().emails.send({
+      from:    EMAIL_REMETENTE,
+      to:      email,
+      subject: 'Confirme sua conta — Space Fit',
+      html:    layoutEmail('Confirme sua conta', corpo),
+    })
+  } catch (erro) {
+    console.error('[email] Erro ao enviar email de confirmacao de conta:', erro)
+  }
+}
+
+// =============================================================================
+// Email 5: Redefinição de senha
+// =============================================================================
+export async function enviarEmailRedefinirSenha(nome: string, email: string, resetUrl: string): Promise<void> {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('[email] RESEND_API_KEY nao configurado — email de redefinicao ignorado.')
+    return
+  }
+
+  const corpo = `
+    <h2 style="margin:0 0 8px;font-size:22px;font-weight:900;color:#ffffff;">
+      Redefinir senha
+    </h2>
+    <p style="margin:0 0 24px;font-size:14px;color:#9ca3af;">
+      Ola${nome ? `, ${nome}` : ''}! Recebemos uma solicitacao para redefinir a senha da sua conta.
+    </p>
+
+    <div style="text-align:center;margin:32px 0;">
+      <a href="${resetUrl}"
+        style="display:inline-block;background:#b2ea0f;color:#000000;font-size:15px;font-weight:900;text-decoration:none;padding:14px 32px;border-radius:12px;letter-spacing:0.5px;">
+        REDEFINIR MINHA SENHA
+      </a>
+    </div>
+
+    <p style="margin:0;font-size:12px;color:#6b7280;text-align:center;">
+      Se voce nao solicitou a redefinicao de senha, ignore este email.
+      O link expira em 1 hora.
+    </p>`
+
+  try {
+    await getResend().emails.send({
+      from:    EMAIL_REMETENTE,
+      to:      email,
+      subject: 'Redefinir senha — Space Fit',
+      html:    layoutEmail('Redefinir senha', corpo),
+    })
+  } catch (erro) {
+    console.error('[email] Erro ao enviar email de redefinicao de senha:', erro)
+  }
+}
