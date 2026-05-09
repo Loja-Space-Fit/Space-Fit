@@ -32,13 +32,24 @@ export async function middleware(request: NextRequest) {
   }
   const path = request.nextUrl.pathname
 
+  // Helper: cria redirect preservando os cookies de sessão renovados
+  function redirectWithCookies(destination: string, preserveRedirect = false) {
+    const url = request.nextUrl.clone()
+    url.pathname = destination
+    url.search = ''
+    if (preserveRedirect) {
+      url.searchParams.set('redirect', request.nextUrl.pathname)
+    }
+    const res = NextResponse.redirect(url)
+    supabaseResponse.cookies.getAll().forEach(cookie => {
+      res.cookies.set(cookie.name, cookie.value)
+    })
+    return res
+  }
+
   // === Proteção /admin — exige autenticação + is_admin verificado no servidor ===
   if (path.startsWith('/admin')) {
-    if (!user) {
-      const url = request.nextUrl.clone()
-      url.pathname = '/login'
-      return NextResponse.redirect(url)
-    }
+    if (!user) return redirectWithCookies('/login', true)
 
     // Verifica is_admin com service role (bypassa RLS, não depende do cliente)
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -54,17 +65,13 @@ export async function middleware(request: NextRequest) {
         .eq('id', user.id)
         .single()
 
-      if (!perfil?.is_admin) {
-        return NextResponse.redirect(new URL('/', request.url))
-      }
+      if (!perfil?.is_admin) return redirectWithCookies('/')
     }
   }
 
   // === Proteção /minha-conta — exige autenticação ===
   if (path.startsWith('/minha-conta') && !user) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    return NextResponse.redirect(url)
+    return redirectWithCookies('/login', true)
   }
 
   return supabaseResponse
