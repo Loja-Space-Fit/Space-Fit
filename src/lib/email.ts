@@ -29,31 +29,32 @@ function layoutEmail(titulo: string, corpo: string): string {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>${titulo}</title>
 </head>
-<body style="margin:0;padding:0;background:#0a0a0a;font-family:Arial,Helvetica,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:32px 16px;">
+<body style="margin:0;padding:0;background:#f4f4f5;font-family:Arial,Helvetica,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:40px 16px;">
     <tr><td align="center">
-      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#111111;border-radius:16px;border:1px solid #2a2a2a;overflow:hidden;">
+      <table width="420" cellpadding="0" cellspacing="0" style="max-width:420px;width:100%;background:#111111;border-radius:16px;overflow:hidden;">
 
         <!-- Cabecalho -->
         <tr>
-          <td style="background:#111111;padding:28px 32px;border-bottom:1px solid #2a2a2a;text-align:center;">
-            <p style="margin:0;font-size:24px;font-weight:900;color:#b2ea0f;letter-spacing:2px;">SPACE FIT</p>
-            <p style="margin:6px 0 0;font-size:13px;color:#9ca3af;">Sua loja de moda fitness</p>
+          <td style="padding:48px 40px 0;text-align:center;">
+            <p style="margin:0 0 6px;font-size:28px;font-weight:900;color:#b2ea0f;letter-spacing:3px;">SPACE FIT</p>
+            <p style="margin:0 0 28px;font-size:12px;color:#6b7280;letter-spacing:1px;">Sua loja de moda fitness</p>
+            <div style="width:40px;height:2px;background:#b2ea0f;margin:0 auto;"></div>
           </td>
         </tr>
 
         <!-- Corpo -->
         <tr>
-          <td style="padding:32px;">
+          <td style="padding:32px 40px 40px;">
             ${corpo}
           </td>
         </tr>
 
         <!-- Rodape -->
         <tr>
-          <td style="padding:20px 32px;border-top:1px solid #2a2a2a;text-align:center;">
-            <p style="margin:0;font-size:12px;color:#6b7280;">
-              Este email foi enviado automaticamente. Nao responda este email.
+          <td style="padding:20px 40px 28px;border-top:1px solid #1f1f1f;text-align:center;">
+            <p style="margin:0;font-size:11px;color:#374151;">
+              E-mail enviado automaticamente &middot; Não responda
             </p>
           </td>
         </tr>
