@@ -186,8 +186,7 @@ export default function CheckoutPage() {
   useEffect(() => {
     if (!uf || cepStatus !== 'ok' || deliveryType !== 'delivery') return
     calcularFrete(uf, subtotal)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [subtotal, deliveryType])
+  }, [subtotal, deliveryType, uf, cepStatus, calcularFrete])
 
   const pointsDiscount = usePoints ? pointsToUse : 0
   const shippingValue  = deliveryType === 'pickup' ? 0 : shippingCost
