@@ -257,7 +257,7 @@ export default function Cabecalho() {
 
       {/* === MENU MOBILE — overlay tela cheia (backdrop-blur removido do header quando aberto para fixed funcionar) === */}
       {menuMobileAberto && (
-        <div className="fixed inset-0 z-[100] bg-[#0a0a0a] flex flex-col h-screen">
+        <div className="fixed inset-0 z-[100] bg-[#0a0a0a] overflow-y-auto">
           {/* Topo com logo e botão fechar */}
           <div className="flex items-center justify-between px-4 h-[72px] border-b border-white/5 shrink-0">
             <span className="text-[#b2ea0f] font-black text-xl tracking-widest">SPACE FIT</span>
@@ -270,7 +270,7 @@ export default function Cabecalho() {
             </button>
           </div>
 
-          <div className="px-4 py-4 flex flex-col gap-1 flex-1 overflow-y-auto">
+          <div className="px-4 py-4 flex flex-col gap-1">
 
           {/* Categorias no mobile */}
           {categorias.map(cat => (
