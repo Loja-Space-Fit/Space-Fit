@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient, createClient } from '@/lib/supabase/server'
 import { getPreferenceClient } from '@/lib/mercadopago'
+import { processLoyaltyPoints } from '@/lib/loyalty'
 
 export async function POST(req: NextRequest) {
   try {
@@ -126,6 +127,22 @@ export async function POST(req: NextRequest) {
           .from('orders')
           .update({ payment_status: 'approved', order_status: 'paid' })
           .eq('id', order.id)
+
+        // Incrementar uso do cupom
+        if (coupon_code) {
+          const { data: cupom } = await supabase
+            .from('coupons').select('uses_count').eq('code', coupon_code).single()
+          if (cupom) {
+            await supabase
+              .from('coupons')
+              .update({ uses_count: (cupom.uses_count || 0) + 1 })
+              .eq('code', coupon_code)
+          }
+        }
+
+        // Processar pontos de fidelidade
+        await processLoyaltyPoints(order.id, supabase)
+
         return NextResponse.json({ order_id: order.id, order_number: order.order_number })
       }
 

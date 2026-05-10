@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { getPreferenceClient } from '@/lib/mercadopago'
+import { processLoyaltyPoints } from '@/lib/loyalty'
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -31,6 +32,24 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       .from('orders')
       .update({ payment_status: 'approved', order_status: 'paid' })
       .eq('id', order.id)
+
+    // Incrementar uso do cupom
+    const { data: pedidoCompleto } = await supabase
+      .from('orders').select('coupon_code').eq('id', order.id).single()
+    if (pedidoCompleto?.coupon_code) {
+      const { data: cupom } = await supabase
+        .from('coupons').select('uses_count').eq('code', pedidoCompleto.coupon_code).single()
+      if (cupom) {
+        await supabase
+          .from('coupons')
+          .update({ uses_count: (cupom.uses_count || 0) + 1 })
+          .eq('code', pedidoCompleto.coupon_code)
+      }
+    }
+
+    // Processar pontos de fidelidade
+    await processLoyaltyPoints(order.id, supabase)
+
     return NextResponse.redirect(new URL(`/pedido-confirmado/${order.id}`, siteUrl))
   }
 
