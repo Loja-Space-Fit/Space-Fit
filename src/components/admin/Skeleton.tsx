@@ -15,7 +15,7 @@ function Barra({ className }: { className: string }) {
 // =============================================================================
 export function SkeletonMetricCard() {
   return (
-    <div className="bg-[#111111] border border-[#2a2a2a] rounded-2xl p-5 flex flex-col gap-3">
+    <div className="card-dark p-5 flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <Barra className="h-3 w-24" />
         <Barra className="w-8 h-8 rounded-lg" />
@@ -32,7 +32,7 @@ export function SkeletonMetricCard() {
 export function SkeletonGrafico({ altura = 280 }: { altura?: number }) {
   return (
     <div
-      className="bg-[#111111] border border-[#2a2a2a] rounded-2xl p-5 animate-pulse"
+      className="card-dark p-5 animate-pulse"
       style={{ height: altura }}
     >
       {/* Label do eixo Y simulado */}

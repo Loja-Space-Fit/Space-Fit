@@ -20,10 +20,5 @@ export function getPreferenceClient() {
   return new Preference(getMercadoPagoClient())
 }
 
-// Formata valor em Real Brasileiro
-export function formatBRL(value: number): string {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  }).format(value)
-}
+// Importado de utils para evitar duplicação
+export { formatBRL } from '@/lib/utils'

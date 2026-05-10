@@ -71,7 +71,7 @@ function LinhaItem({ item }: { item: Order['items'][number] }) {
 // =============================================================================
 function Secao({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   return (
-    <div className="bg-[#111111] border border-[#2a2a2a] rounded-2xl overflow-hidden print:border-gray-300 print:bg-white">
+    <div className="card-dark overflow-hidden print:border-gray-300 print:bg-white">
       <div className="px-5 py-3 border-b border-[#2a2a2a] print:border-gray-300">
         <h2 className="text-xs font-bold text-[#9ca3af] uppercase tracking-wider print:text-gray-500">
           {titulo}
@@ -133,7 +133,7 @@ export default async function DetalhesPedidoPage({
         </div>
 
         {/* Cabecalho do pedido */}
-        <div className="bg-[#111111] border border-[#2a2a2a] rounded-2xl px-6 py-5 print:border-gray-300 print:bg-white">
+        <div className="card-dark px-6 py-5 print:border-gray-300 print:bg-white">
           <div className="flex items-start justify-between flex-wrap gap-4">
             <div>
               <p className="text-xs text-[#9ca3af] uppercase tracking-wider mb-1 print:text-gray-500">

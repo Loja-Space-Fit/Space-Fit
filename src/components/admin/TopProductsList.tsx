@@ -15,7 +15,7 @@ export default function TopProductsList({ produtos }: PropsTopProductsList) {
   const maxQuantidade = produtos[0]?.quantidade_vendida ?? 1
 
   return (
-    <div className="bg-[#111111] border border-[#2a2a2a] rounded-2xl p-5 flex flex-col">
+    <div className="card-dark p-5 flex flex-col">
       <p className="text-xs text-[#9ca3af] font-semibold uppercase tracking-wider mb-5">
         Top Produtos
       </p>

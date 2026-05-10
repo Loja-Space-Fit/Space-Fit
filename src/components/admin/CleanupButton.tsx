@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState } from 'react'
 import { Trash2, Loader2, CheckCircle, AlertCircle, X } from 'lucide-react'
@@ -78,7 +78,7 @@ export default function BotaoLimpezaBanco() {
       {mostrarConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setMostrarConfirm(false)} />
-          <div className="relative z-10 w-full max-w-sm bg-[#111111] border border-[#2a2a2a] rounded-2xl p-6 shadow-2xl">
+          <div className="relative z-10 w-full max-w-sm card-dark p-6 shadow-2xl">
             <button onClick={() => setMostrarConfirm(false)} className="absolute top-4 right-4 text-[#9ca3af] hover:text-white transition-colors">
               <X className="w-4 h-4" />
             </button>
@@ -120,7 +120,7 @@ export default function BotaoLimpezaBanco() {
         </div>
       )}
 
-      <div className="bg-[#111111] border border-[#2a2a2a] rounded-2xl p-5">
+      <div className="card-dark p-5">
         <div className="flex items-center justify-between mb-1">
           <div>
             <h3 className="font-black text-white text-sm">Limpeza do Banco</h3>

@@ -34,7 +34,7 @@ export default function MetricCard({
 
   if (carregando) {
     return (
-      <div className="bg-[#111111] border border-[#2a2a2a] rounded-2xl p-5 animate-pulse">
+      <div className="card-dark p-5 animate-pulse">
         <div className="flex items-center justify-between mb-3">
           <div className="h-3 w-24 bg-[#2a2a2a] rounded" />
           <div className="w-8 h-8 bg-[#2a2a2a] rounded-lg" />
@@ -46,7 +46,7 @@ export default function MetricCard({
   }
 
   return (
-    <div className="bg-[#111111] border border-[#2a2a2a] rounded-2xl p-5 flex flex-col gap-3">
+    <div className="card-dark p-5 flex flex-col gap-3">
 
       {/* Cabecalho: label + icone */}
       <div className="flex items-center justify-between">

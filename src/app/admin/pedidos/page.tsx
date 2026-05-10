@@ -1,4 +1,4 @@
-ï»¿'use client'
+'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
@@ -10,7 +10,7 @@ import type { Order } from '@/types'
 
 const PEDIDOS_POR_PAGINA = 20
 
-// Mantemos os status em inglÃªs pois sÃ£o os valores reais do banco
+// Mantemos os status em inglês pois são os valores reais do banco
 const TODOS_STATUS = ['pending', 'paid', 'preparing', 'shipped', 'delivered', 'cancelled']
 
 const ROTULO_STATUS: Record<string, string> = {
@@ -68,7 +68,7 @@ export default function PaginaPedidosAdmin() {
       .eq('hidden_from_admin', false)
       .order('created_at', { ascending: false })
 
-    // SÃ³ aplica o filtro se nÃ£o for "todos"
+    // Só aplica o filtro se não for "todos"
     if (filtroStatus !== 'all') {
       consulta = consulta.eq('order_status', filtroStatus)
     }
@@ -80,7 +80,7 @@ export default function PaginaPedidosAdmin() {
 
   useEffect(() => { carregarPedidos() }, [carregarPedidos])
 
-  // Subscription realtime â€” qualquer mudanca na tabela orders recarrega a lista.
+  // Subscription realtime — qualquer mudanca na tabela orders recarrega a lista.
   // Mantemos o botao manual como fallback caso o canal seja bloqueado.
   useEffect(() => {
     const supabase = createClient()
@@ -118,7 +118,7 @@ export default function PaginaPedidosAdmin() {
     const supabase = createClient()
 
     // Ao cancelar, precisamos devolver o estoque e o uso do cupom.
-    // Verificamos se o pedido ainda nÃ£o estava cancelado para evitar reverter duas vezes.
+    // Verificamos se o pedido ainda não estava cancelado para evitar reverter duas vezes.
     if (novoStatus === 'cancelled') {
       const pedido = listaPedidos.find(p => p.id === idPedido)
 
@@ -181,7 +181,7 @@ export default function PaginaPedidosAdmin() {
         }).catch(e => console.error('[pedidos] Falha ao processar pontos:', e))
       }
 
-      // Dispara email de notificacao para "Enviado" e "Entregue" â€” nao bloqueia UI
+      // Dispara email de notificacao para "Enviado" e "Entregue" — nao bloqueia UI
       if (novoStatus === 'shipped' || novoStatus === 'delivered') {
         fetch('/api/admin/email-status', {
           method: 'POST',
@@ -269,9 +269,9 @@ export default function PaginaPedidosAdmin() {
       ) : (
         <div className="space-y-3">
           {pedidosPagina.map(pedido => (
-            <div key={pedido.id} className="bg-[#111111] border border-[#2a2a2a] rounded-2xl overflow-hidden">
+            <div key={pedido.id} className="card-dark overflow-hidden">
 
-              {/* Linha resumo â€” clique abre/fecha detalhes */}
+              {/* Linha resumo — clique abre/fecha detalhes */}
               <div
                 className="p-4 flex flex-col sm:flex-row sm:items-center gap-3 cursor-pointer hover:bg-[#1a1a1a] transition-colors"
                 onClick={() => setPedidoAberto(pedidoAberto === pedido.id ? null : pedido.id)}
@@ -315,24 +315,24 @@ export default function PaginaPedidosAdmin() {
                       <div key={i} className="flex items-center justify-between text-sm">
                         <span className="text-white">
                           {item.product_name}
-                          {item.size && <span className="text-[#9ca3af]"> â€” {item.size}</span>}
-                          {' '}Ã— {item.quantity}
+                          {item.size && <span className="text-[#9ca3af]"> — {item.size}</span>}
+                          {' '}× {item.quantity}
                         </span>
                         <span className="text-[#b2ea0f] font-bold">{formatBRL(item.total_price)}</span>
                       </div>
                     ))}
                   </div>
 
-                  {/* EndereÃ§o de entrega (pode ser nulo em retirada na loja) */}
+                  {/* Endereço de entrega (pode ser nulo em retirada na loja) */}
                   {pedido.address && (
                     <div className="mb-4 p-3 bg-[#1a1a1a] rounded-xl text-sm text-[#d1d5db]">
-                      <p className="font-bold text-white mb-1">EndereÃ§o de Entrega</p>
+                      <p className="font-bold text-white mb-1">Endereço de Entrega</p>
                       <p>{pedido.address.street}, {pedido.address.number} {pedido.address.complement}</p>
-                      <p>{pedido.address.neighborhood} â€” {pedido.address.city}/{pedido.address.state} â€” CEP {pedido.address.cep}</p>
+                      <p>{pedido.address.neighborhood} — {pedido.address.city}/{pedido.address.state} — CEP {pedido.address.cep}</p>
                     </div>
                   )}
 
-                  {/* BotÃµes de mudanÃ§a de status */}
+                  {/* Botões de mudança de status */}
                   <div className="mb-4">
                     <p className="text-xs font-bold text-[#9ca3af] uppercase mb-2">Atualizar Status</p>
                     <div className="flex flex-wrap gap-2">
@@ -353,7 +353,7 @@ export default function PaginaPedidosAdmin() {
                     </div>
                   </div>
 
-                  {/* ExclusÃ£o fica aqui embaixo para nÃ£o ser clicada por acidente */}
+                  {/* Exclusão fica aqui embaixo para não ser clicada por acidente */}
                   <div className="border-t border-[#2a2a2a] pt-4">
                     <button
                       onClick={() => excluirPedido(pedido.id)}
@@ -375,7 +375,7 @@ export default function PaginaPedidosAdmin() {
       {totalPaginas > 1 && (
         <div className="flex items-center justify-between mt-6 px-1">
           <p className="text-xs text-[#9ca3af]">
-            Mostrando {inicio + 1}â€“{Math.min(inicio + PEDIDOS_POR_PAGINA, pedidosFiltrados.length)} de {pedidosFiltrados.length} pedidos
+            Mostrando {inicio + 1}–{Math.min(inicio + PEDIDOS_POR_PAGINA, pedidosFiltrados.length)} de {pedidosFiltrados.length} pedidos
           </p>
           <div className="flex items-center gap-1">
             <button
@@ -386,7 +386,7 @@ export default function PaginaPedidosAdmin() {
               <ChevronLeft className="w-3.5 h-3.5" /> Anterior
             </button>
 
-            {/* Numeros de pagina â€” mostra ate 5 ao redor da atual */}
+            {/* Numeros de pagina — mostra ate 5 ao redor da atual */}
             {Array.from({ length: totalPaginas }, (_, i) => i + 1)
               .filter(n => n === 1 || n === totalPaginas || Math.abs(n - paginaSegura) <= 2)
               .reduce<(number | '...')[]>((acc, n, idx, arr) => {

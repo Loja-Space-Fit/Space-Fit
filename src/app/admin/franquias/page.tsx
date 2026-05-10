@@ -223,7 +223,7 @@ export default function AdminFranquiasPage() {
           className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           onClick={e => { if (e.target === e.currentTarget) closeModal() }}
         >
-          <div className="bg-[#111111] border border-[#2a2a2a] rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
+          <div className="card-dark w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
 
             {/* Modal header */}
             <div className="flex items-center justify-between px-6 py-5 border-b border-[#2a2a2a] sticky top-0 bg-[#111111] z-10">

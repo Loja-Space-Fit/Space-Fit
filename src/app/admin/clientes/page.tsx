@@ -1,6 +1,6 @@
-ï»¿// CRM de clientes â€” agrega todos os pedidos por telefone do cliente,
+// CRM de clientes — agrega todos os pedidos por telefone do cliente,
 // calcula total gasto, numero de pedidos e classifica cada um.
-// Componente de servidor â€” busca os dados; FiltroClientes (client) faz a busca/filtro.
+// Componente de servidor — busca os dados; FiltroClientes (client) faz a busca/filtro.
 
 import { buscarClientesAgregados } from '@/services/admin'
 import { formatBRL }               from '@/lib/utils'
@@ -16,7 +16,7 @@ function CardResumo({ rotulo, valor, sub, cor }: {
   rotulo: string; valor: string; sub?: string; cor: string
 }) {
   return (
-    <div className="bg-[#111111] border border-[#2a2a2a] rounded-2xl px-5 py-4">
+    <div className="card-dark px-5 py-4">
       <p className="text-xs text-[#9ca3af] font-semibold uppercase tracking-wider">{rotulo}</p>
       <p className="text-2xl font-black mt-1" style={{ color: cor }}>{valor}</p>
       {sub && <p className="text-xs text-[#9ca3af] mt-0.5">{sub}</p>}

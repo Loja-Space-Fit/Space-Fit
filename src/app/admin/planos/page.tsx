@@ -1,4 +1,4 @@
-Ôªø'use client'
+'use client'
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
@@ -74,13 +74,13 @@ export default function PlanosAdminPage() {
   const [saving, setSaving] = useState(false)
   const [deleteId, setDeleteId] = useState<string | null>(null)
 
-  // Hor√°rios
+  // Hor·rios
   const [editingHourId, setEditingHourId] = useState<string | 'new' | null>(null)
   const [hourForm, setHourForm] = useState({ region: '', day_label: '', hours: '', display_order: 1 })
   const [savingHour, setSavingHour] = useState(false)
   const [deleteHourId, setDeleteHourId] = useState<string | null>(null)
 
-  // Regi√µes
+  // Regiıes
   const [editingRegionId, setEditingRegionId] = useState<string | 'new' | null>(null)
   const [regionForm, setRegionForm] = useState<Omit<Region, 'id'>>(EMPTY_REGION)
   const [savingRegion, setSavingRegion] = useState(false)
@@ -144,7 +144,7 @@ export default function PlanosAdminPage() {
     setPlans(prev => prev.map(x => x.id === p.id ? { ...x, active: !x.active } : x))
   }
 
-  // ---- HOR√ÅRIOS ----
+  // ---- HOR¡RIOS ----
   const regionHours = hours.filter(h => h.region === activeRegion)
 
   function startNewHour() {
@@ -372,7 +372,7 @@ export default function PlanosAdminPage() {
       {editingId !== null && (
         <div className="fixed inset-0 bg-black/70 z-50 overflow-y-auto">
           <div className="min-h-full flex items-center justify-center p-4">
-            <div className="bg-[#111111] border border-[#2a2a2a] rounded-2xl w-full max-w-lg p-6 space-y-4">
+            <div className="card-dark w-full max-w-lg p-6 space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-black text-white">{editingId === 'new' ? 'Novo plano' : 'Editar plano'}</h2>
                 <button onClick={cancel} className="text-[#9ca3af] hover:text-white"><X className="w-5 h-5" /></button>
@@ -430,7 +430,7 @@ export default function PlanosAdminPage() {
       {editingHourId !== null && (
         <div className="fixed inset-0 bg-black/70 z-50 overflow-y-auto">
           <div className="min-h-full flex items-center justify-center p-4">
-            <div className="bg-[#111111] border border-[#2a2a2a] rounded-2xl w-full max-w-sm p-6 space-y-4">
+            <div className="card-dark w-full max-w-sm p-6 space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-black text-white">{editingHourId === 'new' ? 'Novo horario' : 'Editar horario'}</h2>
                 <button onClick={() => setEditingHourId(null)} className="text-[#9ca3af] hover:text-white"><X className="w-5 h-5" /></button>
@@ -462,7 +462,7 @@ export default function PlanosAdminPage() {
       {editingRegionId !== null && (
         <div className="fixed inset-0 bg-black/70 z-50 overflow-y-auto">
           <div className="min-h-full flex items-center justify-center p-4">
-            <div className="bg-[#111111] border border-[#2a2a2a] rounded-2xl w-full max-w-md p-6 space-y-4">
+            <div className="card-dark w-full max-w-md p-6 space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-black text-white">{editingRegionId === 'new' ? 'Nova regiao' : 'Editar regiao'}</h2>
                 <button onClick={() => setEditingRegionId(null)} className="text-[#9ca3af] hover:text-white"><X className="w-5 h-5" /></button>

@@ -105,7 +105,7 @@ export default function AdminKitsPage() {
 
       {showForm && (
         <div className="fixed inset-0 z-50 bg-black/80 flex items-start justify-center p-4 overflow-y-auto">
-          <div className="w-full max-w-2xl bg-[#111111] border border-[#2a2a2a] rounded-2xl my-4">
+          <div className="w-full max-w-2xl card-dark my-4">
             <div className="flex items-center justify-between p-5 border-b border-[#2a2a2a]">
               <h2 className="font-black text-white">{editingBundle ? 'Editar Kit' : 'Novo Kit'}</h2>
               <button onClick={() => setShowForm(false)}><X className="w-5 h-5 text-[#9ca3af]" /></button>
@@ -175,7 +175,7 @@ export default function AdminKitsPage() {
           {bundles.map(b => {
             const itemTotal = b.bundle_items?.reduce((s, i) => s + ((i.product as unknown as {price:number})?.price || 0) * i.quantity, 0) || 0
             return (
-              <div key={b.id} className="bg-[#111111] border border-[#2a2a2a] rounded-2xl p-5">
+              <div key={b.id} className="card-dark p-5">
                 <div className="flex items-start justify-between mb-3">
                   <div>
                     <h3 className="font-bold text-white">{b.name}</h3>

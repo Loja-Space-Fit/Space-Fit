@@ -10,27 +10,27 @@ export default function AdminLoading() {
       {/* Linha de cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-28 bg-[#111111] border border-[#2a2a2a] rounded-2xl" />
+          <div key={i} className="h-28 card-dark" />
         ))}
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-28 bg-[#111111] border border-[#2a2a2a] rounded-2xl" />
+          <div key={i} className="h-28 card-dark" />
         ))}
       </div>
 
       {/* Alertas */}
-      <div className="h-40 bg-[#111111] border border-[#2a2a2a] rounded-2xl" />
+      <div className="h-40 card-dark" />
 
       {/* Gráfico + Top Produtos */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2 h-72 bg-[#111111] border border-[#2a2a2a] rounded-2xl" />
-        <div className="h-72 bg-[#111111] border border-[#2a2a2a] rounded-2xl" />
+        <div className="lg:col-span-2 h-72 card-dark" />
+        <div className="h-72 card-dark" />
       </div>
 
       {/* Tabela de pedidos */}
-      <div className="h-64 bg-[#111111] border border-[#2a2a2a] rounded-2xl" />
+      <div className="h-64 card-dark" />
     </div>
   )
 }

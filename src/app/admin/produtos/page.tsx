@@ -255,7 +255,7 @@ export default function AdminProductsPage() {
       {/* Modal do formulário */}
       {showForm && (
         <div className="fixed inset-0 z-50 bg-black/80 flex items-start justify-center p-4 overflow-y-auto overscroll-contain">
-          <div className="w-full max-w-2xl bg-[#111111] border border-[#2a2a2a] rounded-2xl my-4">
+          <div className="w-full max-w-2xl card-dark my-4">
             <div className="flex items-center justify-between p-5 border-b border-[#2a2a2a]">
               <h2 className="font-black text-white">{editing ? 'Editar Produto' : 'Novo Produto'}</h2>
               <button onClick={() => setShowForm(false)} className="text-[#9ca3af] hover:text-white">
@@ -403,7 +403,7 @@ export default function AdminProductsPage() {
       {loading ? (
         <div className="text-center py-20 text-[#9ca3af]">Carregando...</div>
       ) : (
-        <div className="bg-[#111111] border border-[#2a2a2a] rounded-2xl overflow-hidden">
+        <div className="card-dark overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>

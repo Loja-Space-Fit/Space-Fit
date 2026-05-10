@@ -192,5 +192,32 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   margin: 1.5rem 0;
 }
 
+/* ============================================================
+   Utilitários reutilizáveis — substituem classes longas inline
+   ============================================================ */
+
+/* Card escuro padrão — bg #111, borda #2a2a2a, bordas arredondadas */
+.card-dark {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+}
+
+/* Input de busca admin */
+.input-search {
+  background-color: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  color: var(--foreground);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.input-search:focus {
+  border-color: var(--green);
+}
+.input-search::placeholder {
+  color: var(--muted);
+}
+
 
 

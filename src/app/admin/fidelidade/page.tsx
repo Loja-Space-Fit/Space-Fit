@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { formatBRL } from '@/lib/utils'
+import { formatBRL, formatPhone } from '@/lib/utils'
 import { Search } from 'lucide-react'
 
 interface LoyaltyAccount {
@@ -21,13 +21,6 @@ interface LoyaltyTransaction {
   type: string
   description: string
   created_at: string
-}
-
-function formatPhone(phone: string): string {
-  const d = phone.replace(/\D/g, '')
-  if (d.length === 11) return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`
-  if (d.length === 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`
-  return phone
 }
 
 export default function AdminLoyaltyPage() {
@@ -78,7 +71,7 @@ export default function AdminLoyaltyPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9ca3af] pointer-events-none" />
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por nome ou telefone..." className="input pl-10" />
           </div>
-          <div className="bg-[#111111] border border-[#2a2a2a] rounded-2xl overflow-hidden">
+          <div className="card-dark overflow-hidden">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-[#2a2a2a] text-xs text-[#9ca3af] uppercase tracking-wider">
@@ -120,7 +113,7 @@ export default function AdminLoyaltyPage() {
             {selected ? `Histórico de ${selected.customer_name}` : 'Selecione um cliente'}
           </h2>
           {selected ? (
-            <div className="bg-[#111111] border border-[#2a2a2a] rounded-2xl overflow-hidden">
+            <div className="card-dark overflow-hidden">
               <div className="p-4 border-b border-[#2a2a2a] bg-[#b2ea0f]/10">
                 <p className="text-3xl font-black text-[#b2ea0f]">{selected.points.toLocaleString('pt-BR')}</p>
                 <p className="text-xs text-[#9ca3af]">pontos acumulados</p>
@@ -141,7 +134,7 @@ export default function AdminLoyaltyPage() {
               </div>
             </div>
           ) : (
-            <div className="bg-[#111111] border border-[#2a2a2a] rounded-2xl p-8 text-center text-[#9ca3af] text-sm">
+            <div className="card-dark p-8 text-center text-[#9ca3af] text-sm">
               Clique em um cliente para ver o histórico de pontos
             </div>
           )}

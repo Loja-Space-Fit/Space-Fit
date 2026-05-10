@@ -30,7 +30,7 @@ export default function BotaoReprocessarPontos() {
   }
 
   return (
-    <div className="bg-[#111111] border border-[#2a2a2a] rounded-2xl p-5">
+    <div className="card-dark p-5">
       <div className="flex items-center justify-between mb-1">
         <div>
           <h3 className="font-black text-white text-sm">Reprocessar Space Points</h3>

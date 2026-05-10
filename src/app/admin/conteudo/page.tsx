@@ -146,7 +146,7 @@ export default function AdminContentPage() {
 
         {showForm && (
           <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 overflow-y-auto">
-            <div className="w-full max-w-4xl bg-[#111111] border border-[#2a2a2a] rounded-2xl my-auto">
+            <div className="w-full max-w-4xl card-dark my-auto">
               <div className="flex items-center justify-between p-5 border-b border-[#2a2a2a]">
                 <h2 className="font-black text-white">{editing ? 'Editar Banner' : 'Novo Banner'}</h2>
                 <button onClick={() => setShowForm(false)}><X className="w-5 h-5 text-[#9ca3af]" /></button>
@@ -374,7 +374,7 @@ export default function AdminContentPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {banners.map(b => (
-              <div key={b.id} className="bg-[#111111] border border-[#2a2a2a] rounded-2xl overflow-hidden">
+              <div key={b.id} className="card-dark overflow-hidden">
                 <div className="relative h-36 bg-[#1a1a1a]">
                   {b.image_url ? (
                     <img src={b.image_url} alt={b.title} className="w-full h-full object-cover" />
@@ -414,7 +414,7 @@ export default function AdminContentPage() {
         <h2 className="text-xl font-black text-white mb-2">Produtos em Destaque</h2>
         <p className="text-[#9ca3af] text-sm mb-5">Marke os produtos que aparecerão na seção destaque da página inicial.</p>
         {savingFeatured && <p className="text-[#b2ea0f] text-xs mb-2">Salvando...</p>}
-        <div className="bg-[#111111] border border-[#2a2a2a] rounded-2xl overflow-hidden">
+        <div className="card-dark overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>

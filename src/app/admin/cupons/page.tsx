@@ -147,7 +147,7 @@ export default function AdminCouponsPage() {
 
       {showForm && (
         <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 overflow-y-auto overscroll-contain">
-          <div className="w-full max-w-md bg-[#111111] border border-[#2a2a2a] rounded-2xl">
+          <div className="w-full max-w-md card-dark">
             <div className="flex items-center justify-between p-5 border-b border-[#2a2a2a]">
               <h2 className="font-black text-white">{editing ? 'Editar Cupom' : 'Novo Cupom'}</h2>
               <button onClick={() => setShowForm(false)}><X className="w-5 h-5 text-[#9ca3af]" /></button>
@@ -277,7 +277,7 @@ export default function AdminCouponsPage() {
             const expired    = c.expires_at && new Date(c.expires_at) < now
             const notStarted = c.starts_at  && new Date(c.starts_at)  > now
             return (
-              <div key={c.id} className="bg-[#111111] border border-[#2a2a2a] rounded-2xl p-5">
+              <div key={c.id} className="card-dark p-5">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <Tag className="w-4 h-4 text-[#b2ea0f]" />

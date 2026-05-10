@@ -1,4 +1,4 @@
-ï»¿// Dashboard administrativo â€” servidor, busca tudo em paralelo e passa
+// Dashboard administrativo — servidor, busca tudo em paralelo e passa
 // dados prontos para os componentes filhos (alguns client, outros server).
 
 import {
@@ -27,7 +27,7 @@ import BotaoLimpezaBanco   from '@/components/admin/CleanupButton'
 import BotaoReprocessarPontos from '@/components/admin/ReprocessarPontosButton'
 
 // =============================================================================
-// Paleta de status â€” usada na tabela de pedidos recentes
+// Paleta de status — usada na tabela de pedidos recentes
 // =============================================================================
 const badgeStatus: Record<string, { bg: string; texto: string; rotulo: string }> = {
   pending:   { bg: 'bg-yellow-400/15', texto: 'text-yellow-400', rotulo: 'Pendente'   },
@@ -42,7 +42,7 @@ const badgeStatus: Record<string, { bg: string; texto: string; rotulo: string }>
 // PAGE
 // =============================================================================
 export default async function AdminDashboard() {
-  // Grafico de vendas Ã© buscado client-side via GraficoVendas (sem recarregar)
+  // Grafico de vendas é buscado client-side via GraficoVendas (sem recarregar)
   const [metricas, topProdutos, pedidosRecentes] =
     await Promise.all([
       buscarMetricasDashboard(),
@@ -67,7 +67,7 @@ export default async function AdminDashboard() {
       </div>
 
       {/* ================================================================ */}
-      {/* LINHA 1 â€” Receita e pedidos principais */}
+      {/* LINHA 1 — Receita e pedidos principais */}
       {/* ================================================================ */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
 
@@ -86,7 +86,7 @@ export default async function AdminDashboard() {
           valor={formatBRL(metricas.receitaHojePendente)}
           icone={Clock}
           cor={metricas.receitaHojePendente > 0 ? '#f59e0b' : '#9ca3af'}
-          subTexto="Pagamentos aguardando aprovaÃ§Ã£o"
+          subTexto="Pagamentos aguardando aprovação"
         />
 
         <MetricCard
@@ -120,7 +120,7 @@ export default async function AdminDashboard() {
       </div>
 
       {/* ================================================================ */}
-      {/* LINHA 2 â€” Metricas secundarias */}
+      {/* LINHA 2 — Metricas secundarias */}
       {/* ================================================================ */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
 
@@ -163,12 +163,12 @@ export default async function AdminDashboard() {
       </div>
 
       {/* ================================================================ */}
-      {/* LINHA 3 â€” Painel de alertas operacionais */}
+      {/* LINHA 3 — Painel de alertas operacionais */}
       {/* ================================================================ */}
       <PainelAlertas />
 
       {/* ================================================================ */}
-      {/* LINHA 4 â€” Grafico + Top Produtos */}
+      {/* LINHA 4 — Grafico + Top Produtos */}
       {/* ================================================================ */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2">
@@ -180,9 +180,9 @@ export default async function AdminDashboard() {
       </div>
 
       {/* ================================================================ */}
-      {/* LINHA 5 â€” Ultimos pedidos */}
+      {/* LINHA 5 — Ultimos pedidos */}
       {/* ================================================================ */}
-      <div className="bg-[#111111] border border-[#2a2a2a] rounded-2xl overflow-hidden">
+      <div className="card-dark overflow-hidden">
 
         <div className="flex items-center justify-between px-5 py-4 border-b border-[#2a2a2a]">
           <h2 className="font-black text-white text-sm">Ultimos Pedidos</h2>
@@ -252,7 +252,7 @@ export default async function AdminDashboard() {
       </div>
 
       {/* ================================================================ */}
-      {/* LINHA 6 â€” Manutencao do banco */}
+      {/* LINHA 6 — Manutencao do banco */}
       {/* ================================================================ */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <BotaoLimpezaBanco />

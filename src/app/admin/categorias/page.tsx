@@ -281,7 +281,7 @@ export default function AdminCategoriesPage() {
       {/* ── Seletor de tipo ─────────────────────────────────────────────────── */}
       {step === 'type-select' && (
         <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-          <div className="w-full max-w-sm bg-[#111111] border border-[#2a2a2a] rounded-2xl">
+          <div className="w-full max-w-sm card-dark">
             <div className="flex items-center justify-between p-5 border-b border-[#2a2a2a]">
               <h2 className="font-black text-white">Que tipo de categoria?</h2>
               <button onClick={closeForm}><X className="w-5 h-5 text-[#9ca3af]" /></button>
@@ -315,7 +315,7 @@ export default function AdminCategoriesPage() {
       {/* ── Formulário de Categoria ──────────────────────────────────────────── */}
       {step === 'category' && (
         <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 overflow-y-auto overscroll-contain">
-          <div className="w-full max-w-md bg-[#111111] border border-[#2a2a2a] rounded-2xl my-4">
+          <div className="w-full max-w-md card-dark my-4">
             <div className="flex items-center justify-between p-5 border-b border-[#2a2a2a]">
               <h2 className="font-black text-white">{editingCat ? 'Editar Categoria' : 'Nova Categoria'}</h2>
               <button onClick={closeForm}><X className="w-5 h-5 text-[#9ca3af]" /></button>
@@ -389,7 +389,7 @@ export default function AdminCategoriesPage() {
       {/* ── Formulário de Kit/Combo ──────────────────────────────────────────── */}
       {step === 'bundle' && (
         <div className="fixed inset-0 z-50 bg-black/80 flex items-start justify-center p-4 overflow-y-auto overscroll-contain">
-          <div className="w-full max-w-2xl bg-[#111111] border border-[#2a2a2a] rounded-2xl my-4">
+          <div className="w-full max-w-2xl card-dark my-4">
             <div className="flex items-center justify-between p-5 border-b border-[#2a2a2a]">
               <h2 className="font-black text-white">{editingBundle ? 'Editar Kit' : 'Novo Kit & Combo'}</h2>
               <button onClick={closeForm}><X className="w-5 h-5 text-[#9ca3af]" /></button>
@@ -580,7 +580,7 @@ export default function AdminCategoriesPage() {
             <h2 className="text-sm font-bold text-[#9ca3af] uppercase tracking-widest mb-3">Categorias Individuais</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {categories.map(cat => (
-                <div key={cat.id} className="bg-[#111111] border border-[#2a2a2a] rounded-2xl p-5">
+                <div key={cat.id} className="card-dark p-5">
                   <div className="flex items-start justify-between mb-3">
                     <div>
                       <h3 className="font-bold text-white">{cat.name}</h3>
@@ -619,7 +619,7 @@ export default function AdminCategoriesPage() {
               {bundles.map(b => {
                 const itemTotal = b.bundle_items?.reduce((s, i) => s + ((i.product as unknown as { price: number })?.price || 0) * i.quantity, 0) || 0
                 return (
-                  <div key={b.id} className="relative bg-[#111111] border border-[#2a2a2a] rounded-2xl p-5 overflow-hidden">
+                  <div key={b.id} className="relative card-dark p-5 overflow-hidden">
                     {b.image_url && (
                       <>
                         {/* eslint-disable-next-line @next/next/no-img-element */}

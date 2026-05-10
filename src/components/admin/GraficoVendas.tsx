@@ -288,7 +288,7 @@ export default function GraficoVendas({ diasInicial = 30 }: { diasInicial?: numb
   const intervaloEixoX = dados.length > 14 ? 4 : dados.length > 7 ? 2 : 1
 
   return (
-    <div className="bg-[#111111] border border-[#2a2a2a] rounded-2xl p-5">
+    <div className="card-dark p-5">
       {/* Cabeçalho */}
       <div className="flex items-start justify-between mb-5 flex-wrap gap-3">
         <p className="text-xs text-[#9ca3af] font-semibold uppercase tracking-wider pt-2">

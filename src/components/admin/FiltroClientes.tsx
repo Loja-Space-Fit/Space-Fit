@@ -78,7 +78,7 @@ export default function FiltroClientes({ clientes, ticketMedio }: PropsFiltroCli
   const filtrosAtivos = busca.trim() !== '' || classificacao !== 'Todos'
 
   return (
-    <div className="bg-[#111111] border border-[#2a2a2a] rounded-2xl overflow-hidden">
+    <div className="card-dark overflow-hidden">
 
       {/* Cabecalho com busca e filtros */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 px-5 py-4 border-b border-[#2a2a2a]">
