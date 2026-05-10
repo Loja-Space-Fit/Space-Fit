@@ -98,23 +98,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Erro ao salvar pedido' }, { status: 500 })
     }
 
-    // Decrementar estoque apenas para retiradas (pagamento confirmado no ato)
-    // Para pagamentos online (PIX/cartão), o estoque é decrementado no webhook após aprovação
-    if (payment_method === 'pickup') {
-      for (const item of items) {
-        if (bundleIds.has(item.product_id)) {
-          const currentStock = bundleIds.get(item.product_id) ?? 0
-          await supabase
-            .from('bundles')
-            .update({ stock: Math.max(0, currentStock - item.quantity) })
-            .eq('id', item.product_id)
-        } else {
-          const currentStock = stockMap.get(item.product_id) ?? 0
-          await supabase
-            .from('products')
-            .update({ stock: Math.max(0, currentStock - item.quantity) })
-            .eq('id', item.product_id)
-        }
+    // Decrementar estoque imediatamente ao criar o pedido (para todos os métodos).
+    // Se o pagamento for recusado ou cancelado, o estoque é restaurado no webhook/rota de cancelamento.
+    for (const item of items) {
+      if (bundleIds.has(item.product_id)) {
+        const currentStock = bundleIds.get(item.product_id) ?? 0
+        await supabase
+          .from('bundles')
+          .update({ stock: Math.max(0, currentStock - item.quantity) })
+          .eq('id', item.product_id)
+      } else {
+        const currentStock = stockMap.get(item.product_id) ?? 0
+        await supabase
+          .from('products')
+          .update({ stock: Math.max(0, currentStock - item.quantity) })
+          .eq('id', item.product_id)
       }
     }
 
