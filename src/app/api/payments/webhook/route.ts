@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
-import { enviarEmailConfirmacaoPedido } from '@/lib/email'
+import { enviarEmailConfirmacaoPedido, enviarEmailProntoParaRetirada } from '@/lib/email'
 import { processLoyaltyPoints } from '@/lib/loyalty'
 import type { Order } from '@/types'
 
@@ -115,7 +115,10 @@ export async function POST(req: NextRequest) {
           if (pedidoCompleto) {
             await processLoyaltyPoints(orderId, supabase)
 
-            enviarEmailConfirmacaoPedido(pedidoCompleto as Order).catch(e =>
+            const emailFn = pedidoCompleto.payment_method === 'pickup'
+              ? enviarEmailProntoParaRetirada
+              : enviarEmailConfirmacaoPedido
+            emailFn(pedidoCompleto as Order).catch(e =>
               console.error('[webhook] Falha ao enviar email de confirmacao:', e)
             )
 

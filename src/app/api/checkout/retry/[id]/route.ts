@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { getPreferenceClient } from '@/lib/mercadopago'
 import { processLoyaltyPoints } from '@/lib/loyalty'
+import { enviarEmailConfirmacaoPedido, enviarEmailProntoParaRetirada } from '@/lib/email'
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -49,6 +50,15 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
     // Processar pontos de fidelidade
     await processLoyaltyPoints(order.id, supabase)
+
+    // Enviar email de confirmação
+    const { data: pedidoAprovado } = await supabase.from('orders').select('*').eq('id', order.id).single()
+    if (pedidoAprovado) {
+      const emailFn = pedidoAprovado.payment_method === 'pickup'
+        ? enviarEmailProntoParaRetirada
+        : enviarEmailConfirmacaoPedido
+      emailFn(pedidoAprovado as import('@/types').Order).catch(() => {})
+    }
 
     return NextResponse.redirect(new URL(`/pedido-confirmado/${order.id}`, siteUrl))
   }

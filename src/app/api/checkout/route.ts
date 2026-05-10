@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient, createClient } from '@/lib/supabase/server'
 import { getPreferenceClient } from '@/lib/mercadopago'
 import { processLoyaltyPoints } from '@/lib/loyalty'
+import { enviarEmailConfirmacaoPedido, enviarEmailProntoParaRetirada } from '@/lib/email'
 
 export async function POST(req: NextRequest) {
   try {
@@ -142,6 +143,15 @@ export async function POST(req: NextRequest) {
 
         // Processar pontos de fidelidade
         await processLoyaltyPoints(order.id, supabase)
+
+        // Enviar email de confirmação
+        const { data: pedidoAprovado } = await supabase.from('orders').select('*').eq('id', order.id).single()
+        if (pedidoAprovado) {
+          const emailFn = payment_method === 'pickup'
+            ? enviarEmailProntoParaRetirada
+            : enviarEmailConfirmacaoPedido
+          emailFn(pedidoAprovado as import('@/types').Order).catch(() => {})
+        }
 
         return NextResponse.json({ order_id: order.id, order_number: order.order_number })
       }

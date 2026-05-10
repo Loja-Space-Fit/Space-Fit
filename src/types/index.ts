@@ -118,6 +118,7 @@ export interface Order {
   points_earned?: number;
   points_processed?: boolean;
   user_id?: string;
+  pickup_location?: string;
   created_at: string;
   updated_at: string;
 }

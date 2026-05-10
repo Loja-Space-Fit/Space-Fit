@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import { formatBRL, getWhatsAppLink, ORDER_STATUS_LABELS, PAYMENT_METHOD_LABELS } from '@/lib/utils'
 import { processLoyaltyPoints } from '@/lib/loyalty'
 import { getPaymentClient } from '@/lib/mercadopago'
-import { enviarEmailConfirmacaoPedido } from '@/lib/email'
+import { enviarEmailConfirmacaoPedido, enviarEmailProntoParaRetirada } from '@/lib/email'
 import { CheckCircle, XCircle, Clock, QrCode, MessageCircle, ShoppingBag, Package, CreditCard } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -57,7 +57,12 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
       if (wasAlreadyApproved?.payment_status !== 'approved') {
         await processLoyaltyPoints(id, service)
         const { data: pedidoAprovado } = await service.from('orders').select('*').eq('id', id).single()
-        if (pedidoAprovado) enviarEmailConfirmacaoPedido(pedidoAprovado as Order).catch(() => {})
+        if (pedidoAprovado) {
+          const emailFn = pedidoAprovado.payment_method === 'pickup'
+            ? enviarEmailProntoParaRetirada
+            : enviarEmailConfirmacaoPedido
+          emailFn(pedidoAprovado as Order).catch(() => {})
+        }
       }
     } else if (mpRealStatus === 'in_process' || mpRealStatus === 'pending') {
       await service

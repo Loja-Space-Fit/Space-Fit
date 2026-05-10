@@ -161,7 +161,70 @@ export async function enviarEmailConfirmacaoPedido(pedido: Order): Promise<void>
 }
 
 // =============================================================================
-// Email 2: Atualizacao de status (Enviado / Entregue)
+// Email 2: Pedido pronto para retirada na academia
+// =============================================================================
+const NOMES_UNIDADE: Record<string, string> = {
+  conceicao: 'Space Fit — Unidade Conceição',
+  guaira:    'Space Fit — Unidade Guaíra',
+}
+
+export async function enviarEmailProntoParaRetirada(pedido: Order): Promise<void> {
+  if (!pedido.customer_email) return
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('[email] RESEND_API_KEY nao configurado — email de retirada ignorado.')
+    return
+  }
+
+  const unidade = pedido.pickup_location
+    ? (NOMES_UNIDADE[pedido.pickup_location] ?? pedido.pickup_location)
+    : 'nossa academia'
+
+  const corpo = `
+    <h2 style="margin:0 0 8px;font-size:22px;font-weight:900;color:#ffffff;">
+      Seu produto está esperando por você!
+    </h2>
+    <p style="margin:0 0 24px;font-size:14px;color:#9ca3af;">
+      Olá, ${pedido.customer_name}! Seu pedido foi confirmado e está disponível para retirada em <strong style="color:#ffffff;">${unidade}</strong>.
+    </p>
+
+    <div style="background:#1a1a1a;border-radius:12px;padding:16px;margin-bottom:24px;">
+      <p style="margin:0 0 4px;font-size:12px;color:#9ca3af;text-transform:uppercase;letter-spacing:1px;">
+        Número do pedido
+      </p>
+      <p style="margin:0;font-size:20px;font-weight:900;color:#b2ea0f;">${pedido.order_number}</p>
+    </div>
+
+    <p style="margin:0 0 12px;font-size:13px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:1px;">
+      Resumo da compra
+    </p>
+    ${htmlItens(pedido)}
+
+    <div style="margin-top:24px;background:#1a1a1a;border-radius:12px;padding:16px;text-align:center;">
+      <p style="margin:0 0 6px;font-size:12px;color:#9ca3af;text-transform:uppercase;letter-spacing:1px;">Local de retirada</p>
+      <p style="margin:0;font-size:15px;font-weight:700;color:#b2ea0f;">📍 ${unidade}</p>
+      <p style="margin:8px 0 0;font-size:12px;color:#6b7280;">
+        Apresente este e-mail ou o número do pedido na recepção.
+      </p>
+    </div>
+
+    <p style="margin:24px 0 0;font-size:13px;color:#9ca3af;">
+      Qualquer dúvida, fale com a gente pelo WhatsApp. Até lá!
+    </p>`
+
+  try {
+    await getResend().emails.send({
+      from:    EMAIL_REMETENTE,
+      to:      pedido.customer_email,
+      subject: `Seu produto está pronto para retirada! Pedido ${pedido.order_number} | Space Fit`,
+      html:    layoutEmail('Pronto para retirada', corpo),
+    })
+  } catch (erro) {
+    console.error('[email] Erro ao enviar email de retirada:', erro)
+  }
+}
+
+// =============================================================================
+// Email 3 (antes 2): Atualização de status (Enviado / Entregue)
 // =============================================================================
 
 const MENSAGENS_STATUS: Record<string, { assunto: string; titulo: string; descricao: string }> = {
