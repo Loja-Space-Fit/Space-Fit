@@ -136,16 +136,18 @@ export async function POST(req: NextRequest) {
           }
         }
 
-        // Transição → rejeitado: restaurar estoque (guard: só se o admin não cancelou antes)
-        if (mapped.payment_status === 'rejected' && pedidoAtual?.payment_status !== 'rejected') {
+        // Transição → rejeitado: restaurar estoque se ainda não foi restaurado pela página de confirmação
+        // (a página pode ter chegado primeiro e já restaurado — a guard evita dupla restauração)
+        if (mapped.payment_status === 'rejected') {
           const { data: pedidoCompleto } = await supabase
             .from('orders')
             .select('items')
             .eq('id', orderId)
             .single()
 
-          // Usa o order_status ANTES do update — se já era 'cancelled', admin cancelou manualmente
-          if (pedidoCompleto && pedidoAtual?.order_status !== 'cancelled') {
+          // Só restaura se o order ainda estava 'pending' ANTES deste webhook (pedidoAtual)
+          // Se a página de confirmação já processou, pedidoAtual.payment_status já será 'rejected'
+          if (pedidoCompleto && pedidoAtual?.payment_status === 'pending') {
             const orderItems = (pedidoCompleto?.items || []) as Array<{ product_id: string; quantity: number }>
             for (const item of orderItems) {
               const { data: bundle } = await supabase

@@ -66,21 +66,69 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
         .eq('id', id)
         .neq('payment_status', 'approved')
     } else if (mpRealStatus === 'rejected' || mpRealStatus === 'cancelled') {
+      const { data: pedidoAntes } = await service
+        .from('orders')
+        .select('payment_status, items')
+        .eq('id', id)
+        .single()
+
       await service
         .from('orders')
         .update({ payment_status: 'rejected', order_status: 'cancelled', mp_payment_id: mpPaymentId })
         .eq('id', id)
         .neq('payment_status', 'approved')
+
+      // Restaurar estoque (só se estava pending — evita dupla restauração)
+      if (pedidoAntes && pedidoAntes.payment_status === 'pending') {
+        const orderItems = (pedidoAntes.items || []) as Array<{ product_id: string; quantity: number }>
+        for (const item of orderItems) {
+          const { data: bundle } = await service
+            .from('bundles').select('id, stock').eq('id', item.product_id).maybeSingle()
+          if (bundle) {
+            await service.from('bundles').update({ stock: bundle.stock + item.quantity }).eq('id', item.product_id)
+          } else {
+            const { data: product } = await service
+              .from('products').select('id, stock').eq('id', item.product_id).maybeSingle()
+            if (product) {
+              await service.from('products').update({ stock: product.stock + item.quantity }).eq('id', item.product_id)
+            }
+          }
+        }
+      }
     }
   }
 
   // MP redireciona para failure URL sem params — usar mp_result=failure para detectar
   if (mpResult === 'failure') {
+    const { data: pedidoAntes } = await service
+      .from('orders')
+      .select('payment_status, items')
+      .eq('id', id)
+      .single()
+
     await service
       .from('orders')
       .update({ payment_status: 'rejected', order_status: 'cancelled' })
       .eq('id', id)
       .neq('payment_status', 'approved')
+
+    // Restaurar estoque (só se estava pending — evita dupla restauração)
+    if (pedidoAntes && pedidoAntes.payment_status === 'pending') {
+      const orderItems = (pedidoAntes.items || []) as Array<{ product_id: string; quantity: number }>
+      for (const item of orderItems) {
+        const { data: bundle } = await service
+          .from('bundles').select('id, stock').eq('id', item.product_id).maybeSingle()
+        if (bundle) {
+          await service.from('bundles').update({ stock: bundle.stock + item.quantity }).eq('id', item.product_id)
+        } else {
+          const { data: product } = await service
+            .from('products').select('id, stock').eq('id', item.product_id).maybeSingle()
+          if (product) {
+            await service.from('products').update({ stock: product.stock + item.quantity }).eq('id', item.product_id)
+          }
+        }
+      }
+    }
   }
 
   const supabase = createServiceClient()
