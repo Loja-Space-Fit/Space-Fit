@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useCart } from '@/context/CartContext'
 import { useAuth } from '@/context/AuthContext'
 import { useForm } from 'react-hook-form'
@@ -63,6 +63,10 @@ export default function CheckoutPage() {
   const [shippingLoading, setShippingLoading] = useState(false)
   const [shippingInfo, setShippingInfo] = useState<{ price: number; free: boolean; min_days: number; max_days: number; threshold: number; original_price?: number } | null>(null)
 
+  // Ref para subtotal — evita stale closure em buscarCep
+  const subtotalRef = useRef(subtotal)
+  useEffect(() => { subtotalRef.current = subtotal }, [subtotal])
+
   // Unidades de retirada (carregadas do banco)
   const [pickupRegions, setPickupRegions] = useState<{ value: string; label: string; address: string }[]>([])
   useEffect(() => {
@@ -114,12 +118,12 @@ export default function CheckoutPage() {
         form.setValue('city',         data.localidade || '')
         form.setValue('state',        data.uf         || '')
         form.setValue('cep',          digits)
-        calcularFrete(data.uf, subtotal)
+        calcularFrete(data.uf, subtotalRef.current)
       }
     } catch {
       setCepStatus('error')
     }
-  }, [form, calcularFrete, subtotal])
+  }, [form, calcularFrete])
 
   // Buscar pontos do cliente
   useEffect(() => {
@@ -182,11 +186,22 @@ export default function CheckoutPage() {
   const pickupLocation  = form.watch('pickup_location')
   const uf              = form.watch('state')
 
-  // Recalcula frete quando: cupom muda subtotal, ou usuário volta de retirada → entrega
+  // Recalcula frete quando subtotal muda (cupom aplicado/removido)
   useEffect(() => {
-    if (!uf || cepStatus !== 'ok' || deliveryType !== 'delivery') return
-    calcularFrete(uf, subtotal)
-  }, [subtotal, deliveryType, uf, cepStatus, calcularFrete])
+    const currentUf = form.getValues('state')
+    if (!currentUf || cepStatus !== 'ok') return
+    calcularFrete(currentUf, subtotal)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subtotal])
+
+  // Recalcula frete ao voltar de retirada → entrega
+  useEffect(() => {
+    if (deliveryType !== 'delivery') return
+    const currentUf = form.getValues('state')
+    if (!currentUf || cepStatus !== 'ok') return
+    calcularFrete(currentUf, subtotalRef.current)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deliveryType])
 
   const pointsDiscount = usePoints ? pointsToUse : 0
   const shippingValue  = deliveryType === 'pickup' ? 0 : shippingCost
