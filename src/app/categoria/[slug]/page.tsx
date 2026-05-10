@@ -52,15 +52,9 @@ export default async function CategoryPage({ params, searchParams: spPromise }: 
 
     return (
       <div>
-        {/* Hero header */}
-        <div className="relative h-44 md:h-56 overflow-hidden bg-[#111111]">
-          {category.image_url && (
-            <Image src={category.image_url} alt={category.name} fill className="object-cover" />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/70 to-black/30" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-transparent via-[#b2ea0f] to-transparent" />
-          <div className="absolute inset-0 flex flex-col justify-end px-6 md:px-10 pb-6 max-w-7xl mx-auto">
+        {/* Header da categoria (sem imagem) */}
+        <div className="bg-[#111111] border-b border-[#2a2a2a]">
+          <div className="max-w-7xl mx-auto px-6 md:px-10 py-8">
             <div className="flex items-center gap-1.5 text-xs text-[#9ca3af] mb-3">
               <Link href="/" className="hover:text-[#b2ea0f] transition-colors flex items-center gap-1">
                 <Home className="w-3 h-3" /> Início
@@ -188,15 +182,9 @@ export default async function CategoryPage({ params, searchParams: spPromise }: 
 
   return (
     <div>
-      {/* Hero header da categoria */}
-      <div className="relative h-44 md:h-56 overflow-hidden bg-[#111111]">
-        {category.image_url && (
-          <Image src={category.image_url} alt={category.name} fill className="object-cover" />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/70 to-black/30" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-        <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-transparent via-[#b2ea0f] to-transparent" />
-        <div className="absolute inset-0 flex flex-col justify-end px-6 md:px-10 pb-6 max-w-7xl mx-auto">
+      {/* Header da categoria (sem imagem) */}
+      <div className="bg-[#111111] border-b border-[#2a2a2a]">
+        <div className="max-w-7xl mx-auto px-6 md:px-10 py-8">
           {/* Breadcrumb */}
           <div className="flex items-center gap-1.5 text-xs text-[#9ca3af] mb-3">
             <Link href="/" className="hover:text-[#b2ea0f] transition-colors flex items-center gap-1">
