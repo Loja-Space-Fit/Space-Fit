@@ -21,7 +21,7 @@ const schema = z.object({
   customer_phone:   z.string().min(10, 'Telefone obrigatório'),
   customer_email:   z.string().email('E-mail inválido').optional().or(z.literal('')),
   delivery_type:    z.enum(['delivery', 'pickup']),
-  pickup_location:  z.enum(['conceicao', 'guaira']).optional(),
+  pickup_location:  z.string().optional(),
   cep:              z.string().optional(),
   street:           z.string().optional(),
   number:           z.string().optional(),
@@ -62,6 +62,14 @@ export default function CheckoutPage() {
   const [shippingCost, setShippingCost] = useState(0)
   const [shippingLoading, setShippingLoading] = useState(false)
   const [shippingInfo, setShippingInfo] = useState<{ price: number; free: boolean; min_days: number; max_days: number; threshold: number; original_price?: number } | null>(null)
+
+  // Unidades de retirada (carregadas do banco)
+  const [pickupRegions, setPickupRegions] = useState<{ value: string; label: string; address: string }[]>([])
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.from('academy_regions').select('value, label, address').eq('active', true).order('display_order')
+      .then(({ data }) => setPickupRegions(data || []))
+  }, [])
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -416,20 +424,17 @@ export default function CheckoutPage() {
                   <div className="mb-4">
                     <p className="text-sm text-[#9ca3af] mb-2 font-semibold">Escolha a unidade para retirada:</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {[
-                        { value: 'conceicao', label: 'Conceição das Alagoas', sub: 'Conceição das Alagoas – MG' },
-                        { value: 'guaira',    label: 'Guaíra',                sub: 'Guaíra – SP' },
-                      ].map(opt => (
+                      {pickupRegions.map(opt => (
                         <button
                           key={opt.value}
                           type="button"
-                          onClick={() => form.setValue('pickup_location', opt.value as 'conceicao' | 'guaira')}
+                          onClick={() => form.setValue('pickup_location', opt.value)}
                           className={`p-3 rounded-xl border-2 text-left transition-all ${
                             pickupLocation === opt.value ? 'border-[#b2ea0f] bg-[#b2ea0f]/10' : 'border-[#2a2a2a] hover:border-[#b2ea0f]/40'
                           }`}
                         >
                           <p className="font-bold text-white text-sm">{opt.label}</p>
-                          <p className="text-xs text-[#9ca3af]">{opt.sub}</p>
+                          {opt.address && <p className="text-xs text-[#9ca3af]">{opt.address}</p>}
                         </button>
                       ))}
                     </div>
@@ -580,7 +585,9 @@ export default function CheckoutPage() {
                     <div className="p-4 bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl text-sm text-[#d1d5db]">
                       <p className="font-bold text-[#b2ea0f] mb-1 flex items-center gap-2">
                         <Store className="w-4 h-4" />
-                        Retirada em: {pickupLocation === 'conceicao' ? 'Conceição das Alagoas – MG' : pickupLocation === 'guaira' ? 'Guaíra – SP' : 'selecione acima'}
+                        Retirada em: {pickupLocation
+                          ? (pickupRegions.find(r => r.value === pickupLocation)?.label ?? pickupLocation)
+                          : 'selecione acima'}
                       </p>
                       <p className="text-[#9ca3af] text-xs">Aguardaremos você na unidade escolhida.</p>
                     </div>

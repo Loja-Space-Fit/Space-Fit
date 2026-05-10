@@ -163,11 +163,6 @@ export async function enviarEmailConfirmacaoPedido(pedido: Order): Promise<void>
 // =============================================================================
 // Email 2: Pedido pronto para retirada na academia
 // =============================================================================
-const NOMES_UNIDADE: Record<string, string> = {
-  conceicao: 'Space Fit — Unidade Conceição',
-  guaira:    'Space Fit — Unidade Guaíra',
-}
-
 export async function enviarEmailProntoParaRetirada(pedido: Order): Promise<void> {
   if (!pedido.customer_email) return
   if (!process.env.RESEND_API_KEY) {
@@ -175,9 +170,18 @@ export async function enviarEmailProntoParaRetirada(pedido: Order): Promise<void
     return
   }
 
-  const unidade = pedido.pickup_location
-    ? (NOMES_UNIDADE[pedido.pickup_location] ?? pedido.pickup_location)
-    : 'nossa academia'
+  // Buscar o label da unidade no banco (dinâmico, não depende de mapa fixo)
+  let unidade = pedido.pickup_location ?? 'nossa academia'
+  try {
+    const { createServiceClient } = await import('@/lib/supabase/server')
+    const supabase = createServiceClient()
+    const { data: region } = await supabase
+      .from('academy_regions')
+      .select('label')
+      .eq('value', pedido.pickup_location ?? '')
+      .maybeSingle()
+    if (region?.label) unidade = region.label
+  } catch { /* usa o valor bruto como fallback */ }
 
   const corpo = `
     <h2 style="margin:0 0 8px;font-size:22px;font-weight:900;color:#ffffff;">
