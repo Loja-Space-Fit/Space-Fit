@@ -37,6 +37,12 @@ export default function Cabecalho() {
     return () => document.removeEventListener('mousedown', fecharAoClicarFora)
   }, [])
 
+  // Bloqueia scroll do body quando menu mobile está aberto
+  useEffect(() => {
+    document.body.style.overflow = menuMobileAberto ? 'hidden' : ''
+    return () => { document.body.style.overflow = '' }
+  }, [menuMobileAberto])
+
   // Fecha o menu mobile automaticamente ao navegar para outra página
   useEffect(() => { setMenuMobileAberto(false) }, [paginaAtual])
 
@@ -248,9 +254,22 @@ export default function Cabecalho() {
         </div>
       )}
 
-      {/* === MENU MOBILE === */}
-      <div className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out bg-[#0a0a0a] ${menuMobileAberto ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0'}`}>
-        <div className="border-t border-white/5 bg-[#0a0a0a] px-4 py-4 flex flex-col gap-1">
+      {/* === MENU MOBILE — overlay tela cheia === */}
+      {menuMobileAberto && (
+        <div className="md:hidden fixed inset-0 z-50 bg-[#0a0a0a] flex flex-col overflow-y-auto">
+          {/* Topo com logo e botão fechar */}
+          <div className="flex items-center justify-between px-4 h-[72px] border-b border-white/5 shrink-0">
+            <span className="text-[#b2ea0f] font-black text-xl tracking-widest">SPACE FIT</span>
+            <button
+              onClick={() => setMenuMobileAberto(false)}
+              className="w-9 h-9 flex items-center justify-center rounded-xl bg-white/5 text-white"
+              aria-label="Fechar menu"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="px-4 py-4 flex flex-col gap-1">
 
           {/* Categorias no mobile */}
           {categorias.map(cat => (
@@ -364,8 +383,9 @@ export default function Cabecalho() {
               </Link>
             )}
           </div>
+          </div>
         </div>
-      </div>
+      )}
     </header>
   )
 }
