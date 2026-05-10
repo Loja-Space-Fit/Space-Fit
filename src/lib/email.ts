@@ -337,32 +337,43 @@ export async function enviarEmailConfirmacaoConta(nome: string, email: string, c
     return
   }
 
+  const primeiroNome = nome.split(' ')[0]
+
   const corpo = `
     <h2 style="margin:0 0 8px;font-size:22px;font-weight:900;color:#ffffff;">
-      Confirme sua conta
+      Bem-vindo(a) a Space Fit, ${primeiroNome}!
     </h2>
+    <p style="margin:0 0 16px;font-size:14px;color:#9ca3af;">
+      Sua conta foi criada com sucesso. So falta um passo: confirme seu e-mail clicando no botao abaixo para ativar o acesso completo a loja.
+    </p>
     <p style="margin:0 0 24px;font-size:14px;color:#9ca3af;">
-      Ola, ${nome}! Clique no botao abaixo para ativar sua conta na Space Fit.
+      Apos a confirmacao voce podera acompanhar seus pedidos, acumular pontos no programa de fidelidade e aproveitar ofertas exclusivas.
     </p>
 
     <div style="text-align:center;margin:32px 0;">
       <a href="${confirmUrl}"
         style="display:inline-block;background:#b2ea0f;color:#000000;font-size:15px;font-weight:900;text-decoration:none;padding:14px 32px;border-radius:12px;letter-spacing:0.5px;">
-        CONFIRMAR MINHA CONTA
+        CONFIRMAR MEU E-MAIL
       </a>
     </div>
 
-    <p style="margin:0;font-size:12px;color:#6b7280;text-align:center;">
-      Se voce nao criou uma conta na Space Fit, ignore este email.
+    <p style="margin:0 0 8px;font-size:12px;color:#6b7280;text-align:center;">
       O link expira em 24 horas.
+    </p>
+    <p style="margin:0;font-size:12px;color:#6b7280;text-align:center;">
+      Se voce nao criou uma conta na Space Fit, pode ignorar este e-mail com seguranca.
     </p>`
+
+  const textoSimples = `Bem-vindo(a) a Space Fit, ${primeiroNome}!\n\nSua conta foi criada. Confirme seu e-mail acessando o link abaixo:\n\n${confirmUrl}\n\nO link expira em 24 horas.\n\nSe voce nao criou uma conta, ignore este e-mail.`
 
   try {
     await getResend().emails.send({
-      from:    EMAIL_REMETENTE,
-      to:      email,
-      subject: 'Confirme sua conta — Space Fit',
-      html:    layoutEmail('Confirme sua conta', corpo),
+      from:      EMAIL_REMETENTE,
+      to:        email,
+      reply_to:  process.env.RESEND_FROM_EMAIL ?? 'contato@lojaspacefit.com.br',
+      subject:   'Ative sua conta na Space Fit',
+      html:      layoutEmail('Bem-vindo a Space Fit', corpo),
+      text:      textoSimples,
     })
   } catch (erro) {
     console.error('[email] Erro ao enviar email de confirmacao de conta:', erro)
