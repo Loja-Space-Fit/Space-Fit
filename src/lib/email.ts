@@ -370,7 +370,7 @@ export async function enviarEmailConfirmacaoConta(nome: string, email: string, c
     await getResend().emails.send({
       from:      EMAIL_REMETENTE,
       to:        email,
-      reply_to:  process.env.RESEND_FROM_EMAIL ?? 'contato@lojaspacefit.com.br',
+      replyTo:   process.env.RESEND_FROM_EMAIL ?? 'contato@lojaspacefit.com.br',
       subject:   'Ative sua conta na Space Fit',
       html:      layoutEmail('Bem-vindo a Space Fit', corpo),
       text:      textoSimples,
