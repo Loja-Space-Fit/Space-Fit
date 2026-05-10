@@ -38,7 +38,7 @@ function layoutEmail(titulo: string, corpo: string): string {
         <tr>
           <td style="padding:48px 40px 0;text-align:center;">
             <p style="margin:0 0 6px;font-size:28px;font-weight:900;color:#b2ea0f;letter-spacing:3px;">SPACE FIT</p>
-            <p style="margin:0 0 28px;font-size:12px;color:#6b7280;letter-spacing:1px;">Sua loja de moda fitness</p>
+            <p style="margin:0 0 28px;font-size:12px;color:#6b7280;letter-spacing:1px;">Sua loja fitness</p>
             <div style="width:40px;height:2px;background:#b2ea0f;margin:0 auto;"></div>
           </td>
         </tr>
