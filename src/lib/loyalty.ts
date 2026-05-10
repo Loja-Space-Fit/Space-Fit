@@ -29,7 +29,9 @@ export async function processLoyaltyPoints(
   }
 
   if (!pedido.user_id) {
-    throw new Error(`Pedido ${pedido.order_number} sem user_id`)
+    // Pedido de visitante (sem conta) — não acumula pontos, não bloqueia o fluxo
+    console.info(`[loyalty] Pedido ${pedido.order_number} sem user_id — pontos ignorados para visitante`)
+    return
   }
 
   const toDeduct = pedido.points_to_use || 0

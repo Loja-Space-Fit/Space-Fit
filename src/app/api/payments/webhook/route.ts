@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
           })
           .eq('id', orderId)
 
-        // Transição → aprovado: dispara loyalty e email
+        // Transição → aprovado: dispara loyalty, email e incrementa cupom
         if (mapped.payment_status === 'approved' && pedidoAtual?.payment_status !== 'approved') {
           const { data: pedidoCompleto } = await supabase
             .from('orders')
@@ -118,40 +118,58 @@ export async function POST(req: NextRequest) {
             enviarEmailConfirmacaoPedido(pedidoCompleto as Order).catch(e =>
               console.error('[webhook] Falha ao enviar email de confirmacao:', e)
             )
+
+            // Incrementar uso do cupom somente após pagamento confirmado
+            if (pedidoCompleto.coupon_code) {
+              const { data: cupom } = await supabase
+                .from('coupons')
+                .select('uses_count')
+                .eq('code', pedidoCompleto.coupon_code)
+                .single()
+              if (cupom) {
+                await supabase
+                  .from('coupons')
+                  .update({ uses_count: (cupom.uses_count || 0) + 1 })
+                  .eq('code', pedidoCompleto.coupon_code)
+              }
+            }
           }
         }
 
-        // Transição → rejeitado/cancelado: restaurar estoque
+        // Transição → rejeitado: restaurar estoque (guard: só se ainda não estava cancelado)
         if (mapped.payment_status === 'rejected' && pedidoAtual?.payment_status !== 'rejected') {
           const { data: pedidoCompleto } = await supabase
             .from('orders')
-            .select('items')
+            .select('items, order_status')
             .eq('id', orderId)
             .single()
 
-          const orderItems = (pedidoCompleto?.items || []) as Array<{ product_id: string; quantity: number }>
-          for (const item of orderItems) {
-            const { data: bundle } = await supabase
-              .from('bundles')
-              .select('id, stock')
-              .eq('id', item.product_id)
-              .maybeSingle()
-            if (bundle) {
-              await supabase
+          // Guard extra: evita restaurar estoque se o admin já cancelou manualmente
+          if (pedidoCompleto && pedidoCompleto.order_status !== 'cancelled') {
+            const orderItems = (pedidoCompleto?.items || []) as Array<{ product_id: string; quantity: number }>
+            for (const item of orderItems) {
+              const { data: bundle } = await supabase
                 .from('bundles')
-                .update({ stock: bundle.stock + item.quantity })
-                .eq('id', item.product_id)
-            } else {
-              const { data: product } = await supabase
-                .from('products')
                 .select('id, stock')
                 .eq('id', item.product_id)
                 .maybeSingle()
-              if (product) {
+              if (bundle) {
                 await supabase
-                  .from('products')
-                  .update({ stock: product.stock + item.quantity })
+                  .from('bundles')
+                  .update({ stock: bundle.stock + item.quantity })
                   .eq('id', item.product_id)
+              } else {
+                const { data: product } = await supabase
+                  .from('products')
+                  .select('id, stock')
+                  .eq('id', item.product_id)
+                  .maybeSingle()
+                if (product) {
+                  await supabase
+                    .from('products')
+                    .update({ stock: product.stock + item.quantity })
+                    .eq('id', item.product_id)
+                }
               }
             }
           }

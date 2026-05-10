@@ -116,20 +116,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Incrementar uso do cupom
-    if (coupon_code) {
-      const { data: coupon } = await supabase
-        .from('coupons')
-        .select('uses_count')
-        .eq('code', coupon_code)
-        .single()
-      if (coupon) {
-        await supabase
-          .from('coupons')
-          .update({ uses_count: (coupon.uses_count || 0) + 1 })
-          .eq('code', coupon_code)
-      }
-    }
+    // Nota: o uso do cupom (uses_count) só é incrementado após aprovação do pagamento (no webhook)
 
     // Criar preferência de pagamento no Mercado Pago (apenas para pagamentos online)
     if (payment_method !== 'pickup') {

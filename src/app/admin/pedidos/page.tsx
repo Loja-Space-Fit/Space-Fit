@@ -124,24 +124,36 @@ export default function PaginaPedidosAdmin() {
 
       if (pedido && pedido.order_status !== 'cancelled') {
 
-        // Devolve estoque item por item
+        // Devolve estoque item por item (products e bundles)
         for (const item of (pedido.items || [])) {
           const { data: produto } = await supabase
             .from('products')
-            .select('stock')
+            .select('id, stock')
             .eq('id', item.product_id)
-            .single()
+            .maybeSingle()
 
           if (produto) {
             await supabase
               .from('products')
               .update({ stock: produto.stock + item.quantity })
               .eq('id', item.product_id)
+          } else {
+            const { data: bundle } = await supabase
+              .from('bundles')
+              .select('id, stock')
+              .eq('id', item.product_id)
+              .maybeSingle()
+            if (bundle) {
+              await supabase
+                .from('bundles')
+                .update({ stock: bundle.stock + item.quantity })
+                .eq('id', item.product_id)
+            }
           }
         }
 
-        // Devolve o uso do cupom se havia um aplicado
-        if (pedido.coupon_code) {
+        // Devolve o uso do cupom se o pagamento foi aprovado (só então o cupom foi incrementado)
+        if (pedido.coupon_code && pedido.payment_status === 'approved') {
           const { data: cupom } = await supabase
             .from('coupons')
             .select('uses_count')
@@ -153,6 +165,27 @@ export default function PaginaPedidosAdmin() {
               .from('coupons')
               .update({ uses_count: cupom.uses_count - 1 })
               .eq('code', pedido.coupon_code)
+          }
+        }
+
+        // Reverte pontos de fidelidade se o pagamento foi aprovado
+        if (pedido.payment_status === 'approved' && pedido.user_id) {
+          const { data: acc } = await supabase
+            .from('loyalty_accounts')
+            .select('id, points, total_spent')
+            .eq('user_id', pedido.user_id)
+            .maybeSingle()
+
+          if (acc) {
+            const pontosGanhos = pedido.points_earned ?? 0
+            const pontosUsados = pedido.points_to_use ?? 0
+            await supabase
+              .from('loyalty_accounts')
+              .update({
+                points:      Math.max(0, acc.points - pontosGanhos + pontosUsados),
+                total_spent: Math.max(0, Number(acc.total_spent) - pedido.total),
+              })
+              .eq('id', acc.id)
           }
         }
       }

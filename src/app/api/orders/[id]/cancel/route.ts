@@ -19,7 +19,7 @@ export async function POST(
   // Buscar o pedido
   const { data: order } = await supabase
     .from('orders')
-    .select('id, user_id, payment_status, items')
+    .select('id, user_id, payment_status, items, coupon_code')
     .eq('id', id)
     .single()
 
@@ -39,14 +39,14 @@ export async function POST(
     .update({ payment_status: 'rejected', order_status: 'cancelled' })
     .eq('id', id)
 
-  // Restaurar estoque dos itens
+  // Restaurar estoque dos itens (products e bundles)
   const items = (order.items || []) as Array<{ product_id: string; quantity: number }>
   for (const item of items) {
     const { data: product } = await supabase
       .from('products')
       .select('id, stock')
       .eq('id', item.product_id)
-      .single()
+      .maybeSingle()
 
     if (product) {
       await supabase
@@ -58,7 +58,7 @@ export async function POST(
         .from('bundles')
         .select('id, stock')
         .eq('id', item.product_id)
-        .single()
+        .maybeSingle()
 
       if (bundle) {
         await supabase
@@ -68,6 +68,10 @@ export async function POST(
       }
     }
   }
+
+  // Reverter uso do cupom (só se o pagamento havia sido aprovado antes)
+  // Pedidos cancelados pelo cliente são sempre 'pending' — cupom nunca foi incrementado
+  // (o increment só ocorre no webhook de aprovação), então nenhuma ação necessária aqui.
 
   return NextResponse.json({ ok: true })
 }
