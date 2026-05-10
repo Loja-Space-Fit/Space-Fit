@@ -34,6 +34,13 @@ export const metadata: Metadata = {
   description:
     "A melhor academia de Conceição das Alagoas, MG. Roupas, suplementos e acessórios para sua academia. Space Fit: Discipline, Energy, Results.",
   keywords: ["academia", "fitness", "suplementos", "roupas fitness", "Space Fit", "musculação", "Conceição das Alagoas"],
+  icons: {
+    icon: [
+      { url: '/imagens/logoaba.png', type: 'image/png' },
+    ],
+    shortcut: '/imagens/logoaba.png',
+    apple: '/imagens/logoaba.png',
+  },
   openGraph: {
     title: "Space Fit | Loja Fitness",
     description: "Roupas, suplementos e acessórios fitness. Compre online com segurança.",
