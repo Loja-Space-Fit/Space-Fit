@@ -23,8 +23,18 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     )
   }
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+
+  // Pedido gratuito (cupom 100%) — aprovar diretamente sem passar pelo MP
+  if (Number(order.total) <= 0) {
+    await supabase
+      .from('orders')
+      .update({ payment_status: 'approved', order_status: 'paid' })
+      .eq('id', order.id)
+    return NextResponse.redirect(new URL(`/pedido-confirmado/${order.id}`, siteUrl))
+  }
+
   try {
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
     const isSandbox = (process.env.MERCADOPAGO_ACCESS_TOKEN || '').startsWith('TEST-')
     const preferenceClient = getPreferenceClient()
 
@@ -61,8 +71,6 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     return NextResponse.redirect(isSandbox ? preference.sandbox_init_point! : preference.init_point!)
   } catch (e) {
     console.error('[retry] Erro ao criar preferência:', e)
-    return NextResponse.redirect(
-      new URL(`/pedido-confirmado/${id}`, process.env.NEXT_PUBLIC_SITE_URL!)
-    )
+    return NextResponse.redirect(new URL(`/pedido-confirmado/${id}`, siteUrl))
   }
 }

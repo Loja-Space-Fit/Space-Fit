@@ -120,6 +120,15 @@ export async function POST(req: NextRequest) {
 
     // Criar preferência de pagamento no Mercado Pago (apenas para pagamentos online)
     if (payment_method !== 'pickup') {
+      // Pedido gratuito (cupom 100%) — aprovar diretamente sem passar pelo MP
+      if (Number(total) <= 0) {
+        await supabase
+          .from('orders')
+          .update({ payment_status: 'approved', order_status: 'paid' })
+          .eq('id', order.id)
+        return NextResponse.json({ order_id: order.id, order_number: order.order_number })
+      }
+
       try {
         const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
           || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
