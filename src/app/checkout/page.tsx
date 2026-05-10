@@ -821,23 +821,15 @@ export default function CheckoutPage() {
                     {deliveryType === 'pickup'
                       ? <span className="text-[#b2ea0f]">Grátis</span>
                       : shippingInfo
-                        ? shippingInfo.free
-                          ? <span className="text-[#b2ea0f]">Grátis</span>
-                          : <span className="text-white">{formatBRL(shippingInfo.price)}</span>
+                        ? <span className="text-white">{formatBRL(shippingInfo.price)}</span>
                         : <span className="text-[#555] text-sm font-normal">informe o CEP</span>
                     }
                   </span>
                 </div>
-                {shippingInfo && !shippingInfo.free && deliveryType === 'delivery' && (
+                {shippingInfo && deliveryType === 'delivery' && (
                   <div className="flex items-center gap-1.5 text-xs text-[#9ca3af] -mt-1 px-1">
                     <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><circle cx="12" cy="12" r="10" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2" /></svg>
                     Prazo estimado: <strong className="text-white">{shippingInfo.min_days}–{shippingInfo.max_days} dias úteis</strong>
-                  </div>
-                )}
-                {shippingInfo && shippingInfo.free && deliveryType === 'delivery' && (
-                  <div className="flex items-center gap-1.5 text-xs text-[#b2ea0f] -mt-1 px-1 font-bold">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                    Frete grátis aplicado
                   </div>
                 )}
                 <div className="flex justify-between font-black text-white text-lg pt-2 border-t border-[#2a2a2a]">

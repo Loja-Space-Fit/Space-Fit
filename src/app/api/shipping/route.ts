@@ -23,20 +23,18 @@ export async function GET(req: NextRequest) {
   if (!rate) {
     // UF não encontrada — usa taxa padrão
     return NextResponse.json({
-      price: subtotal >= threshold ? 0 : 35.90,
-      free: subtotal >= threshold,
+      price: 35.90,
+      free: false,
       min_days: 7,
       max_days: 14,
       threshold,
     })
   }
 
-  const free = subtotal >= threshold
-
   return NextResponse.json({
-    price: free ? 0 : rate.price,
+    price: rate.price,
     original_price: rate.price,
-    free,
+    free: false,
     min_days: rate.min_days,
     max_days: rate.max_days,
     threshold,
