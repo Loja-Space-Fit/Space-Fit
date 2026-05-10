@@ -259,7 +259,7 @@ export default function Cabecalho() {
 
       {/* === MENU MOBILE — overlay tela cheia (fora do header para evitar backdrop-filter quebrar fixed) === */}
       {menuMobileAberto && (
-        <div className="md:hidden fixed inset-0 z-[100] bg-[#0a0a0a] flex flex-col overflow-y-auto">
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: '#0a0a0a', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
           {/* Topo com logo e botão fechar */}
           <div className="flex items-center justify-between px-4 h-[72px] border-b border-white/5 shrink-0">
             <span className="text-[#b2ea0f] font-black text-xl tracking-widest">SPACE FIT</span>
@@ -272,7 +272,7 @@ export default function Cabecalho() {
             </button>
           </div>
 
-          <div className="px-4 py-4 flex flex-col gap-1">
+          <div className="px-4 py-4 flex flex-col gap-1 flex-1">
 
           {/* Categorias no mobile */}
           {categorias.map(cat => (
