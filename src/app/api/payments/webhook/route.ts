@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
         // Buscar estado atual antes de atualizar (idempotência — evita processar duas vezes)
         const { data: pedidoAtual } = await supabase
           .from('orders')
-          .select('payment_status')
+          .select('payment_status, order_status')
           .eq('id', orderId)
           .single()
 
@@ -136,16 +136,16 @@ export async function POST(req: NextRequest) {
           }
         }
 
-        // Transição → rejeitado: restaurar estoque (guard: só se ainda não estava cancelado)
+        // Transição → rejeitado: restaurar estoque (guard: só se o admin não cancelou antes)
         if (mapped.payment_status === 'rejected' && pedidoAtual?.payment_status !== 'rejected') {
           const { data: pedidoCompleto } = await supabase
             .from('orders')
-            .select('items, order_status')
+            .select('items')
             .eq('id', orderId)
             .single()
 
-          // Guard extra: evita restaurar estoque se o admin já cancelou manualmente
-          if (pedidoCompleto && pedidoCompleto.order_status !== 'cancelled') {
+          // Usa o order_status ANTES do update — se já era 'cancelled', admin cancelou manualmente
+          if (pedidoCompleto && pedidoAtual?.order_status !== 'cancelled') {
             const orderItems = (pedidoCompleto?.items || []) as Array<{ product_id: string; quantity: number }>
             for (const item of orderItems) {
               const { data: bundle } = await supabase
