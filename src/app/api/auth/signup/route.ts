@@ -38,6 +38,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: msg }, { status: 400 })
     }
 
+    const userId = data.user?.id
+    if (!userId) {
+      return NextResponse.json({ error: 'Erro ao criar usuário.' }, { status: 500 })
+    }
+
+    // Criar perfil diretamente (garante que o perfil existe mesmo se o trigger falhar)
+    const { error: profileError } = await supabase.from('profiles').upsert({
+      id:        userId,
+      email,
+      full_name: formattedName,
+      phone:     phone ?? '',
+    }, { onConflict: 'id' })
+    if (profileError) {
+      console.error('[signup] Erro ao criar perfil:', profileError.message)
+    }
+
     // Usar hashed_token para montar URL própria — assim apenas nossa rota /auth/confirm
     // faz a verificação (evita que o token seja consumido 2x pelo endpoint do Supabase)
     const hashed_token    = data.properties?.hashed_token
