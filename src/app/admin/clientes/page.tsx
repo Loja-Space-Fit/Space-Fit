@@ -1,6 +1,6 @@
-// CRM de clientes — agrega todos os pedidos por telefone do cliente,
+ï»¿// CRM de clientes â€” agrega todos os pedidos por telefone do cliente,
 // calcula total gasto, numero de pedidos e classifica cada um.
-// Componente de servidor — busca os dados; FiltroClientes (client) faz a busca/filtro.
+// Componente de servidor â€” busca os dados; FiltroClientes (client) faz a busca/filtro.
 
 import { buscarClientesAgregados } from '@/services/admin'
 import { formatBRL }               from '@/lib/utils'

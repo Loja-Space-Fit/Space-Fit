@@ -1,4 +1,4 @@
-'use client'
+Ôªø'use client'
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
@@ -74,13 +74,13 @@ export default function PlanosAdminPage() {
   const [saving, setSaving] = useState(false)
   const [deleteId, setDeleteId] = useState<string | null>(null)
 
-  // Hor·rios
+  // Hor√°rios
   const [editingHourId, setEditingHourId] = useState<string | 'new' | null>(null)
   const [hourForm, setHourForm] = useState({ region: '', day_label: '', hours: '', display_order: 1 })
   const [savingHour, setSavingHour] = useState(false)
   const [deleteHourId, setDeleteHourId] = useState<string | null>(null)
 
-  // Regiıes
+  // Regi√µes
   const [editingRegionId, setEditingRegionId] = useState<string | 'new' | null>(null)
   const [regionForm, setRegionForm] = useState<Omit<Region, 'id'>>(EMPTY_REGION)
   const [savingRegion, setSavingRegion] = useState(false)
@@ -144,7 +144,7 @@ export default function PlanosAdminPage() {
     setPlans(prev => prev.map(x => x.id === p.id ? { ...x, active: !x.active } : x))
   }
 
-  // ---- HOR¡RIOS ----
+  // ---- HOR√ÅRIOS ----
   const regionHours = hours.filter(h => h.region === activeRegion)
 
   function startNewHour() {
