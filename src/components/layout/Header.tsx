@@ -94,7 +94,7 @@ export default function Cabecalho() {
               </button>
 
               {menuUsuarioAberto && (
-                <div className="absolute right-0 top-full mt-2 w-48 bg-[#111] border border-white/10 rounded-2xl shadow-2xl shadow-black/50 overflow-hidden z-50">
+                <div className="absolute right-0 top-full mt-2 w-48 bg-[#111] border border-white/10 rounded-2xl shadow-2xl shadow-black/50 overflow-y-auto max-h-[calc(100vh-80px)] z-50">
                   <div className="px-4 py-3 border-b border-white/5">
                     <p className="text-xs text-[#9ca3af]">Logado como</p>
                     <p className="text-sm text-white font-semibold truncate">{primeiroNome}</p>
