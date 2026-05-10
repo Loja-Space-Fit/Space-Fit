@@ -106,15 +106,16 @@ function LoginForm() {
     e.preventDefault()
     setLoading(true)
     setError('')
-    const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail.trim(), {
-      redirectTo: `${window.location.origin}/reset-password`,
-    })
-    setLoading(false)
-    if (error?.message.toLowerCase().includes('rate') || error?.status === 429) {
-      setError('Muitas tentativas. Aguarde alguns minutos e tente novamente.')
-      return
+    try {
+      await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: forgotEmail.trim() }),
+      })
+    } catch {
+      // ignora — sempre mostra sucesso por segurança
     }
-    // Sempre mostra sucesso (segurança: não revela se o e-mail está cadastrado)
+    setLoading(false)
     setView('forgot-sent')
   }, [forgotEmail])
 
