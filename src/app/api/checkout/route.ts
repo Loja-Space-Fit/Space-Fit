@@ -121,6 +121,34 @@ export async function POST(req: NextRequest) {
     // Nota: o uso do cupom (uses_count) só é incrementado após aprovação do pagamento (no webhook)
 
     // Criar preferência de pagamento no Mercado Pago (apenas para pagamentos online)
+    if (payment_method === 'pickup') {
+      // Pedido de retirada: aprovar imediatamente, incrementar cupom e enviar email
+      await supabase
+        .from('orders')
+        .update({ payment_status: 'approved', order_status: 'paid' })
+        .eq('id', order.id)
+
+      if (coupon_code) {
+        const { data: cupom } = await supabase
+          .from('coupons').select('uses_count').eq('code', coupon_code).single()
+        if (cupom) {
+          await supabase
+            .from('coupons')
+            .update({ uses_count: (cupom.uses_count || 0) + 1 })
+            .eq('code', coupon_code)
+        }
+      }
+
+      await processLoyaltyPoints(order.id, supabase)
+
+      const { data: pedidoRetirada } = await supabase.from('orders').select('*').eq('id', order.id).single()
+      if (pedidoRetirada) {
+        enviarEmailProntoParaRetirada(pedidoRetirada as import('@/types').Order).catch(() => {})
+      }
+
+      return NextResponse.json({ order_id: order.id, order_number: order.order_number })
+    }
+
     if (payment_method !== 'pickup') {
       // Pedido gratuito (cupom 100%) — aprovar diretamente sem passar pelo MP
       if (Number(total) <= 0) {
@@ -210,7 +238,7 @@ export async function POST(req: NextRequest) {
           { status: 502 }
         )
       }
-    }
+    } // fim if payment_method !== 'pickup'
 
     return NextResponse.json({ order_id: order.id, order_number: order.order_number })
   } catch (error) {
