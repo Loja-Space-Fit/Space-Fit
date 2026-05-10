@@ -15,7 +15,7 @@ function getResend() {
 }
 
 const EMAIL_REMETENTE =
-  `Space Fit <${process.env.RESEND_FROM_EMAIL ?? 'noreply@lojaspacefit.com.br'}>`
+  `Space Fit <${process.env.RESEND_FROM_EMAIL ?? 'contato@lojaspacefit.com.br'}>`
 
 // =============================================================================
 // Templates HTML em pt-BR com identidade visual Space Fit

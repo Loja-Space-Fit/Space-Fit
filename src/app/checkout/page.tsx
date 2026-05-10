@@ -180,6 +180,14 @@ export default function CheckoutPage() {
   const deliveryType    = form.watch('delivery_type')
   const paymentMethod   = form.watch('payment_method')
   const pickupLocation  = form.watch('pickup_location')
+  const uf              = form.watch('state')
+
+  // Recalcula frete quando: cupom muda subtotal, ou usuário volta de retirada → entrega
+  useEffect(() => {
+    if (!uf || cepStatus !== 'ok' || deliveryType !== 'delivery') return
+    calcularFrete(uf, subtotal)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subtotal, deliveryType])
 
   const pointsDiscount = usePoints ? pointsToUse : 0
   const shippingValue  = deliveryType === 'pickup' ? 0 : shippingCost
