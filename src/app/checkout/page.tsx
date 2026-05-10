@@ -115,12 +115,12 @@ export default function CheckoutPage() {
 
   // Buscar pontos do cliente
   useEffect(() => {
-    if (user && profile?.phone) {
+    if (user) {
       const supabase = createClient()
-      supabase.from('loyalty_accounts').select('points').eq('customer_phone', profile.phone).single()
+      supabase.from('loyalty_accounts').select('points').eq('user_id', user.id).maybeSingle()
         .then(({ data }) => setLoyaltyPoints(data?.points ?? 0))
     }
-  }, [user, profile])
+  }, [user])
 
   // Verificar se há pedido pendente em andamento (evita acúmulo de estoque)
   useEffect(() => {
