@@ -97,23 +97,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function signUp(email: string, password: string, name: string, phone: string) {
-    const formattedName = name.trim().replace(/\b\w/g, c => c.toUpperCase())
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { full_name: formattedName, phone },
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm?next=/minha-conta`,
-      },
-    })
-    if (error) return { error: error.message }
-
-    // Enviar email de boas-vindas da academia (via Resend)
-    fetch('/api/auth/send-welcome', {
+    // Cadastro server-side: usa admin.generateLink para criar o usuário e enviar
+    // email customizado com botão de confirmação (sem email automático do Supabase)
+    const res = await fetch('/api/auth/signup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nome: formattedName, email }),
-    }).catch(() => {/* fire-and-forget */})
+      body: JSON.stringify({ email, password, nome: name, phone }),
+    })
+    const json = await res.json()
+
+    if (!res.ok) {
+      if (json.error === 'already_registered') return { error: 'already registered' }
+      return { error: json.error ?? 'Erro ao criar conta.' }
+    }
 
     return { error: null }
   }
