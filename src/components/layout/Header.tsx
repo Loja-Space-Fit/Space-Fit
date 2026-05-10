@@ -270,7 +270,7 @@ export default function Cabecalho() {
             </button>
           </div>
 
-          <div className="px-4 py-4 flex flex-col gap-1 flex-1">
+          <div className="px-4 py-4 flex flex-col gap-1 flex-1 overflow-y-auto">
 
           {/* Categorias no mobile */}
           {categorias.map(cat => (
