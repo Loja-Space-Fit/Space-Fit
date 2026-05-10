@@ -2,19 +2,49 @@
 
 import { useCart } from '@/context/CartContext'
 import { useAuth } from '@/context/AuthContext'
-import { X, Minus, Plus, Trash2, ShoppingBag } from 'lucide-react'
+import { X, Minus, Plus, Trash2, ShoppingBag, Clock } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { formatBRL } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+
+const CART_TTL_MS = 3 * 60 * 60 * 1000
+
+function useCartTimer(addedAt: number | null, hasItems: boolean) {
+  const [remaining, setRemaining] = useState<number | null>(null)
+
+  useEffect(() => {
+    if (!hasItems || !addedAt) { setRemaining(null); return }
+
+    function update() {
+      const left = CART_TTL_MS - (Date.now() - addedAt!)
+      setRemaining(left > 0 ? left : 0)
+    }
+    update()
+    const id = setInterval(update, 1000)
+    return () => clearInterval(id)
+  }, [addedAt, hasItems])
+
+  return remaining
+}
+
+function formatTimer(ms: number) {
+  const total = Math.floor(ms / 1000)
+  const h = Math.floor(total / 3600)
+  const m = Math.floor((total % 3600) / 60)
+  const s = total % 60
+  return `${String(h).padStart(2, '0')}h ${String(m).padStart(2, '0')}m ${String(s).padStart(2, '0')}s`
+}
 
 export default function CartDrawer() {
   const {
     isOpen, closeCart, items, removeItem, updateQty,
-    subtotal, total,
+    subtotal, total, addedAt,
   } = useCart()
   const { user } = useAuth()
   const router = useRouter()
+  const remaining = useCartTimer(addedAt, items.length > 0)
 
   return (
     <>
@@ -48,6 +78,20 @@ export default function CartDrawer() {
 
         {/* Itens */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          {/* Banner de urgência */}
+          {items.length > 0 && remaining !== null && (
+            <div className="bg-[#1a1a1a] border border-[#b2ea0f]/30 rounded-xl p-3 flex gap-3 items-start">
+              <Clock className="w-4 h-4 text-[#b2ea0f] shrink-0 mt-0.5" />
+              <div>
+                <p className="text-xs font-bold text-white">
+                  Não deixe seus itens escaparem · <span className="text-[#b2ea0f]">{formatTimer(remaining)}</span>
+                </p>
+                <p className="text-xs text-[#9ca3af] mt-0.5">
+                  Corra! Itens podem esgotar. Finalize a compra e garanta agora.
+                </p>
+              </div>
+            </div>
+          )}
           {items.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center gap-4 text-[#9ca3af]">
               <ShoppingBag className="w-16 h-16 opacity-20" />

@@ -1,15 +1,18 @@
 'use client'
 
-import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react'
+import React, { createContext, useContext, useReducer, useEffect, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { CartItem, Coupon } from '@/types'
 import { formatBRL } from '@/lib/utils'
+
+const CART_TTL_MS = 3 * 60 * 60 * 1000 // 3 horas
 
 interface CartState {
   items: CartItem[]
   coupon: Coupon | null
   couponCode: string
   isOpen: boolean
+  addedAt: number | null // timestamp de quando o primeiro item foi adicionado
 }
 
 type CartAction =
@@ -20,6 +23,7 @@ type CartAction =
   | { type: 'REMOVE_COUPON' }
   | { type: 'CLEAR_CART' }
   | { type: 'TOGGLE_CART'; payload?: boolean }
+  | { type: 'RESTORE_ADDED_AT'; payload: number }
 
 function cartReducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
@@ -36,7 +40,11 @@ function cartReducer(state: CartState, action: CartAction): CartState {
         }
         return { ...state, items }
       }
-      return { ...state, items: [...state.items, action.payload] }
+      return {
+        ...state,
+        items: [...state.items, action.payload],
+        addedAt: state.addedAt ?? Date.now(),
+      }
     }
     case 'REMOVE_ITEM': {
       const key = `${action.payload.product_id}-${action.payload.size || ''}`
@@ -59,9 +67,11 @@ function cartReducer(state: CartState, action: CartAction): CartState {
     case 'REMOVE_COUPON':
       return { ...state, coupon: null, couponCode: '' }
     case 'CLEAR_CART':
-      return { ...state, items: [], coupon: null, couponCode: '' }
+      return { ...state, items: [], coupon: null, couponCode: '', addedAt: null }
     case 'TOGGLE_CART':
       return { ...state, isOpen: action.payload !== undefined ? action.payload : !state.isOpen }
+    case 'RESTORE_ADDED_AT':
+      return { ...state, addedAt: action.payload }
     default:
       return state
   }
@@ -90,7 +100,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     coupon: null,
     couponCode: '',
     isOpen: false,
+    addedAt: null,
   })
+  const clearTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Zerar carrinho ao fazer logout
   useEffect(() => {
@@ -104,24 +116,56 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe()
   }, [])
 
+  // Timer de 3 horas para esvaziar o carrinho automaticamente
+  useEffect(() => {
+    if (clearTimerRef.current) clearTimeout(clearTimerRef.current)
+    if (state.items.length === 0 || !state.addedAt) return
+
+    const elapsed = Date.now() - state.addedAt
+    const remaining = CART_TTL_MS - elapsed
+
+    if (remaining <= 0) {
+      dispatch({ type: 'CLEAR_CART' })
+      try { localStorage.removeItem('spacefit_cart') } catch { /* ignora */ }
+      return
+    }
+
+    clearTimerRef.current = setTimeout(() => {
+      dispatch({ type: 'CLEAR_CART' })
+      try { localStorage.removeItem('spacefit_cart') } catch { /* ignora */ }
+    }, remaining)
+
+    return () => { if (clearTimerRef.current) clearTimeout(clearTimerRef.current) }
+  }, [state.items.length, state.addedAt])
+
   // Persistir carrinho no localStorage
   useEffect(() => {
     try {
       const saved = localStorage.getItem('spacefit_cart')
       if (saved) {
         const parsed = JSON.parse(saved)
+        const addedAt: number | null = parsed.addedAt ?? null
+        // Se já passou 3h, não restaurar
+        if (addedAt && Date.now() - addedAt >= CART_TTL_MS) {
+          localStorage.removeItem('spacefit_cart')
+          return
+        }
         parsed.items?.forEach((item: CartItem) =>
           dispatch({ type: 'ADD_ITEM', payload: item })
         )
+        // Restaura o addedAt original via ADD_ITEM já define, mas precisamos sobrescrever
+        if (addedAt) {
+          dispatch({ type: 'RESTORE_ADDED_AT', payload: addedAt })
+        }
       }
     } catch { /* ignora erro de parse */ }
   }, [])
 
   useEffect(() => {
     try {
-      localStorage.setItem('spacefit_cart', JSON.stringify({ items: state.items }))
+      localStorage.setItem('spacefit_cart', JSON.stringify({ items: state.items, addedAt: state.addedAt }))
     } catch { /* ignora */ }
-  }, [state.items])
+  }, [state.items, state.addedAt])
 
   const subtotal = state.items.reduce((s, i) => s + i.unit_price * i.quantity, 0)
 

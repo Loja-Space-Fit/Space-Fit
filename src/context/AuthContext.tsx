@@ -97,11 +97,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function signUp(email: string, password: string, name: string, phone: string) {
+    const formattedName = name.trim().replace(/\b\w/g, c => c.toUpperCase())
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { full_name: name, phone },
+        data: { full_name: formattedName, phone },
         emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm?next=/minha-conta`,
       },
     })
@@ -111,7 +112,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     fetch('/api/auth/send-welcome', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nome: name, email }),
+      body: JSON.stringify({ nome: formattedName, email }),
     }).catch(() => {/* fire-and-forget */})
 
     return { error: null }
