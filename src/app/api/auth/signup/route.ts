@@ -38,10 +38,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: msg }, { status: 400 })
     }
 
-    const confirmUrl = data.properties?.action_link
-    if (!confirmUrl) {
+    // Usar hashed_token para montar URL própria — assim apenas nossa rota /auth/confirm
+    // faz a verificação (evita que o token seja consumido 2x pelo endpoint do Supabase)
+    const hashed_token    = data.properties?.hashed_token
+    const verificationType = data.properties?.verification_type ?? 'signup'
+    if (!hashed_token) {
       return NextResponse.json({ error: 'Não foi possível gerar o link de confirmação.' }, { status: 500 })
     }
+
+    const confirmUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm?token_hash=${encodeURIComponent(hashed_token)}&type=${encodeURIComponent(verificationType)}&next=/minha-conta`
 
     // Enviar email com botão de confirmação via Resend
     enviarEmailConfirmacaoConta(formattedName, email, confirmUrl).catch(e =>

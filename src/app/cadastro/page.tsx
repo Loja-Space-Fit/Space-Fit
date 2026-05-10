@@ -1,6 +1,6 @@
 ﻿'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Image from 'next/image'
 import { useAuth } from '@/context/AuthContext'
 import Link from 'next/link'
@@ -36,6 +36,11 @@ export default function CadastroPage() {
   const [loading, setLoading]   = useState(false)
   const [error, setError]       = useState('')
   const [done, setDone]         = useState(false)
+
+  // Rola para o topo ao exibir a tela de sucesso (evita página scrollada)
+  useEffect(() => {
+    if (done) window.scrollTo({ top: 0, behavior: 'instant' })
+  }, [done])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()

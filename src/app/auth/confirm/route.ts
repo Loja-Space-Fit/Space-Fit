@@ -1,6 +1,24 @@
 import { type EmailOtpType } from '@supabase/supabase-js'
 import { type NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createServerClient } from '@supabase/ssr'
+
+// Cria um cliente Supabase que escreve cookies diretamente na resposta fornecida
+function makeSupabase(request: NextRequest, response: NextResponse) {
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll: () => request.cookies.getAll(),
+        setAll: (cookiesToSet) => {
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options)
+          )
+        },
+      },
+    }
+  )
+}
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -9,22 +27,20 @@ export async function GET(request: NextRequest) {
   const code       = searchParams.get('code')
   const next       = searchParams.get('next') ?? '/minha-conta'
 
-  const supabase = await createClient()
-
-  // Fluxo PKCE: Supabase redireciona com ?code= após verificar o link do email
+  // Fluxo PKCE: ?code= (fallback caso Supabase redirecione pelo endpoint próprio)
   if (code) {
+    const response = NextResponse.redirect(new URL(next, request.url))
+    const supabase = makeSupabase(request, response)
     const { error } = await supabase.auth.exchangeCodeForSession(code)
-    if (!error) {
-      return NextResponse.redirect(new URL(next, request.url))
-    }
+    if (!error) return response
   }
 
-  // Fluxo OTP/token_hash: link gerado via admin.generateLink ou signUp sem PKCE
+  // Fluxo OTP/token_hash: link gerado com hashed_token de admin.generateLink
   if (token_hash && type) {
+    const response = NextResponse.redirect(new URL(next, request.url))
+    const supabase = makeSupabase(request, response)
     const { error } = await supabase.auth.verifyOtp({ type, token_hash })
-    if (!error) {
-      return NextResponse.redirect(new URL(next, request.url))
-    }
+    if (!error) return response
   }
 
   // Em caso de erro, redirecionar para login com mensagem
