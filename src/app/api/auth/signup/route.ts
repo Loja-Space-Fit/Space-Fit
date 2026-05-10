@@ -48,10 +48,15 @@ export async function POST(req: NextRequest) {
 
     const confirmUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm?token_hash=${encodeURIComponent(hashed_token)}&type=${encodeURIComponent(verificationType)}&next=/minha-conta`
 
-    // Enviar email com botão de confirmação via Resend
-    enviarEmailConfirmacaoConta(formattedName, email, confirmUrl).catch(e =>
-      console.error('[signup] Erro ao enviar email de confirmacao:', e)
-    )
+    // Enviar email com botão de confirmação via Resend (aguardado para capturar erros nos logs)
+    try {
+      await enviarEmailConfirmacaoConta(formattedName, email, confirmUrl)
+      console.log('[signup] Email de confirmação enviado para:', email)
+    } catch (emailErr) {
+      console.error('[signup] Falha ao enviar email de confirmação:', emailErr)
+      console.error('[signup] confirmUrl gerado:', confirmUrl)
+      // Não bloqueia — conta foi criada, usuário pode pedir reenvio
+    }
 
     return NextResponse.json({ ok: true })
   } catch (e) {
