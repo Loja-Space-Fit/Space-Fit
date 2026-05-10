@@ -58,8 +58,7 @@ export default function Cabecalho() {
   const primeiroNome = perfil?.full_name?.split(' ')[0] || 'Conta'
 
   return (
-    <>
-    <header className="sticky top-0 z-50 bg-[#0a0a0a]/95 backdrop-blur-md border-b border-[#b2ea0f]/10 shadow-[0_4px_30px_rgba(0,0,0,0.6)]">
+    <header className={`sticky top-0 z-50 bg-[#0a0a0a]/95 ${menuMobileAberto ? '' : 'backdrop-blur-md'} border-b border-[#b2ea0f]/10 shadow-[0_4px_30px_rgba(0,0,0,0.6)]`}>
       {/* === BARRA PRINCIPAL === */}
       <div className="max-w-7xl mx-auto px-4 h-[72px] flex items-center justify-between gap-6">
 
@@ -255,11 +254,10 @@ export default function Cabecalho() {
         </div>
       )}
 
-    </header>
 
-      {/* === MENU MOBILE — overlay tela cheia (fora do header para evitar backdrop-filter quebrar fixed) === */}
+      {/* === MENU MOBILE — overlay tela cheia (backdrop-blur removido do header quando aberto para fixed funcionar) === */}
       {menuMobileAberto && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: '#0a0a0a', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+        <div className="fixed inset-0 z-[100] bg-[#0a0a0a] flex flex-col h-screen">
           {/* Topo com logo e botão fechar */}
           <div className="flex items-center justify-between px-4 h-[72px] border-b border-white/5 shrink-0">
             <span className="text-[#b2ea0f] font-black text-xl tracking-widest">SPACE FIT</span>
@@ -389,6 +387,6 @@ export default function Cabecalho() {
           </div>
         </div>
       )}
-    </>
+    </header>
   )
 }
