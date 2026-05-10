@@ -6,7 +6,7 @@ import CategoryCards from '@/components/store/CategoryCards'
 import TestimonialsSection from '@/components/store/TestimonialsSection'
 import FadeIn from '@/components/ui/FadeIn'
 import Link from 'next/link'
-import { ArrowRight, Zap, Flame, Trophy, Users, ShieldCheck, Package, MessageCircle } from 'lucide-react'
+import { ArrowRight, Zap, Flame, Trophy, Users, Truck, ShieldCheck, Package, MessageCircle } from 'lucide-react'
 
 export default async function HomePage() {
   const supabase = await createClient()
