@@ -6,7 +6,7 @@ import CategoryCards from '@/components/store/CategoryCards'
 import TestimonialsSection from '@/components/store/TestimonialsSection'
 import FadeIn from '@/components/ui/FadeIn'
 import Link from 'next/link'
-import { ArrowRight, Zap, Flame, Shield, Trophy, Users, ShieldCheck, Package, MessageCircle } from 'lucide-react'
+import { ArrowRight, Zap, Flame, Trophy, Users, ShieldCheck, Package, MessageCircle } from 'lucide-react'
 
 export default async function HomePage() {
   const supabase = await createClient()
@@ -39,9 +39,8 @@ export default async function HomePage() {
       {/* Barra de benefícios */}
       <div className="relative bg-[#0d0d0d] border-b border-[#1a1a1a] overflow-hidden">
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#b2ea0f]/40 to-transparent" />
-        <div className="max-w-7xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4">
+        <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3">
           {[
-            { Icon: Shield, title: 'Parcelamento', sub: 'em até 12x sem juros' },
             { Icon: ShieldCheck, title: 'Pagamento Seguro', sub: '100% protegido' },
             { Icon: Package, title: 'Entrega Rápida', sub: 'para todo Brasil' },
             { Icon: MessageCircle, title: 'Suporte', sub: 'via WhatsApp' },
