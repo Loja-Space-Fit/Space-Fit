@@ -404,7 +404,10 @@ export default function CheckoutPage() {
                 {step === 1 && (
                   <button
                     type="button"
-                    onClick={() => setStep(2)}
+                    onClick={async () => {
+                      const valid = await form.trigger(['customer_name', 'customer_phone', 'customer_email'])
+                      if (valid) setStep(2)
+                    }}
                     className="btn-green mt-4"
                   >
                     Continuar para Entrega
