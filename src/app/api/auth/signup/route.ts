@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
     // Enviar email de boas-vindas (sem link de confirmação)
     try {
       await enviarEmailBoasVindas(formattedName, email)
-      console.log('[signup] Email de boas-vindas enviado para:', email)
+      console.log('[signup] Email de boas-vindas enviado para dominio:', email.split('@')[1])
     } catch (emailErr) {
       console.error('[signup] Falha ao enviar email de boas-vindas:', emailErr)
     }

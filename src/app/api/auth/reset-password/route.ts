@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
 
     // Sempre retorna sucesso — não revela se o e-mail está cadastrado
     if (error || !data?.properties?.hashed_token) {
-      console.warn('[reset-password] email nao encontrado ou erro:', email, error?.message)
+      console.warn('[reset-password] email nao encontrado ou erro para dominio:', email.split('@')[1], error?.message)
       return NextResponse.json({ ok: true })
     }
 
