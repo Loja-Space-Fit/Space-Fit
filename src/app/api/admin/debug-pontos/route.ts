@@ -8,6 +8,10 @@ export async function GET() {
 
   const supabase = createServiceClient()
 
+  // Apenas admins podem acessar esta rota de diagnóstico
+  const { data: adminProfile } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single()
+  if (!adminProfile?.is_admin) return NextResponse.json({ erro: 'Acesso negado' }, { status: 403 })
+
   const { data: perfil } = await supabase.from('profiles').select('phone, full_name').eq('id', user.id).single()
   const phoneRaw = (perfil?.phone ?? '').replace(/\D/g, '')
 

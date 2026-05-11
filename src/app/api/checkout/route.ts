@@ -29,30 +29,37 @@ export async function POST(req: NextRequest) {
 
     const supabase = createServiceClient()
 
-    // Validar estoque e guardar valores atuais
-    const stockMap = new Map<string, number>()
-    const bundleIds = new Map<string, number>() // bundleId → current stock
+    // Validar estoque, capturar preços reais e guardar valores atuais
+    const stockMap  = new Map<string, number>()
+    const bundleIds = new Map<string, number>()
+    const priceMap  = new Map<string, number>() // product_id → preço real do banco
 
     for (const item of items) {
+      if (!item.product_id || !item.quantity || item.quantity < 1) {
+        return NextResponse.json({ error: 'Item inválido no carrinho' }, { status: 400 })
+      }
+
       const { data: product } = await supabase
         .from('products')
-        .select('id, stock, name')
+        .select('id, stock, name, price, active')
         .eq('id', item.product_id)
         .single()
 
       if (product) {
-        // Item é um produto normal
+        if (!product.active) {
+          return NextResponse.json({ error: `Produto "${product.name}" não está disponível` }, { status: 400 })
+        }
         if (product.stock < item.quantity) {
           return NextResponse.json({
             error: `Estoque insuficiente para "${product.name}". Disponível: ${product.stock}`
           }, { status: 400 })
         }
         stockMap.set(item.product_id, product.stock)
+        priceMap.set(item.product_id, product.price)
       } else {
-        // Verifica se é um bundle/kit
         const { data: bundle } = await supabase
           .from('bundles')
-          .select('id, name, active, stock')
+          .select('id, name, active, stock, price')
           .eq('id', item.product_id)
           .single()
 
@@ -66,10 +73,74 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ error: `Kit "${bundle.name}" sem estoque suficiente.` }, { status: 400 })
         }
         bundleIds.set(item.product_id, bundle.stock)
+        priceMap.set(item.product_id, bundle.price)
       }
     }
 
-    // Criar pedido
+    // --- Recalcular todos os valores no servidor (nunca confiar no cliente) ---
+
+    // Subtotal real baseado nos preços do banco
+    let serverSubtotal = 0
+    const serverItems = items.map((item: { product_id: string; quantity: number; product_name?: string; product_image?: string; size?: string }) => {
+      const actualPrice = priceMap.get(item.product_id) ?? 0
+      serverSubtotal += actualPrice * item.quantity
+      return { ...item, unit_price: actualPrice, total_price: Math.round(actualPrice * item.quantity * 100) / 100 }
+    })
+    serverSubtotal = Math.round(serverSubtotal * 100) / 100
+
+    // Desconto real do cupom
+    let serverDiscount = 0
+    if (coupon_code) {
+      const { data: coupon } = await supabase
+        .from('coupons')
+        .select('type, value, min_order, max_uses, uses_count, expires_at, active')
+        .eq('code', coupon_code.toUpperCase())
+        .eq('active', true)
+        .single()
+      if (!coupon) {
+        return NextResponse.json({ error: 'Cupom inválido ou expirado' }, { status: 400 })
+      }
+      const now = new Date()
+      if (coupon.expires_at && new Date(coupon.expires_at) < now) {
+        return NextResponse.json({ error: 'Cupom expirado' }, { status: 400 })
+      }
+      if (coupon.max_uses && coupon.uses_count >= coupon.max_uses) {
+        return NextResponse.json({ error: 'Cupom esgotado' }, { status: 400 })
+      }
+      if (serverSubtotal < coupon.min_order) {
+        return NextResponse.json({
+          error: `Pedido mínimo de R$ ${Number(coupon.min_order).toFixed(2).replace('.', ',')} para usar este cupom`
+        }, { status: 400 })
+      }
+      serverDiscount = coupon.type === 'percent'
+        ? Math.round(serverSubtotal * coupon.value / 100 * 100) / 100
+        : Math.min(coupon.value, serverSubtotal)
+    }
+
+    // Pontos de fidelidade: validar saldo real do usuário (1 ponto = R$ 1,00)
+    let serverPointsDiscount = 0
+    let validatedPointsToUse = 0
+    if (points_to_use && points_to_use > 0 && userId) {
+      const { data: loyaltyAccount } = await supabase
+        .from('loyalty_accounts')
+        .select('points')
+        .eq('user_id', userId)
+        .single()
+      const available = loyaltyAccount?.points ?? 0
+      const afterCoupon = Math.max(0, serverSubtotal - serverDiscount)
+      validatedPointsToUse = Math.min(points_to_use, available, Math.floor(afterCoupon))
+      serverPointsDiscount = validatedPointsToUse
+    }
+
+    // Frete: forçar 0 para retirada; para entrega, aceitar valor do cliente (calculado por /api/shipping)
+    const serverShipping = delivery_type === 'pickup' ? 0 : Math.max(0, Number(shipping) || 0)
+
+    // Total final do servidor
+    const serverTotal = Math.max(0, Math.round(
+      (serverSubtotal - serverDiscount - serverPointsDiscount + serverShipping) * 100
+    ) / 100)
+
+    // Criar pedido com valores calculados no servidor
     const { data: order, error } = await supabase
       .from('orders')
       .insert({
@@ -77,18 +148,18 @@ export async function POST(req: NextRequest) {
         customer_phone,
         customer_email: customer_email || null,
         address: address || null,
-        items,
-        subtotal,
-        discount: discount || 0,
-        shipping: shipping || 0,
-        total,
+        items: serverItems,
+        subtotal: serverSubtotal,
+        discount: serverDiscount,
+        shipping: serverShipping,
+        total: serverTotal,
         payment_method,
         payment_status: 'pending',
         order_status: 'pending',
         coupon_code: coupon_code || null,
         user_id: userId,
-        points_to_use: points_to_use || 0,
-        points_earned: Math.round(total * 0.01 * 100) / 100,
+        points_to_use: validatedPointsToUse,
+        points_earned: Math.round(serverTotal * 0.01 * 100) / 100,
         points_processed: false,
         pickup_location: pickup_location || null,
       })
@@ -151,7 +222,7 @@ export async function POST(req: NextRequest) {
 
     if (payment_method !== 'pickup') {
       // Pedido gratuito (cupom 100%) — aprovar diretamente sem passar pelo MP
-      if (Number(total) <= 0) {
+      if (Number(serverTotal) <= 0) {
         await supabase
           .from('orders')
           .update({ payment_status: 'approved', order_status: 'paid' })
@@ -190,8 +261,8 @@ export async function POST(req: NextRequest) {
         const isSandbox = (process.env.MERCADOPAGO_ACCESS_TOKEN || '').startsWith('TEST-')
         const preferenceClient = getPreferenceClient()
 
-        // Calcula o total real a cobrar (já com descontos)
-        const totalFinal = Number(total)
+        // Calcula o total real a cobrar (calculado no servidor)
+        const totalFinal = serverTotal
 
         const preference = await preferenceClient.create({
           body: {
