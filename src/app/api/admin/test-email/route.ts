@@ -1,7 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
+import { createServiceClient, createClient } from '@/lib/supabase/server'
 
 export async function GET(req: NextRequest) {
+  // Requer autenticação de admin
+  const userClient = await createClient()
+  const { data: { user } } = await userClient.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+
+  const serviceClient = createServiceClient()
+  const { data: profile } = await serviceClient
+    .from('profiles')
+    .select('is_admin')
+    .eq('id', user.id)
+    .single()
+  if (!profile?.is_admin) return NextResponse.json({ error: 'Acesso negado' }, { status: 403 })
+
   const to = req.nextUrl.searchParams.get('to')
   if (!to) return NextResponse.json({ error: 'Informe ?to=email@exemplo.com' }, { status: 400 })
 

@@ -18,8 +18,16 @@ export async function GET() {
     .order('created_at', { ascending: false })
     .limit(10)
 
-  const { data: contas } = await supabase.from('loyalty_accounts').select('*')
-  const { data: transacoes } = await supabase.from('loyalty_transactions').select('*').order('created_at', { ascending: false }).limit(20)
+  const { data: contas } = await supabase
+    .from('loyalty_accounts')
+    .select('*')
+    .eq('user_id', user.id)
+  const { data: transacoes } = await supabase
+    .from('loyalty_transactions')
+    .select('*')
+    .in('order_id', (pedidos ?? []).map((p: { id: string }) => p.id))
+    .order('created_at', { ascending: false })
+    .limit(20)
 
   return NextResponse.json({
     user_id: user.id,

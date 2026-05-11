@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createServiceClient } from '@/lib/supabase/server'
+import { createServiceClient, createClient } from '@/lib/supabase/server'
 import { getPreferenceClient } from '@/lib/mercadopago'
 import { processLoyaltyPoints } from '@/lib/loyalty'
 import { enviarEmailConfirmacaoPedido, enviarEmailProntoParaRetirada } from '@/lib/email'
@@ -10,12 +10,21 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
   const { data: order, error } = await supabase
     .from('orders')
-    .select('id, order_number, customer_name, customer_email, total, payment_method, payment_status')
+    .select('id, order_number, customer_name, customer_email, total, payment_method, payment_status, user_id')
     .eq('id', id)
     .single()
 
   if (error || !order) {
     return NextResponse.redirect(new URL('/checkout', process.env.NEXT_PUBLIC_SITE_URL!))
+  }
+
+  // Se o pedido pertence a um usuário autenticado, verificar ownership
+  if (order.user_id) {
+    const userClient = await createClient()
+    const { data: { user } } = await userClient.auth.getUser()
+    if (!user || user.id !== order.user_id) {
+      return NextResponse.redirect(new URL('/login', process.env.NEXT_PUBLIC_SITE_URL!))
+    }
   }
 
   // Só permite retry em pedidos pendentes ou recusados
