@@ -1,5 +1,5 @@
 import { createClient, createServiceClient } from '@/lib/supabase/server'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { formatBRL, getWhatsAppLink, ORDER_STATUS_LABELS, PAYMENT_METHOD_LABELS } from '@/lib/utils'
 import { processLoyaltyPoints } from '@/lib/loyalty'
 import { getPaymentClient } from '@/lib/mercadopago'
@@ -146,18 +146,12 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
 
   if (!order) notFound()
 
-  // Verificar ownership: usuário comum só pode ver seus próprios pedidos
+  // Verificar ownership: só o dono do pedido pode ver esta página
   if (order.user_id) {
     const userClient = await createClient()
     const { data: { user } } = await userClient.auth.getUser()
-    if (user && user.id !== order.user_id) {
-      // Checar se é admin antes de bloquear
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('is_admin')
-        .eq('id', user.id)
-        .single()
-      if (!profile?.is_admin) notFound()
+    if (!user || user.id !== order.user_id) {
+      redirect('/')
     }
   }
 
