@@ -19,7 +19,7 @@ import { createClient } from '@/lib/supabase/client'
 const schema = z.object({
   customer_name:    z.string().min(2, 'Nome obrigatório'),
   customer_phone:   z.string().min(10, 'Telefone obrigatório'),
-  customer_email:   z.string().email('E-mail inválido').optional().or(z.literal('')),
+  customer_email:   z.string().email('E-mail inválido').min(1, 'E-mail obrigatório'),
   delivery_type:    z.enum(['delivery', 'pickup']),
   pickup_location:  z.string().optional(),
   cep:              z.string().optional(),
@@ -394,8 +394,11 @@ export default function CheckoutPage() {
                     )}
                   </div>
                   <div className="md:col-span-2">
-                    <label className="text-sm text-[#9ca3af] mb-1 block">E-mail (opcional)</label>
+                    <label className="text-sm text-[#9ca3af] mb-1 block">E-mail</label>
                     <input {...form.register('customer_email')} type="email" placeholder="seu@email.com" className="input" />
+                    {form.formState.errors.customer_email && (
+                      <p className="text-red-400 text-xs mt-1">{form.formState.errors.customer_email.message}</p>
+                    )}
                   </div>
                 </div>
                 {step === 1 && (
