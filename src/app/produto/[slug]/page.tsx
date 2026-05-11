@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { data: p } = await supabase.from('products').select('name, description').eq('slug', slug).single()
   if (!p) return { title: 'Produto' }
   return {
-    title: `${p.name} | Space Fit`,
+    title: p.name,
     description: p.description || p.name,
   }
 }

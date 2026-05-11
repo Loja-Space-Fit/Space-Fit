@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import FranquiasClient from './FranquiasClient'
 
 export const metadata: Metadata = {
-  title: 'Franquias | Space Fit Academia',
+  title: 'Franquias',
   description: 'Conheça as unidades da Space Fit Academia. Historia, estrutura e localização de cada franquia.',
 }
 

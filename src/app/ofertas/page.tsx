@@ -5,7 +5,7 @@ import ProductCard from '@/components/store/ProductCard'
 import { Tag } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Ofertas | Space Fit',
+  title: 'Ofertas',
   description: 'Produtos com desconto na Space Fit. Aproveite as melhores ofertas em roupas, suplementos e acessórios fitness.',
 }
 

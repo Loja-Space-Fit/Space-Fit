@@ -3,7 +3,7 @@ import NossosPlanos from '@/components/store/NossosPlanos'
 import { Dumbbell } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Nossos Planos | Space Fit Academia',
+  title: 'Nossos Planos',
   description: 'Conheça os planos da Space Fit Academia nas unidades de Conceição das Alagoas - MG e Guaíra - SP. Planos mensais, trimestrais, semestrais, anuais e premium.',
 }
 

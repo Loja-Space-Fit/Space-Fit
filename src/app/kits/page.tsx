@@ -8,7 +8,7 @@ import { Package } from 'lucide-react'
 import { formatBRL } from '@/lib/utils'
 
 export const metadata: Metadata = {
-  title: 'Kits & Combos | Space Fit',
+  title: 'Kits & Combos',
   description: 'Kits e combos especiais com o melhor custo-benefício para o seu treino.',
 }
 

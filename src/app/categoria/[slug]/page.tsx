@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     .from('categories').select('name, description').eq('slug', slug).single()
   if (!cat) return { title: 'Categoria' }
   return {
-    title: `${cat.name} | Space Fit`,
+    title: cat.name,
     description: cat.description || `Produtos de ${cat.name} na Space Fit`,
   }
 }
