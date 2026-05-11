@@ -146,6 +146,21 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
 
   if (!order) notFound()
 
+  // Verificar ownership: usuário comum só pode ver seus próprios pedidos
+  if (order.user_id) {
+    const userClient = await createClient()
+    const { data: { user } } = await userClient.auth.getUser()
+    if (user && user.id !== order.user_id) {
+      // Checar se é admin antes de bloquear
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_admin')
+        .eq('id', user.id)
+        .single()
+      if (!profile?.is_admin) notFound()
+    }
+  }
+
   const o = order as Order
   const isPix = o.payment_method === 'pix'
 
