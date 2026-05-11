@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from 'react'
 import Image from 'next/image'
 import { useAuth } from '@/context/AuthContext'
 import Link from 'next/link'
-import { Lock, Mail, User, Phone, Eye, EyeOff, Loader2, Check, X as XIcon } from 'lucide-react'
+import { Lock, User, Phone, Eye, EyeOff, Loader2, Check, X as XIcon } from 'lucide-react'
 
 function formatPhone(v: string) {
   const digits = v.replace(/\D/g, '').slice(0, 11)
@@ -71,35 +71,15 @@ export default function CadastroPage() {
       <div className="min-h-screen flex items-center justify-center px-4 bg-[#0a0a0a]">
         <div className="text-center max-w-sm">
           <div className="w-20 h-20 mx-auto rounded-full bg-[#b2ea0f]/15 border-2 border-[#b2ea0f] flex items-center justify-center mb-6">
-            <Mail className="w-10 h-10 text-[#b2ea0f]" />
+            <Check className="w-10 h-10 text-[#b2ea0f]" />
           </div>
-          <h2 className="text-2xl font-black text-white mb-2">Verifique seu e-mail!</h2>
+          <h2 className="text-2xl font-black text-white mb-2">Conta criada!</h2>
           <p className="text-[#9ca3af] text-sm mb-6">
-            Enviamos um e-mail de confirmação para{' '}
-            <span className="text-white font-semibold">{email}</span>
+            Bem-vindo(a) à Space Fit! Sua conta foi criada com sucesso.
           </p>
 
-          <div className="bg-[#1a1a1a] border border-[#b2ea0f]/30 rounded-xl p-5 mb-6 text-left space-y-3">
-            <div className="flex items-start gap-3">
-              <span className="w-6 h-6 rounded-full bg-[#b2ea0f] text-black text-xs font-black flex items-center justify-center shrink-0">1</span>
-              <p className="text-sm text-[#9ca3af]">Abra seu e-mail em <span className="text-white font-medium">{email}</span></p>
-            </div>
-            <div className="flex items-start gap-3">
-              <span className="w-6 h-6 rounded-full bg-[#b2ea0f] text-black text-xs font-black flex items-center justify-center shrink-0">2</span>
-              <p className="text-sm text-[#9ca3af]">Clique no botão <span className="text-white font-medium">&quot;CONFIRMAR MINHA CONTA&quot;</span> no e-mail</p>
-            </div>
-            <div className="flex items-start gap-3">
-              <span className="w-6 h-6 rounded-full bg-[#b2ea0f] text-black text-xs font-black flex items-center justify-center shrink-0">3</span>
-              <p className="text-sm text-[#9ca3af]">Você será redirecionado automaticamente para sua conta</p>
-            </div>
-          </div>
-
-          <p className="text-xs text-[#6b7280] mb-4">
-            Não encontrou o e-mail? Verifique a pasta de spam ou lixo eletrônico.
-          </p>
-
-          <Link href="/login" className="text-sm text-[#b2ea0f] font-semibold hover:underline">
-            Já confirmei — ir para o Login
+          <Link href="/login" className="btn-green w-full text-center">
+            Entrar na minha conta
           </Link>
         </div>
       </div>

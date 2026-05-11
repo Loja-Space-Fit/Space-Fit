@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
-import { enviarEmailConfirmacaoConta } from '@/lib/email'
+import { enviarEmailBoasVindas } from '@/lib/email'
 
 export async function POST(req: NextRequest) {
   try {
@@ -19,20 +19,17 @@ export async function POST(req: NextRequest) {
 
     const supabase = createServiceClient()
 
-    // generateLink cria o usuário E retorna o link de confirmação sem enviar email
-    const { data, error } = await supabase.auth.admin.generateLink({
-      type: 'signup',
+    // Cria usuário já confirmado — sem necessidade de verificar email
+    const { data, error } = await supabase.auth.admin.createUser({
       email,
       password,
-      options: {
-        data: { full_name: formattedName, phone: phone ?? '' },
-        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm?next=/minha-conta`,
-      },
+      email_confirm: true,
+      user_metadata: { full_name: formattedName, phone: phone ?? '' },
     })
 
     if (error) {
       const msg = error.message ?? ''
-      if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already been registered')) {
+      if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already been registered') || msg.toLowerCase().includes('already exists')) {
         return NextResponse.json({ error: 'already_registered' }, { status: 409 })
       }
       return NextResponse.json({ error: msg }, { status: 400 })
@@ -54,24 +51,12 @@ export async function POST(req: NextRequest) {
       console.error('[signup] Erro ao criar perfil:', profileError.message)
     }
 
-    // Usar hashed_token para montar URL própria — assim apenas nossa rota /auth/confirm
-    // faz a verificação (evita que o token seja consumido 2x pelo endpoint do Supabase)
-    const hashed_token    = data.properties?.hashed_token
-    const verificationType = data.properties?.verification_type ?? 'signup'
-    if (!hashed_token) {
-      return NextResponse.json({ error: 'Não foi possível gerar o link de confirmação.' }, { status: 500 })
-    }
-
-    const confirmUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm?token_hash=${encodeURIComponent(hashed_token)}&type=${encodeURIComponent(verificationType)}&next=/minha-conta`
-
-    // Enviar email com botão de confirmação via Resend (aguardado para capturar erros nos logs)
+    // Enviar email de boas-vindas (sem link de confirmação)
     try {
-      await enviarEmailConfirmacaoConta(formattedName, email, confirmUrl)
-      console.log('[signup] Email de confirmação enviado para:', email)
+      await enviarEmailBoasVindas(formattedName, email)
+      console.log('[signup] Email de boas-vindas enviado para:', email)
     } catch (emailErr) {
-      console.error('[signup] Falha ao enviar email de confirmação:', emailErr)
-      console.error('[signup] confirmUrl gerado:', confirmUrl)
-      // Não bloqueia — conta foi criada, usuário pode pedir reenvio
+      console.error('[signup] Falha ao enviar email de boas-vindas:', emailErr)
     }
 
     return NextResponse.json({ ok: true })

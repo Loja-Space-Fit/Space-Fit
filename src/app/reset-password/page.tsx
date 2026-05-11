@@ -8,6 +8,7 @@ import { Lock, Eye, EyeOff, Loader2, CheckCircle2 } from 'lucide-react'
 
 export default function ResetPasswordPage() {
   const router  = useRouter()
+  const [expired,  setExpired]  = useState(false)
   const [ready,    setReady]    = useState(false)
   const [password, setPassword] = useState('')
   const [confirm,  setConfirm]  = useState('')
@@ -17,6 +18,13 @@ export default function ResetPasswordPage() {
   const [done,     setDone]     = useState(false)
 
   useEffect(() => {
+    // Verificar se o link expirou (segundo clique no mesmo link)
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('expired') === 'true') {
+      setExpired(true)
+      return
+    }
+
     const supabase = createClient()
 
     // Se Supabase já processou o hash antes do componente montar, a sessão já existe
@@ -73,6 +81,29 @@ export default function ResetPasswordPage() {
           <CheckCircle2 className="w-14 h-14 text-[#b2ea0f] mx-auto mb-4" />
           <h2 className="text-2xl font-black text-white mb-2">Senha atualizada!</h2>
           <p className="text-[#9ca3af]">Redirecionando para o login...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (expired) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-[#0a0a0a]">
+        <div className="w-full max-w-md text-center">
+          <Image src="/imagens/logo.png" alt="Space Fit" width={420} height={160} className="h-32 w-auto mx-auto mb-6" />
+          <div className="w-16 h-16 rounded-full bg-red-500/15 border-2 border-red-500 flex items-center justify-center mx-auto mb-4">
+            <Lock className="w-8 h-8 text-red-400" />
+          </div>
+          <h2 className="text-2xl font-black text-white mb-2">Link expirado</h2>
+          <p className="text-[#9ca3af] mb-6">
+            Este link de redefinição já foi utilizado ou expirou. Solicite um novo link para continuar.
+          </p>
+          <button
+            onClick={() => router.push('/login?forgot=true')}
+            className="btn-green w-full"
+          >
+            Solicitar novo link
+          </button>
         </div>
       </div>
     )

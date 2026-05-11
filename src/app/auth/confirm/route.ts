@@ -43,6 +43,11 @@ export async function GET(request: NextRequest) {
     if (!error) return response
   }
 
-  // Em caso de erro, redirecionar para login com mensagem
+  // Para recovery (redefinição de senha), redireciona para a página de reset com aviso de link expirado
+  if (type === 'recovery') {
+    return NextResponse.redirect(new URL('/reset-password?expired=true', request.url))
+  }
+
+  // Para outros tipos, redirecionar para login com mensagem
   return NextResponse.redirect(new URL('/login?error=confirm', request.url))
 }

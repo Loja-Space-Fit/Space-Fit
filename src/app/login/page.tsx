@@ -57,7 +57,9 @@ function LoginForm() {
   const loginRequired = searchParams.get('message') === 'login-required'
 
   const [mode, setMode]               = useState<'email' | 'phone'>('email')
-  const [view, setView]               = useState<'login' | 'forgot' | 'forgot-sent'>('login')
+  const [view, setView]               = useState<'login' | 'forgot' | 'forgot-sent'>(
+    searchParams.get('forgot') === 'true' ? 'forgot' : 'login'
+  )
   const [identifier, setIdentifier]   = useState('')
   const [password, setPassword]       = useState('')
   const [show, setShow]               = useState(false)
