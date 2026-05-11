@@ -32,6 +32,8 @@ export default function ResetPasswordPage() {
     if (hash) {
       setTokenHash(hash)
       setReady(true)
+      // Garantir que qualquer sessão existente seja encerrada antes do reset
+      createClient().auth.signOut()
       return
     }
 
