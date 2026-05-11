@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from 'react'
 import Image from 'next/image'
 import { useAuth } from '@/context/AuthContext'
 import Link from 'next/link'
-import { Lock, User, Phone, Eye, EyeOff, Loader2, Check, X as XIcon } from 'lucide-react'
+import { Lock, Mail, User, Phone, Eye, EyeOff, Loader2, Check, X as XIcon } from 'lucide-react'
 
 function formatPhone(v: string) {
   const digits = v.replace(/\D/g, '').slice(0, 11)
