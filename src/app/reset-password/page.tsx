@@ -7,7 +7,8 @@ import { createClient } from '@/lib/supabase/client'
 import { Lock, Eye, EyeOff, Loader2, CheckCircle2 } from 'lucide-react'
 
 export default function ResetPasswordPage() {
-  const router  = useRouter()
+  const router     = useRouter()
+  const [tokenHash, setTokenHash] = useState('')
   const [expired,  setExpired]  = useState(false)
   const [ready,    setReady]    = useState(false)
   const [password, setPassword] = useState('')
@@ -18,27 +19,30 @@ export default function ResetPasswordPage() {
   const [done,     setDone]     = useState(false)
 
   useEffect(() => {
-    // Verificar se o link expirou (segundo clique no mesmo link)
     const params = new URLSearchParams(window.location.search)
+
+    // Link expirado (sinalizado pelo auth/confirm)
     if (params.get('expired') === 'true') {
       setExpired(true)
       return
     }
 
-    const supabase = createClient()
+    // Token passado pelo auth/confirm — não cria sessão ainda
+    const hash = params.get('token_hash')
+    if (hash) {
+      setTokenHash(hash)
+      setReady(true)
+      return
+    }
 
-    // Se Supabase já processou o hash antes do componente montar, a sessão já existe
+    // Fallback: link processado diretamente pelo Supabase (fluxo PKCE/legado)
+    const supabase = createClient()
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) setReady(true)
     })
-
-    // Caso o evento ainda não tenha disparado, escuta
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
-        setReady(true)
-      }
+      if (event === 'PASSWORD_RECOVERY') setReady(true)
     })
-
     return () => subscription.unsubscribe()
   }, [])
 
@@ -63,7 +67,23 @@ export default function ResetPasswordPage() {
     setLoading(true)
     setError('')
     const supabase = createClient()
+
+    // Se chegou via token_hash (fluxo normal), precisa criar a sessão de recovery primeiro
+    if (tokenHash) {
+      const { error: otpError } = await supabase.auth.verifyOtp({
+        type: 'recovery',
+        token_hash: tokenHash,
+      })
+      if (otpError) {
+        setLoading(false)
+        setExpired(true)
+        return
+      }
+    }
+
     const { error } = await supabase.auth.updateUser({ password })
+    // Faz logout imediatamente para não deixar o usuário autenticado após o reset
+    await supabase.auth.signOut()
     setLoading(false)
     if (error) {
       setError('Erro ao atualizar senha. O link pode ter expirado.')

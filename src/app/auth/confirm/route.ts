@@ -35,17 +35,19 @@ export async function GET(request: NextRequest) {
     if (!error) return response
   }
 
-  // Fluxo OTP/token_hash: link gerado com hashed_token de admin.generateLink
+  // Fluxo recovery: NÃO cria sessão aqui — passa o token para o cliente para evitar login automático
+  if (token_hash && type === 'recovery') {
+    return NextResponse.redirect(
+      new URL(`/reset-password?token_hash=${encodeURIComponent(token_hash)}`, request.url)
+    )
+  }
+
+  // Fluxo OTP/token_hash para outros tipos (signup, email, etc.)
   if (token_hash && type) {
     const response = NextResponse.redirect(new URL(next, request.url))
     const supabase = makeSupabase(request, response)
     const { error } = await supabase.auth.verifyOtp({ type, token_hash })
     if (!error) return response
-  }
-
-  // Para recovery (redefinição de senha), redireciona para a página de reset com aviso de link expirado
-  if (type === 'recovery') {
-    return NextResponse.redirect(new URL('/reset-password?expired=true', request.url))
   }
 
   // Para outros tipos, redirecionar para login com mensagem
