@@ -275,9 +275,11 @@ export async function POST(req: NextRequest) {
             }],
             payer: {
               name: customer_name,
-              // Nunca usar o email real do cliente como payer — o MP bloqueia quando
-              // o email do comprador coincide com o da conta do vendedor.
-              email: 'comprador@spacefit.com.br',
+              // Não usar o email da conta do vendedor como payer (MP bloqueia).
+              // Para qualquer outro email real do cliente, usar normalmente.
+              email: customer_email && customer_email !== process.env.RESEND_FROM_EMAIL
+                ? customer_email
+                : 'comprador@mp.com.br',
             },
             external_reference: order.id,
             back_urls: {

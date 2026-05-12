@@ -29,6 +29,7 @@ export default function AddBundleToCartButton({ bundleId, bundleName, bundleSlug
       product_image: bundleImage,
       quantity:      1,
       unit_price:    bundlePrice,
+      stock,
     })
     setAdded(true)
     setTimeout(() => setAdded(false), 2000)

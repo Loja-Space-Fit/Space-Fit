@@ -132,6 +132,7 @@ export interface CartItem {
   size?: string;
   quantity: number;
   unit_price: number;
+  stock?: number;
 }
 
 // Fidelidade

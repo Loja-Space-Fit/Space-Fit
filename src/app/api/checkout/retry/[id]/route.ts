@@ -87,7 +87,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         }],
         payer: {
           name: order.customer_name,
-          email: 'comprador@spacefit.com.br',
+          // Não usar o email da conta do vendedor como payer (MP bloqueia).
+          email: order.customer_email && order.customer_email !== process.env.RESEND_FROM_EMAIL
+            ? order.customer_email
+            : 'comprador@mp.com.br',
         },
         external_reference: order.id,
         back_urls: {

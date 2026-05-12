@@ -25,6 +25,7 @@ export default function AddToCartButton({ product, selectedSize, quantity = 1, c
       size: selectedSize,
       quantity,
       unit_price: product.price,
+      stock: product.stock,
     })
     setAdded(true)
     openCart()

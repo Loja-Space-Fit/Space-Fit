@@ -53,7 +53,7 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
         .eq('id', id)
         .eq('payment_status', 'pending')
 
-      // Só processa loyalty e email se não estava aprovado antes (evita duplicatas)
+      // Só processa loyalty, email e cupom se não estava aprovado antes (evita duplicatas)
       if (wasAlreadyApproved?.payment_status !== 'approved') {
         await processLoyaltyPoints(id, service)
         const { data: pedidoAprovado } = await service.from('orders').select('*').eq('id', id).single()
@@ -62,6 +62,21 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
             ? enviarEmailProntoParaRetirada
             : enviarEmailConfirmacaoPedido
           emailFn(pedidoAprovado as Order).catch(() => {})
+
+          // Incrementar uso do cupom
+          if (pedidoAprovado.coupon_code) {
+            const { data: cupom } = await service
+              .from('coupons')
+              .select('uses_count')
+              .eq('code', pedidoAprovado.coupon_code)
+              .single()
+            if (cupom) {
+              await service
+                .from('coupons')
+                .update({ uses_count: (cupom.uses_count || 0) + 1 })
+                .eq('code', pedidoAprovado.coupon_code)
+            }
+          }
         }
       }
     } else if (mpRealStatus === 'in_process' || mpRealStatus === 'pending') {
