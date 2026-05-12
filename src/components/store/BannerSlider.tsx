@@ -55,9 +55,9 @@ export default function BannerSlider({ banners }: { banners: Banner[] }) {
             priority={i === 0}
             className="object-cover"
           />
-          {/* Overlay dramático */}
-          <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-black/20" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+          {/* Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/45 to-black/10" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
         </div>
       ))}
 

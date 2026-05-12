@@ -270,11 +270,19 @@ export default function AdminContentPage() {
                       className="input"
                     >
                       <option value="">Não fazer nada</option>
+                      <optgroup label="Páginas especiais">
+                        <option value="/ofertas">Ir para: Ofertas</option>
+                        <option value="/kits">Ir para: Kits &amp; Combos</option>
+                        <option value="/planos">Ir para: Planos</option>
+                        <option value="/franquias">Ir para: Franquias</option>
+                      </optgroup>
+                      <optgroup label="Categorias">
                       {categories.map(cat => (
                         <option key={cat.slug} value={`/categoria/${cat.slug}`}>
                           Ir para: {cat.name}
                         </option>
                       ))}
+                      </optgroup>
                     </select>
                   </div>
 
