@@ -1,7 +1,20 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import type { Category } from '@/types'
-import { Shirt, Dumbbell, Package, ArrowRight } from 'lucide-react'
+import { Shirt, Dumbbell, Package, ArrowRight,
+  Zap, Flame, Heart, Trophy, Timer, Target, Activity, Bike, Gauge,
+  Medal, Footprints, Watch, Glasses, Backpack, Tag, ShoppingBag, Box,
+  Pill, FlaskConical, Leaf, Apple, Coffee, Droplets, Scale, Gem,
+  Star, Crown, Sparkles, Store, Layers, Package2, ShieldCheck, BadgeCheck,
+  type LucideIcon,
+} from 'lucide-react'
+
+const ICON_COMPONENTS: Record<string, LucideIcon> = {
+  Dumbbell, Zap, Flame, Heart, Trophy, Timer, Target, Activity, Bike, Gauge,
+  Medal, Footprints, Shirt, Watch, Glasses, Backpack, Tag, ShoppingBag, Package, Box,
+  Pill, FlaskConical, Leaf, Apple, Coffee, Droplets, Scale, Gem,
+  Star, Crown, Sparkles, Store, Layers, Package2, ShieldCheck, BadgeCheck,
+}
 
 const categoryIcons: Record<string, React.ReactNode> = {
   roupas:      <Shirt className="w-5 h-5" />,
@@ -29,6 +42,7 @@ export default function CategoryCards({ categories }: Props) {
         const imgSrc   = cat.image_url || categoryImages[cat.slug] || ''
         const href     = isBundle ? '/kits' : `/categoria/${cat.slug}`
         const label    = isBundle ? 'Ver todos' : 'Ver coleção'
+        const IconComp = cat.icon ? ICON_COMPONENTS[cat.icon] : undefined
 
         return (
           <Link
@@ -57,7 +71,10 @@ export default function CategoryCards({ categories }: Props) {
               <div className="flex items-end justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-[#b2ea0f] flex items-center justify-center text-black shadow-[0_0_14px_rgba(178,234,15,0.5)] group-hover:shadow-[0_0_22px_rgba(178,234,15,0.7)] transition-all">
-                    {categoryIcons[cat.slug] || <Package className="w-5 h-5" />}
+                    {IconComp
+                    ? <IconComp className="w-5 h-5" />
+                    : (categoryIcons[cat.slug] || <Package className="w-5 h-5" />)
+                  }
                   </div>
                   <div>
                     <h3 className="text-lg font-black text-white uppercase tracking-tight leading-none">{cat.name}</h3>

@@ -3,7 +3,13 @@
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { formatBRL, slugify } from '@/lib/utils'
-import { Plus, Pencil, Trash2, X, Loader2, Upload, ImageIcon, Package, Tag } from 'lucide-react'
+import { Plus, Pencil, Trash2, X, Loader2, Upload, ImageIcon, Package, Tag,
+  Dumbbell, Zap, Flame, Heart, Trophy, Timer, Target, Activity, Bike, Gauge,
+  Medal, Footprints, Shirt, Watch, Glasses, Backpack, ShoppingBag, Box,
+  Pill, FlaskConical, Leaf, Apple, Coffee, Droplets, Scale, Gem,
+  Star, Crown, Sparkles, Store, Layers, Package2, ShieldCheck, BadgeCheck,
+  type LucideIcon,
+} from 'lucide-react'
 import toast from 'react-hot-toast'
 import ImageCropEditor from '@/components/admin/ImageCropEditor'
 import type { Category, Bundle, Product } from '@/types'
@@ -21,7 +27,73 @@ interface BundleWithItems extends Bundle {
 
 type FormStep = null | 'type-select' | 'category' | 'bundle'
 
-const defaultCatForm = () => ({ name: '', slug: '', description: '', image_url: '', active: true, display_order: 0, is_bundle_category: false })
+const ICON_COMPONENTS: Record<string, LucideIcon> = {
+  Dumbbell, Zap, Flame, Heart, Trophy, Timer, Target, Activity, Bike, Gauge,
+  Medal, Footprints, Shirt, Watch, Glasses, Backpack, Tag, ShoppingBag, Package, Box,
+  Pill, FlaskConical, Leaf, Apple, Coffee, Droplets, Scale, Gem,
+  Star, Crown, Sparkles, Store, Layers, Package2, ShieldCheck, BadgeCheck,
+}
+
+const ICON_GROUPS = [
+  {
+    label: 'Fitness & Treino',
+    icons: [
+      { name: 'Dumbbell', label: 'Haltere' },
+      { name: 'Zap', label: 'Energia' },
+      { name: 'Flame', label: 'Intensidade' },
+      { name: 'Heart', label: 'Saúde' },
+      { name: 'Trophy', label: 'Conquista' },
+      { name: 'Timer', label: 'Tempo' },
+      { name: 'Target', label: 'Meta' },
+      { name: 'Activity', label: 'Atividade' },
+      { name: 'Bike', label: 'Cardio' },
+      { name: 'Gauge', label: 'Performance' },
+      { name: 'Medal', label: 'Medalha' },
+      { name: 'Footprints', label: 'Passos' },
+    ],
+  },
+  {
+    label: 'Roupas & Acessórios',
+    icons: [
+      { name: 'Shirt', label: 'Camiseta' },
+      { name: 'Watch', label: 'Relógio' },
+      { name: 'Glasses', label: 'Óculos' },
+      { name: 'Backpack', label: 'Mochila' },
+      { name: 'Tag', label: 'Etiqueta' },
+      { name: 'ShoppingBag', label: 'Sacola' },
+      { name: 'Package', label: 'Pacote' },
+      { name: 'Box', label: 'Caixa' },
+    ],
+  },
+  {
+    label: 'Nutrição & Saúde',
+    icons: [
+      { name: 'Pill', label: 'Cápsula' },
+      { name: 'FlaskConical', label: 'Frasco' },
+      { name: 'Leaf', label: 'Natural' },
+      { name: 'Apple', label: 'Nutrição' },
+      { name: 'Coffee', label: 'Pré-treino' },
+      { name: 'Droplets', label: 'Hidratação' },
+      { name: 'Scale', label: 'Medida' },
+      { name: 'Gem', label: 'Premium' },
+    ],
+  },
+  {
+    label: 'Geral',
+    icons: [
+      { name: 'Star', label: 'Destaque' },
+      { name: 'Crown', label: 'Elite' },
+      { name: 'Sparkles', label: 'Especial' },
+      { name: 'Store', label: 'Loja' },
+      { name: 'Layers', label: 'Coleção' },
+      { name: 'Package2', label: 'Produto' },
+      { name: 'ShieldCheck', label: 'Seguro' },
+      { name: 'BadgeCheck', label: 'Verificado' },
+    ],
+  },
+]
+
+const defaultCatForm = () => ({ name: '', slug: '', description: '', image_url: '', icon: '', active: true, display_order: 0, is_bundle_category: false })
 const defaultBundleForm = () => ({ name: '', slug: '', description: '', price: '', active: true })
 
 export default function AdminCategoriesPage() {
@@ -77,7 +149,7 @@ export default function AdminCategoriesPage() {
 
   function openEditCategory(c: Category) {
     setEditingCat(c)
-    setCatForm({ name: c.name, slug: c.slug, description: c.description || '', image_url: c.image_url || '', active: c.active, display_order: c.display_order, is_bundle_category: c.is_bundle_category || false })
+    setCatForm({ name: c.name, slug: c.slug, description: c.description || '', image_url: c.image_url || '', icon: c.icon || '', active: c.active, display_order: c.display_order, is_bundle_category: c.is_bundle_category || false })
     setStep('category')
   }
 
@@ -333,6 +405,47 @@ export default function AdminCategoriesPage() {
                 <label className="text-sm text-[#9ca3af] mb-1 block">Descrição</label>
                 <textarea value={catForm.description} onChange={e => setCatForm(f => ({ ...f, description: e.target.value }))} className="input" rows={2} placeholder="Descrição da categoria" />
               </div>
+
+              {/* Seletor de ícone */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm text-[#9ca3af]">Ícone da categoria</label>
+                  {catForm.icon && (
+                    <button type="button" onClick={() => setCatForm(f => ({ ...f, icon: '' }))} className="text-xs text-[#555] hover:text-[#9ca3af] transition-colors">
+                      × remover
+                    </button>
+                  )}
+                </div>
+                <div className="space-y-3 max-h-48 overflow-y-auto rounded-xl border border-[#2a2a2a] p-3 bg-[#111111]">
+                  {ICON_GROUPS.map(group => (
+                    <div key={group.label}>
+                      <p className="text-[10px] text-[#555] uppercase tracking-widest mb-2 font-bold">{group.label}</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {group.icons.map(({ name, label }) => {
+                          const Icon = ICON_COMPONENTS[name]
+                          const selected = catForm.icon === name
+                          return (
+                            <button
+                              key={name}
+                              type="button"
+                              title={label}
+                              onClick={() => setCatForm(f => ({ ...f, icon: f.icon === name ? '' : name }))}
+                              className={`w-9 h-9 flex items-center justify-center rounded-lg border transition-all ${
+                                selected
+                                  ? 'border-[#b2ea0f] bg-[#b2ea0f]/15 text-[#b2ea0f]'
+                                  : 'border-[#2a2a2a] text-[#9ca3af] hover:border-[#b2ea0f]/50 hover:text-white'
+                              }`}
+                            >
+                              <Icon className="w-4 h-4" />
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <div>
                 <label className="text-sm text-[#9ca3af] mb-1 block">Imagem <span className="text-[#555] text-xs">(800×450px · proporção 16:9)</span></label>
                 {catForm.image_url ? (

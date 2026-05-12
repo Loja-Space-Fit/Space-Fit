@@ -8,6 +8,7 @@ export interface Category {
   slug: string;
   description?: string;
   image_url?: string;
+  icon?: string;
   active: boolean;
   display_order: number;
   is_bundle_category: boolean;
