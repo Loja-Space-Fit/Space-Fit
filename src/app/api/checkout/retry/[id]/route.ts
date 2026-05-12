@@ -25,6 +25,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     if (!user || user.id !== order.user_id) {
       return NextResponse.redirect(new URL('/login', process.env.NEXT_PUBLIC_SITE_URL!))
     }
+  } else {
+    // Pedidos de visitante não permitem retry — redirecionar para novo checkout
+    return NextResponse.redirect(new URL('/checkout', process.env.NEXT_PUBLIC_SITE_URL!))
   }
 
   // Só permite retry em pedidos pendentes ou recusados

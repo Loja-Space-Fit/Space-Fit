@@ -15,32 +15,43 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ received: true })
     }
 
-    // Verificar assinatura HMAC do Mercado Pago (quando disponível)
+    // Pings de teste do Mercado Pago (sem type/topic) — confirmar imediatamente, sem HMAC
+    if (!body.type && !body.topic) {
+      return NextResponse.json({ received: true })
+    }
+
+    // Verificar assinatura HMAC do Mercado Pago
+    // Se o secret estiver configurado, a assinatura é obrigatória para todos os eventos reais
     const mpSignature = req.headers.get('x-signature')
     const mpRequestId = req.headers.get('x-request-id')
     const secret = process.env.MERCADOPAGO_WEBHOOK_SECRET
 
-    if (secret && mpSignature && body.data?.id && mpRequestId) {
+    if (secret) {
+      if (!mpSignature || !mpRequestId || !body.data?.id) {
+        console.warn('[webhook] Signature headers ausentes — requisição rejeitada')
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+
       const ts = mpSignature.match(/ts=(\d+)/)?.[1]
       const signatureValue = mpSignature.match(/v1=([a-f0-9]+)/)?.[1]
 
-      if (ts && signatureValue) {
-        const { createHmac } = await import('crypto')
-        const manifest = `id:${body.data.id};request-id:${mpRequestId};ts:${ts};`
-        const expectedSignature = createHmac('sha256', secret)
-          .update(manifest)
-          .digest('hex')
-
-        if (expectedSignature !== signatureValue) {
-          console.warn('Assinatura do webhook inválida')
-          return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-        }
+      if (!ts || !signatureValue) {
+        console.warn('[webhook] Formato de assinatura inválido')
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
       }
-    }
 
-    // Corpo vazio ou ping de teste do Mercado Pago — apenas confirmar recebimento
-    if (!body.type && !body.topic) {
-      return NextResponse.json({ received: true })
+      const { createHmac } = await import('crypto')
+      const manifest = `id:${body.data.id};request-id:${mpRequestId};ts:${ts};`
+      const expectedSignature = createHmac('sha256', secret)
+        .update(manifest)
+        .digest('hex')
+
+      if (expectedSignature !== signatureValue) {
+        console.warn('[webhook] Assinatura HMAC inválida')
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+    } else {
+      console.warn('[webhook] MERCADOPAGO_WEBHOOK_SECRET não configurado — validação HMAC desabilitada')
     }
 
     // Processar notificação

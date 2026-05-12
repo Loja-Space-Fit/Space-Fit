@@ -132,8 +132,26 @@ export async function POST(req: NextRequest) {
       serverPointsDiscount = validatedPointsToUse
     }
 
-    // Frete: forçar 0 para retirada; para entrega, aceitar valor do cliente (calculado por /api/shipping)
-    const serverShipping = delivery_type === 'pickup' ? 0 : Math.max(0, Number(shipping) || 0)
+    // Frete: recalcular server-side a partir do UF do endereço
+    let serverShipping = 0
+    if (delivery_type === 'pickup') {
+      serverShipping = 0
+    } else {
+      const uf = String(address?.state || '').toUpperCase().slice(0, 2)
+      if (!uf || uf.length !== 2) {
+        return NextResponse.json({ error: 'Endereço de entrega inválido ou incompleto' }, { status: 400 })
+      }
+      const [{ data: shippingRate }, { data: shippingSettings }] = await Promise.all([
+        supabase.from('shipping_rates').select('price').eq('uf', uf).single(),
+        supabase.from('store_settings').select('key, value').in('key', ['free_shipping_threshold']),
+      ])
+      const threshold = parseFloat(
+        (shippingSettings as Array<{ key: string; value: string }> | null)
+          ?.find(s => s.key === 'free_shipping_threshold')?.value || '299'
+      )
+      const afterDiscounts = Math.max(0, serverSubtotal - serverDiscount - serverPointsDiscount)
+      serverShipping = afterDiscounts >= threshold ? 0 : (shippingRate ? Number(shippingRate.price) : 35.90)
+    }
 
     // Total final do servidor
     const serverTotal = Math.max(0, Math.round(
