@@ -100,7 +100,7 @@ function LoginForm() {
       setError(ERROR_MESSAGES[error] ?? 'Erro ao entrar. Tente novamente.')
       setLoading(false)
     } else {
-      router.push(redirectTo)
+      router.replace(redirectTo)
     }
   }, [mode, identifier, password, signIn, redirectTo, router])
 
