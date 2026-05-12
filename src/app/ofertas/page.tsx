@@ -50,7 +50,7 @@ export default async function OfertasPage() {
         <div className="py-24 text-center">
           <Tag className="w-16 h-16 mx-auto mb-4 text-[#333]" />
           <p className="text-lg text-[#9ca3af]">Nenhuma oferta disponível no momento.</p>
-          <p className="text-sm text-[#555] mt-1">Volte em breve — novas promoções aparecem por aqui!</p>
+          <p className="text-sm text-[#555] mt-1">Volte em breve, novas promoções aparecem por aqui!</p>
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">

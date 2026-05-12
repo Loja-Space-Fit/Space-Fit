@@ -30,7 +30,7 @@ export default async function PainelAlertas() {
       <div className="flex items-center gap-3 bg-[#b2ea0f]/10 border border-[#b2ea0f]/20 rounded-xl px-4 py-3">
         <CheckCircle className="w-4 h-4 text-[#b2ea0f] shrink-0" />
         <p className="text-sm text-[#b2ea0f] font-semibold">
-          Tudo certo — nenhum alerta operacional no momento.
+          Tudo certo, nenhum alerta operacional no momento.
         </p>
       </div>
     )
@@ -69,7 +69,7 @@ export default async function PainelAlertas() {
         <AlertCard
           nivel="warning"
           titulo={`${estoque.baixo.length} produto${estoque.baixo.length > 1 ? 's' : ''} com estoque baixo`}
-          descricao="Repor antes que esgotem — menos de 5 unidades restantes."
+          descricao="Repor antes que esgotem, menos de 5 unidades restantes."
         >
           <div className="flex flex-wrap gap-2 mt-2">
             {estoque.baixo.map(p => (
@@ -78,7 +78,7 @@ export default async function PainelAlertas() {
                 href="/admin/produtos"
                 className="px-2.5 py-1 bg-yellow-500/10 border border-yellow-500/20 rounded-full text-xs text-yellow-300 hover:bg-yellow-500/20 transition-colors"
               >
-                {p.name} — {p.stock} un.
+                {p.name}: {p.stock} un.
               </a>
             ))}
           </div>

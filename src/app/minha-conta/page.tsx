@@ -403,7 +403,7 @@ function MinhaContaPageInner() {
                 label="Endereço"
                 value={
                   profile?.address
-                    ? `${(profile.address as Record<string,string>).street || ''}, ${(profile.address as Record<string,string>).number || ''} — ${(profile.address as Record<string,string>).city || ''}`
+                    ? `${(profile.address as Record<string,string>).street || ''}, ${(profile.address as Record<string,string>).number || ''}, ${(profile.address as Record<string,string>).city || ''}`
                     : '—'
                 }
               />
@@ -572,7 +572,7 @@ function MinhaContaPageInner() {
                   <p className="text-6xl font-black text-[#b2ea0f] leading-none">
                     {(loyalty?.points ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
-                  <p className="text-[#9ca3af] text-sm mt-1">pontos acumulados — vale {formatBRL(loyalty?.points ?? 0)}</p>
+                  <p className="text-[#9ca3af] text-sm mt-1">pontos acumulados · vale {formatBRL(loyalty?.points ?? 0)}</p>
                 </div>
 
                 {/* Stats */}

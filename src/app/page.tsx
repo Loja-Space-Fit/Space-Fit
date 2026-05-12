@@ -208,7 +208,7 @@ export default async function HomePage() {
                 A Space Fit nasceu da paixão pelo treino e pela evolução constante. Somos uma academia em Conceição das Alagoas, MG, dedicada a quem leva o esporte a sério e quer resultados de verdade.
               </p>
               <p className="text-[#9ca3af] text-base md:text-lg leading-relaxed mb-8">
-                Roupas que aguentam o ritmo, suplementos que fazem a diferença e acessórios para quem não aceita limites. Do iniciante ao atleta — aqui você encontra tudo para ir além.
+                Roupas que aguentam o ritmo, suplementos que fazem a diferença e acessórios para quem não aceita limites. Do iniciante ao atleta, aqui você encontra tudo para ir além.
               </p>
               <a
                 href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP || '5534998853794'}?text=${encodeURIComponent('Olá! Quero saber mais sobre a Space Fit.')}`}

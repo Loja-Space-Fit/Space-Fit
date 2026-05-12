@@ -212,7 +212,7 @@ function Calendario({
         ) : !fim ? (
           <p className="text-[11px] text-[#9ca3af] text-center">
             De <span className="text-[#b2ea0f] font-bold">{fmt(inicio)}</span>{' '}
-            — clique para selecionar o fim
+            · clique para selecionar o fim
           </p>
         ) : (
           <p className="text-[11px] text-[#9ca3af] text-center">

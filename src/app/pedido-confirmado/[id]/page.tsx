@@ -184,7 +184,7 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
   const isRejected            = displayStatus === 'rejected'
   const isPendingVerification = isPending && (mpRealStatus === 'in_process' || mpRealStatus === 'pending')
 
-  const waMessage = `Olá! Realizei um pedido na Space Fit. Número: ${o.order_number}. Pedido de ${o.customer_name} — ${formatBRL(o.total)}. ${isPix ? 'Aguardando confirmação do PIX.' : ''}`
+  const waMessage = `Olá! Realizei um pedido na Space Fit. Número: ${o.order_number}. Pedido de ${o.customer_name}, ${formatBRL(o.total)}. ${isPix ? 'Aguardando confirmação do PIX.' : ''}`
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-16 text-center">

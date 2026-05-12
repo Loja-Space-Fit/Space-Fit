@@ -165,7 +165,7 @@ export default async function ProductPage({ params }: Props) {
                   </span>
                 </div>
                 {r.comment && <p className="text-sm text-[#d1d5db] mb-2">"{r.comment}"</p>}
-                <p className="text-xs font-semibold text-[#9ca3af]">— {r.customer_name}</p>
+                <p className="text-xs font-semibold text-[#9ca3af]">{r.customer_name}</p>
               </div>
             ))}
           </div>
