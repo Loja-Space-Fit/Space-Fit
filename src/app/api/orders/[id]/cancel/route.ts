@@ -40,19 +40,30 @@ export async function POST(
     .eq('id', id)
 
   // Restaurar estoque dos itens (products e bundles)
-  const items = (order.items || []) as Array<{ product_id: string; quantity: number }>
+  const items = (order.items || []) as Array<{ product_id: string; quantity: number; size?: string }>
   for (const item of items) {
     const { data: product } = await supabase
       .from('products')
-      .select('id, stock')
+      .select('id, stock, size_stock')
       .eq('id', item.product_id)
       .maybeSingle()
 
     if (product) {
-      await supabase
-        .from('products')
-        .update({ stock: product.stock + item.quantity })
-        .eq('id', item.product_id)
+      const hasSizeStock = product.size_stock && Object.keys(product.size_stock).length > 0
+      if (hasSizeStock && item.size) {
+        const updated = { ...(product.size_stock as Record<string, number>) }
+        updated[item.size] = (updated[item.size] ?? 0) + item.quantity
+        const newTotal = Object.values(updated).reduce((a, b) => a + b, 0)
+        await supabase
+          .from('products')
+          .update({ size_stock: updated, stock: newTotal })
+          .eq('id', item.product_id)
+      } else {
+        await supabase
+          .from('products')
+          .update({ stock: product.stock + item.quantity })
+          .eq('id', item.product_id)
+      }
     } else {
       const { data: bundle } = await supabase
         .from('bundles')

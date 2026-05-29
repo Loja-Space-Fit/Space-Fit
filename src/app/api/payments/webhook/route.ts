@@ -162,7 +162,7 @@ export async function POST(req: NextRequest) {
           // Só restaura se o order ainda estava 'pending' ANTES deste webhook (pedidoAtual)
           // Se a página de confirmação já processou, pedidoAtual.payment_status já será 'rejected'
           if (pedidoCompleto && pedidoAtual?.payment_status === 'pending') {
-            const orderItems = (pedidoCompleto?.items || []) as Array<{ product_id: string; quantity: number }>
+            const orderItems = (pedidoCompleto?.items || []) as Array<{ product_id: string; quantity: number; size?: string }>
             for (const item of orderItems) {
               const { data: bundle } = await supabase
                 .from('bundles')
@@ -177,14 +177,25 @@ export async function POST(req: NextRequest) {
               } else {
                 const { data: product } = await supabase
                   .from('products')
-                  .select('id, stock')
+                  .select('id, stock, size_stock')
                   .eq('id', item.product_id)
                   .maybeSingle()
                 if (product) {
-                  await supabase
-                    .from('products')
-                    .update({ stock: product.stock + item.quantity })
-                    .eq('id', item.product_id)
+                  const hasSizeStock = product.size_stock && Object.keys(product.size_stock).length > 0
+                  if (hasSizeStock && item.size) {
+                    const updated = { ...(product.size_stock as Record<string, number>) }
+                    updated[item.size] = (updated[item.size] ?? 0) + item.quantity
+                    const newTotal = Object.values(updated).reduce((a, b) => a + b, 0)
+                    await supabase
+                      .from('products')
+                      .update({ size_stock: updated, stock: newTotal })
+                      .eq('id', item.product_id)
+                  } else {
+                    await supabase
+                      .from('products')
+                      .update({ stock: product.stock + item.quantity })
+                      .eq('id', item.product_id)
+                  }
                 }
               }
             }

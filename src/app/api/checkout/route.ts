@@ -30,9 +30,10 @@ export async function POST(req: NextRequest) {
     const supabase = createServiceClient()
 
     // Validar estoque, capturar preços reais e guardar valores atuais
-    const stockMap  = new Map<string, number>()
-    const bundleIds = new Map<string, number>()
-    const priceMap  = new Map<string, number>() // product_id → preço real do banco
+    const stockMap    = new Map<string, number>()
+    const bundleIds   = new Map<string, number>()
+    const priceMap    = new Map<string, number>() // product_id → preço real do banco
+    const sizeStockMap = new Map<string, Record<string, number>>() // product_id → size_stock completo
 
     for (const item of items) {
       if (!item.product_id || !item.quantity || item.quantity < 1) {
@@ -41,7 +42,7 @@ export async function POST(req: NextRequest) {
 
       const { data: product } = await supabase
         .from('products')
-        .select('id, stock, name, price, active')
+        .select('id, stock, size_stock, name, price, active')
         .eq('id', item.product_id)
         .single()
 
@@ -49,12 +50,27 @@ export async function POST(req: NextRequest) {
         if (!product.active) {
           return NextResponse.json({ error: `Produto "${product.name}" não está disponível` }, { status: 400 })
         }
-        if (product.stock < item.quantity) {
-          return NextResponse.json({
-            error: `Estoque insuficiente para "${product.name}". Disponível: ${product.stock}`
-          }, { status: 400 })
+
+        const hasSizeStock = product.size_stock && Object.keys(product.size_stock).length > 0
+
+        if (hasSizeStock && item.size) {
+          // Validação por tamanho
+          const available = (product.size_stock as Record<string, number>)[item.size] ?? 0
+          if (available < item.quantity) {
+            return NextResponse.json({
+              error: `Estoque insuficiente para "${product.name}" tamanho ${item.size}. Disponível: ${available}`
+            }, { status: 400 })
+          }
+          sizeStockMap.set(item.product_id, product.size_stock as Record<string, number>)
+        } else {
+          // Validação de estoque único
+          if (product.stock < item.quantity) {
+            return NextResponse.json({
+              error: `Estoque insuficiente para "${product.name}". Disponível: ${product.stock}`
+            }, { status: 400 })
+          }
+          stockMap.set(item.product_id, product.stock)
         }
-        stockMap.set(item.product_id, product.stock)
         priceMap.set(item.product_id, product.price)
       } else {
         const { data: bundle } = await supabase
@@ -191,6 +207,20 @@ export async function POST(req: NextRequest) {
 
     // Decrementar estoque imediatamente ao criar o pedido (para todos os métodos).
     // Se o pagamento for recusado ou cancelado, o estoque é restaurado no webhook/rota de cancelamento.
+
+    // Agrupa decrementos de size_stock por produto (evita sobrescrever tamanhos do mesmo produto)
+    type SizeDecrements = Record<string, number>
+    const sizeDecrementsMap = new Map<string, SizeDecrements>()
+    for (const item of items) {
+      if (sizeStockMap.has(item.product_id) && item.size) {
+        const existing = sizeDecrementsMap.get(item.product_id) || {}
+        sizeDecrementsMap.set(item.product_id, {
+          ...existing,
+          [item.size]: (existing[item.size] || 0) + item.quantity,
+        })
+      }
+    }
+
     for (const item of items) {
       if (bundleIds.has(item.product_id)) {
         const currentStock = bundleIds.get(item.product_id) ?? 0
@@ -198,6 +228,8 @@ export async function POST(req: NextRequest) {
           .from('bundles')
           .update({ stock: Math.max(0, currentStock - item.quantity) })
           .eq('id', item.product_id)
+      } else if (sizeDecrementsMap.has(item.product_id)) {
+        // Já processado abaixo — pular aqui para não duplicar
       } else {
         const currentStock = stockMap.get(item.product_id) ?? 0
         await supabase
@@ -205,6 +237,24 @@ export async function POST(req: NextRequest) {
           .update({ stock: Math.max(0, currentStock - item.quantity) })
           .eq('id', item.product_id)
       }
+    }
+
+    // Aplicar decrementos de size_stock (um UPDATE por produto)
+    for (const [productId, decrements] of sizeDecrementsMap) {
+      const currentSizeStock = { ...(sizeStockMap.get(productId) ?? {}) }
+      let newTotal = 0
+      for (const [size, qty] of Object.entries(decrements)) {
+        currentSizeStock[size] = Math.max(0, (currentSizeStock[size] ?? 0) - qty)
+        newTotal += currentSizeStock[size]
+      }
+      // Soma os tamanhos não alterados para manter stock global coerente
+      for (const [size, qty] of Object.entries(currentSizeStock)) {
+        if (!(size in decrements)) newTotal += qty
+      }
+      await supabase
+        .from('products')
+        .update({ size_stock: currentSizeStock, stock: newTotal })
+        .eq('id', productId)
     }
 
     // Nota: o uso do cupom (uses_count) só é incrementado após aprovação do pagamento (no webhook)

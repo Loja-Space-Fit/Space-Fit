@@ -10,9 +10,10 @@ interface Props {
   selectedSize?: string
   quantity?: number
   compact?: boolean
+  sizeStock?: number
 }
 
-export default function AddToCartButton({ product, selectedSize, quantity = 1, compact = false }: Props) {
+export default function AddToCartButton({ product, selectedSize, quantity = 1, compact = false, sizeStock }: Props) {
   const { addItem, openCart } = useCart()
   const [added, setAdded] = useState(false)
 
@@ -25,7 +26,7 @@ export default function AddToCartButton({ product, selectedSize, quantity = 1, c
       size: selectedSize,
       quantity,
       unit_price: product.price,
-      stock: product.stock,
+      stock: sizeStock ?? product.stock,
     })
     setAdded(true)
     openCart()

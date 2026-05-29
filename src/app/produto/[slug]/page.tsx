@@ -103,13 +103,15 @@ export default async function ProductPage({ params }: Props) {
             )}
           </div>
 
-          {/* Estoque */}
-          <div className="flex items-center gap-2 mb-6">
-            <Package className={`w-4 h-4 ${p.stock > 0 ? 'text-[#b2ea0f]' : 'text-red-400'}`} />
-            <span className={`text-sm font-semibold ${p.stock > 0 ? 'text-[#b2ea0f]' : 'text-red-400'}`}>
-              {p.stock > 0 ? `${p.stock} unidades disponíveis` : 'Produto Esgotado'}
-            </span>
-          </div>
+          {/* Estoque — só para produtos sem tamanhos */}
+          {(!p.sizes?.length) && (
+            <div className="flex items-center gap-2 mb-6">
+              <Package className={`w-4 h-4 ${p.stock > 0 ? 'text-[#b2ea0f]' : 'text-red-400'}`} />
+              <span className={`text-sm font-semibold ${p.stock > 0 ? 'text-[#b2ea0f]' : 'text-red-400'}`}>
+                {p.stock > 0 ? `${p.stock} unidades disponíveis` : 'Produto Esgotado'}
+              </span>
+            </div>
+          )}
 
           {/* Descrição */}
           {p.description && (

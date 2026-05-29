@@ -27,6 +27,7 @@ export interface Product {
   stock: number;
   images: string[];
   sizes: string[];
+  size_stock: Record<string, number>;
   active: boolean;
   featured: boolean;
   created_at: string;

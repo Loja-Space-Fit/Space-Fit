@@ -19,6 +19,7 @@ export default function AdminProductsPage() {
   const [form, setForm]                 = useState(defaultForm())
   const [selectedSizes, setSelectedSizes] = useState<string[]>([])
   const [hasSizesToggle, setHasSizesToggle] = useState(false)
+  const [sizeStockForm, setSizeStockForm] = useState<Record<string, string>>({ P: '', M: '', G: '', GG: '' })
   const [imagesList, setImagesList]   = useState<string[]>([])
   const [uploading, setUploading]     = useState(false)
   const [uploadError, setUploadError] = useState('')
@@ -53,6 +54,7 @@ export default function AdminProductsPage() {
     setForm(defaultForm())
     setSelectedSizes([])
     setHasSizesToggle(false)
+    setSizeStockForm({ P: '', M: '', G: '', GG: '' })
     setImagesList([])
     setUploadError('')
     setShowForm(true)
@@ -69,6 +71,12 @@ export default function AdminProductsPage() {
     })
     setSelectedSizes(p.sizes || [])
     setHasSizesToggle((p.sizes?.length ?? 0) > 0)
+    setSizeStockForm({
+      P:  String(p.size_stock?.P  ?? ''),
+      M:  String(p.size_stock?.M  ?? ''),
+      G:  String(p.size_stock?.G  ?? ''),
+      GG: String(p.size_stock?.GG ?? ''),
+    })
     setImagesList(p.images || [])
     setUploadError('')
     setShowForm(true)
@@ -82,6 +90,18 @@ export default function AdminProductsPage() {
     const images = imagesList
     const sizes  = hasSizesToggle ? selectedSizes : []
 
+    // Estoque por tamanho: só para tamanhos selecionados
+    const size_stock: Record<string, number> = {}
+    if (hasSizesToggle) {
+      for (const s of selectedSizes) {
+        size_stock[s] = parseInt(sizeStockForm[s] || '0') || 0
+      }
+    }
+    // stock global: soma dos tamanhos (para compatibilidade) ou valor do campo normal
+    const stock = hasSizesToggle
+      ? Object.values(size_stock).reduce((a, b) => a + b, 0)
+      : parseInt(form.stock) || 0
+
     const data = {
       name:         form.name,
       slug:         form.slug || slugify(form.name),
@@ -89,8 +109,7 @@ export default function AdminProductsPage() {
       category_id:  form.category_id || null,
       price:        parseFloat(form.price),
       compare_price: form.compare_price ? parseFloat(form.compare_price) : null,
-      stock:        parseInt(form.stock) || 0,
-      images, sizes,
+      stock, images, sizes, size_stock,
       active:   form.active,
       featured: form.featured,
     }
@@ -287,10 +306,6 @@ export default function AdminProductsPage() {
                   <label className="label">Preço original (riscado, opcional)</label>
                   <input value={form.compare_price} onChange={e => setForm(f => ({ ...f, compare_price: e.target.value }))} type="number" step="0.01" min="0" className="input" placeholder="119.90" />
                 </div>
-                <div>
-                  <label className="label">Estoque (unidades)</label>
-                  <input value={form.stock} onChange={e => setForm(f => ({ ...f, stock: e.target.value }))} type="number" min="0" className="input" placeholder="50" />
-                </div>
                 {/* Toggle: Possui tamanhos? */}
                 <div className="md:col-span-2">
                   <label className="flex items-center gap-3 cursor-pointer select-none">
@@ -299,8 +314,12 @@ export default function AdminProductsPage() {
                       role="switch"
                       aria-checked={hasSizesToggle}
                       onClick={() => {
-                        setHasSizesToggle(v => !v)
-                        if (hasSizesToggle) setSelectedSizes([])
+                        const next = !hasSizesToggle
+                        setHasSizesToggle(next)
+                        if (!next) {
+                          setSelectedSizes([])
+                          setSizeStockForm({ P: '', M: '', G: '', GG: '' })
+                        }
                       }}
                       className={`relative w-11 h-6 rounded-full transition-colors focus:outline-none ${
                         hasSizesToggle ? 'bg-[#b2ea0f]' : 'bg-[#2a2a2a]'
@@ -313,33 +332,62 @@ export default function AdminProductsPage() {
                     <span className="text-sm text-white font-medium">Possui tamanhos?</span>
                   </label>
                 </div>
-                {/* Seletor de tamanhos */}
+                {/* Estoque único — só quando NÃO tem tamanhos */}
+                {!hasSizesToggle && (
+                  <div>
+                    <label className="label">Estoque (unidades)</label>
+                    <input value={form.stock} onChange={e => setForm(f => ({ ...f, stock: e.target.value }))} type="number" min="0" className="input" placeholder="50" />
+                  </div>
+                )}
+                {/* Tamanhos com estoque individual */}
                 {hasSizesToggle && (
                   <div className="md:col-span-2">
-                    <label className="label">Tamanhos disponíveis</label>
-                    <div className="flex flex-wrap gap-2 mt-1">
+                    <label className="label">Tamanhos e estoques</label>
+                    <div className="grid grid-cols-2 gap-2 mt-1">
                       {SIZES.map(size => {
                         const checked = selectedSizes.includes(size)
                         return (
-                          <button
+                          <div
                             key={size}
-                            type="button"
-                            onClick={() => setSelectedSizes(prev =>
-                              checked ? prev.filter(s => s !== size) : [...prev, size]
-                            )}
-                            className={`px-3 py-1.5 rounded-lg text-sm font-bold border transition-all ${
-                              checked
-                                ? 'bg-[#b2ea0f] border-[#b2ea0f] text-black'
-                                : 'bg-[#1a1a1a] border-[#2a2a2a] text-[#9ca3af] hover:border-[#b2ea0f]/50 hover:text-white'
+                            className={`flex items-center gap-2 p-2 rounded-lg border transition-all ${
+                              checked ? 'border-[#b2ea0f]/40 bg-[#b2ea0f]/5' : 'border-[#2a2a2a] bg-[#1a1a1a] opacity-60'
                             }`}
                           >
-                            {size}
-                          </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const willCheck = !checked
+                                setSelectedSizes(prev =>
+                                  willCheck ? [...prev, size] : prev.filter(s => s !== size)
+                                )
+                                if (!willCheck) setSizeStockForm(prev => ({ ...prev, [size]: '' }))
+                              }}
+                              className={`w-12 h-9 rounded-lg text-sm font-bold border-2 transition-all shrink-0 ${
+                                checked
+                                  ? 'border-[#b2ea0f] bg-[#b2ea0f] text-black'
+                                  : 'border-[#2a2a2a] text-[#9ca3af] hover:border-[#b2ea0f]/50'
+                              }`}
+                            >
+                              {size}
+                            </button>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[10px] text-[#9ca3af] mb-0.5">Estoque</p>
+                              <input
+                                type="number"
+                                min="0"
+                                placeholder="0"
+                                disabled={!checked}
+                                value={sizeStockForm[size] ?? ''}
+                                onChange={e => setSizeStockForm(prev => ({ ...prev, [size]: e.target.value }))}
+                                className="input !py-1 !text-sm w-full disabled:opacity-30 disabled:cursor-not-allowed"
+                              />
+                            </div>
+                          </div>
                         )
                       })}
                     </div>
                     {selectedSizes.length === 0 && (
-                      <p className="text-xs text-yellow-500 mt-1">Nenhum tamanho selecionado · o produto não terá seletor de tamanho na loja.</p>
+                      <p className="text-xs text-yellow-500 mt-1.5">Nenhum tamanho selecionado · o produto não terá seletor de tamanho na loja.</p>
                     )}
                   </div>
                 )}
@@ -471,9 +519,19 @@ export default function AdminProductsPage() {
                       {p.compare_price && <p className="text-xs text-[#9ca3af] line-through">{formatBRL(p.compare_price)}</p>}
                     </td>
                     <td className="px-5 py-3 text-center hidden sm:table-cell">
-                      <span className={`text-sm font-bold ${p.stock <= 5 ? 'text-yellow-400' : p.stock === 0 ? 'text-red-400' : 'text-white'}`}>
-                        {p.stock}
-                      </span>
+                      {p.sizes?.length > 0 && Object.keys(p.size_stock || {}).length > 0 ? (
+                        <div className="flex flex-col items-center gap-0.5">
+                          {p.sizes.map(s => (
+                            <span key={s} className={`text-xs font-semibold ${(p.size_stock[s] ?? 0) === 0 ? 'text-red-400' : (p.size_stock[s] ?? 0) <= 3 ? 'text-yellow-400' : 'text-white'}`}>
+                              {s}: {p.size_stock[s] ?? 0}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className={`text-sm font-bold ${p.stock <= 5 ? 'text-yellow-400' : p.stock === 0 ? 'text-red-400' : 'text-white'}`}>
+                          {p.stock}
+                        </span>
+                      )}
                     </td>
                     <td className="px-5 py-3 text-center hidden sm:table-cell">
                       <span className={`badge ${p.active ? 'bg-[#b2ea0f]/20 text-[#b2ea0f]' : 'bg-[#2a2a2a] text-[#9ca3af]'}`}>
