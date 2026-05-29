@@ -72,7 +72,7 @@ export default function Footer() {
               spacefitacademias@gmail.com
             </a>
             <a
-              href="https://www.instagram.com/spacefit.conceicao/"
+              href="https://www.instagram.com/spacefit.academia/"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2.5 text-sm text-[#9ca3af] hover:text-[#b2ea0f] transition-colors group"
@@ -80,7 +80,7 @@ export default function Footer() {
               <span className="w-7 h-7 rounded-lg bg-[#b2ea0f]/10 flex items-center justify-center group-hover:bg-[#b2ea0f]/20 transition-colors">
                 <InstagramIcon className="w-3.5 h-3.5 text-[#b2ea0f]" />
               </span>
-              @spacefit.conceicao
+              @spacefit.academia
             </a>
             <div className="flex items-start gap-2.5 text-sm text-[#6b7280]">
               <span className="w-7 h-7 rounded-lg bg-[#b2ea0f]/10 flex items-center justify-center shrink-0">
@@ -137,7 +137,7 @@ export default function Footer() {
           <div className="mt-8">
             <h3 className="text-white font-black mb-4 text-xs uppercase tracking-[0.2em]">Redes Sociais</h3>
             <a
-              href="https://www.instagram.com/spacefit.conceicao/"
+              href="https://www.instagram.com/spacefit.academia/"
             >
               <InstagramIcon className="w-3.5 h-3.5" />
               Instagram

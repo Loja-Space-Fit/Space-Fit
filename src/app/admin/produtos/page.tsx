@@ -18,15 +18,13 @@ export default function AdminProductsPage() {
   const [activeTab, setActiveTab]       = useState<string>('todos')
   const [form, setForm]                 = useState(defaultForm())
   const [selectedSizes, setSelectedSizes] = useState<string[]>([])
+  const [hasSizesToggle, setHasSizesToggle] = useState(false)
   const [imagesList, setImagesList]   = useState<string[]>([])
   const [uploading, setUploading]     = useState(false)
   const [uploadError, setUploadError] = useState('')
   const [cropSrc, setCropSrc]         = useState<string | null>(null)
 
-  const SIZES = ['PP', 'P', 'M', 'G', 'GG', 'XG', 'XGG', '2XG']
-
-  // Verifica se a categoria selecionada é Roupas
-  const isRoupas = categories.find(c => c.id === form.category_id)?.slug === 'roupas'
+  const SIZES = ['P', 'M', 'G', 'GG']
 
   function defaultForm() {
     return {
@@ -54,6 +52,7 @@ export default function AdminProductsPage() {
     setEditing(null)
     setForm(defaultForm())
     setSelectedSizes([])
+    setHasSizesToggle(false)
     setImagesList([])
     setUploadError('')
     setShowForm(true)
@@ -69,6 +68,7 @@ export default function AdminProductsPage() {
       active: p.active, featured: p.featured,
     })
     setSelectedSizes(p.sizes || [])
+    setHasSizesToggle((p.sizes?.length ?? 0) > 0)
     setImagesList(p.images || [])
     setUploadError('')
     setShowForm(true)
@@ -80,7 +80,7 @@ export default function AdminProductsPage() {
     const supabase = createClient()
 
     const images = imagesList
-    const sizes  = isRoupas ? selectedSizes : []
+    const sizes  = hasSizesToggle ? selectedSizes : []
 
     const data = {
       name:         form.name,
@@ -291,8 +291,30 @@ export default function AdminProductsPage() {
                   <label className="label">Estoque (unidades)</label>
                   <input value={form.stock} onChange={e => setForm(f => ({ ...f, stock: e.target.value }))} type="number" min="0" className="input" placeholder="50" />
                 </div>
-                {/* Tamanhos: só para Roupas */}
-                {isRoupas && (
+                {/* Toggle: Possui tamanhos? */}
+                <div className="md:col-span-2">
+                  <label className="flex items-center gap-3 cursor-pointer select-none">
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={hasSizesToggle}
+                      onClick={() => {
+                        setHasSizesToggle(v => !v)
+                        if (hasSizesToggle) setSelectedSizes([])
+                      }}
+                      className={`relative w-11 h-6 rounded-full transition-colors focus:outline-none ${
+                        hasSizesToggle ? 'bg-[#b2ea0f]' : 'bg-[#2a2a2a]'
+                      }`}
+                    >
+                      <span className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${
+                        hasSizesToggle ? 'translate-x-5' : 'translate-x-0'
+                      }`} />
+                    </button>
+                    <span className="text-sm text-white font-medium">Possui tamanhos?</span>
+                  </label>
+                </div>
+                {/* Seletor de tamanhos */}
+                {hasSizesToggle && (
                   <div className="md:col-span-2">
                     <label className="label">Tamanhos disponíveis</label>
                     <div className="flex flex-wrap gap-2 mt-1">
@@ -317,7 +339,7 @@ export default function AdminProductsPage() {
                       })}
                     </div>
                     {selectedSizes.length === 0 && (
-                      <p className="text-xs text-yellow-500 mt-1">Nenhum tamanho selecionado · o produto não terá opção de tamanho.</p>
+                      <p className="text-xs text-yellow-500 mt-1">Nenhum tamanho selecionado · o produto não terá seletor de tamanho na loja.</p>
                     )}
                   </div>
                 )}
