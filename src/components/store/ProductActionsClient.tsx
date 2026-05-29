@@ -11,14 +11,17 @@ export default function ProductActionsClient({ product }: { product: Product }) 
 
   const hasSizes = product.sizes?.length > 0
   const sizeStock: Record<string, number> = product.size_stock ?? {}
+  const hasSizeStockData = Object.keys(sizeStock).length > 0
 
   // Estoque efetivo para o contexto atual
   const stockForSize: number | null = hasSizes
-    ? (selectedSize != null ? (sizeStock[selectedSize] ?? 0) : null)
+    ? (selectedSize != null
+        ? (hasSizeStockData ? (sizeStock[selectedSize] ?? 0) : product.stock)
+        : null)
     : product.stock
 
   const effectiveStock = stockForSize ?? 0
-  const sizeOutOfStock = hasSizes && selectedSize != null && effectiveStock === 0
+  const sizeOutOfStock = hasSizes && selectedSize != null && hasSizeStockData && effectiveStock === 0
 
   return (
     <div className="space-y-4">
