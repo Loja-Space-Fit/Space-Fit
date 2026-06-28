@@ -29,7 +29,7 @@ export default async function ProductPage({ params }: Props) {
 
   const { data: product } = await supabase
     .from('products')
-    .select('*, category:categories(name, slug), reviews(*)')
+    .select('*, category:categories(name, slug), reviews(*), variations:product_variations(id, size, flavor, stock, created_at, updated_at)')
     .eq('slug', slug)
     .eq('active', true)
     .single()
@@ -103,8 +103,8 @@ export default async function ProductPage({ params }: Props) {
             )}
           </div>
 
-          {/* Estoque — só para produtos sem tamanhos */}
-          {(!p.sizes?.length) && (
+          {/* Estoque global — apenas para produtos sem tamanhos e sem sabores */}
+          {(!p.sizes?.length && !p.flavors?.length) && (
             <div className="flex items-center gap-2 mb-6">
               <Package className={`w-4 h-4 ${p.stock > 0 ? 'text-[#b2ea0f]' : 'text-red-400'}`} />
               <span className={`text-sm font-semibold ${p.stock > 0 ? 'text-[#b2ea0f]' : 'text-red-400'}`}>

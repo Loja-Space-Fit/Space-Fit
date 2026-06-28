@@ -16,7 +16,6 @@ export async function POST(
 
   const supabase = createServiceClient()
 
-  // Buscar o pedido
   const { data: order } = await supabase
     .from('orders')
     .select('id, user_id, payment_status, items, coupon_code')
@@ -39,32 +38,97 @@ export async function POST(
     .update({ payment_status: 'rejected', order_status: 'cancelled' })
     .eq('id', id)
 
-  // Restaurar estoque dos itens (products e bundles)
-  const items = (order.items || []) as Array<{ product_id: string; quantity: number; size?: string }>
+  // Restaurar estoque de cada item
+  const items = (order.items || []) as Array<{
+    product_id: string; quantity: number; size?: string; flavor?: string
+  }>
+
   for (const item of items) {
+    // Tenta produto primeiro
     const { data: product } = await supabase
       .from('products')
-      .select('id, stock, size_stock')
+      .select('id, stock, size_stock, flavor_stock, sizes, flavors')
       .eq('id', item.product_id)
       .maybeSingle()
 
     if (product) {
-      const hasSizeStock = product.size_stock && Object.keys(product.size_stock).length > 0
-      if (hasSizeStock && item.size) {
-        const updated = { ...(product.size_stock as Record<string, number>) }
-        updated[item.size] = (updated[item.size] ?? 0) + item.quantity
-        const newTotal = Object.values(updated).reduce((a, b) => a + b, 0)
-        await supabase
-          .from('products')
-          .update({ size_stock: updated, stock: newTotal })
-          .eq('id', item.product_id)
+      const hasSizes   = Array.isArray(product.sizes)   && product.sizes.length   > 0
+      const hasFlavors = Array.isArray(product.flavors) && product.flavors.length > 0
+      const isCombo    = hasSizes && hasFlavors
+
+      if (isCombo && item.size && item.flavor) {
+        // Variação combo
+        const { data: variation } = await supabase
+          .from('product_variations')
+          .select('stock')
+          .eq('product_id', item.product_id)
+          .eq('size', item.size)
+          .eq('flavor', item.flavor)
+          .maybeSingle()
+
+        if (variation) {
+          await supabase
+            .from('product_variations')
+            .update({ stock: variation.stock + item.quantity })
+            .eq('product_id', item.product_id)
+            .eq('size', item.size)
+            .eq('flavor', item.flavor)
+        }
+
+        // Recalcula stock global
+        const { data: allVariations } = await supabase
+          .from('product_variations')
+          .select('stock')
+          .eq('product_id', item.product_id)
+        const totalStock = (allVariations ?? []).reduce((s: number, v: { stock: number }) => s + v.stock, 0)
+        await supabase.from('products').update({ stock: totalStock }).eq('id', item.product_id)
+
+      } else if (!isCombo && hasSizes && item.size) {
+        // Tamanho apenas
+        const hasSizeStock = product.size_stock && Object.keys(product.size_stock).length > 0
+        if (hasSizeStock) {
+          const updated = { ...(product.size_stock as Record<string, number>) }
+          updated[item.size] = (updated[item.size] ?? 0) + item.quantity
+          const newTotal = Object.values(updated).reduce((a, b) => a + b, 0)
+          await supabase
+            .from('products')
+            .update({ size_stock: updated, stock: newTotal })
+            .eq('id', item.product_id)
+        } else {
+          await supabase
+            .from('products')
+            .update({ stock: product.stock + item.quantity })
+            .eq('id', item.product_id)
+        }
+
+      } else if (!isCombo && hasFlavors && item.flavor) {
+        // Sabor apenas
+        const hasFlavorStock = product.flavor_stock && Object.keys(product.flavor_stock).length > 0
+        if (hasFlavorStock) {
+          const updated = { ...(product.flavor_stock as Record<string, number>) }
+          updated[item.flavor] = (updated[item.flavor] ?? 0) + item.quantity
+          const newTotal = Object.values(updated).reduce((a, b) => a + b, 0)
+          await supabase
+            .from('products')
+            .update({ flavor_stock: updated, stock: newTotal })
+            .eq('id', item.product_id)
+        } else {
+          await supabase
+            .from('products')
+            .update({ stock: product.stock + item.quantity })
+            .eq('id', item.product_id)
+        }
+
       } else {
+        // Produto simples
         await supabase
           .from('products')
           .update({ stock: product.stock + item.quantity })
           .eq('id', item.product_id)
       }
+
     } else {
+      // Bundle
       const { data: bundle } = await supabase
         .from('bundles')
         .select('id, stock')
@@ -79,10 +143,6 @@ export async function POST(
       }
     }
   }
-
-  // Reverter uso do cupom (só se o pagamento havia sido aprovado antes)
-  // Pedidos cancelados pelo cliente são sempre 'pending' — cupom nunca foi incrementado
-  // (o increment só ocorre no webhook de aprovação), então nenhuma ação necessária aqui.
 
   return NextResponse.json({ ok: true })
 }

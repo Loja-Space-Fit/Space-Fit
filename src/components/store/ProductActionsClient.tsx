@@ -1,31 +1,92 @@
 'use client'
 
 import { useState } from 'react'
-import type { Product } from '@/types'
+import type { Product, ProductVariation } from '@/types'
 import AddToCartButton from './AddToCartButton'
 import { Minus, Plus, Package } from 'lucide-react'
 
 export default function ProductActionsClient({ product }: { product: Product }) {
-  const [selectedSize, setSelectedSize] = useState<string | undefined>(undefined)
-  const [quantity, setQuantity] = useState(1)
+  const [selectedSize, setSelectedSize]     = useState<string | undefined>(undefined)
+  const [selectedFlavor, setSelectedFlavor] = useState<string | undefined>(undefined)
+  const [quantity, setQuantity]             = useState(1)
 
-  const hasSizes = product.sizes?.length > 0
-  const sizeStock: Record<string, number> = product.size_stock ?? {}
-  const hasSizeStockData = Object.keys(sizeStock).length > 0
+  const hasSizes   = (product.sizes?.length ?? 0) > 0
+  const hasFlavors = (product.flavors?.length ?? 0) > 0
+  const isCombo    = hasSizes && hasFlavors
+  const isSizeOnly = hasSizes && !hasFlavors
+  const isFlavorOnly = hasFlavors && !hasSizes
 
-  // Estoque efetivo para o contexto atual
-  const stockForSize: number | null = hasSizes
-    ? (selectedSize != null
-        ? (hasSizeStockData ? (sizeStock[selectedSize] ?? 0) : product.stock)
-        : null)
-    : product.stock
+  const sizeStock: Record<string, number>   = product.size_stock   ?? {}
+  const flavorStock: Record<string, number> = product.flavor_stock ?? {}
+  const hasSizeStockData   = Object.keys(sizeStock).length   > 0
+  const hasFlavorStockData = Object.keys(flavorStock).length > 0
 
-  const effectiveStock = stockForSize ?? 0
-  const sizeOutOfStock = hasSizes && selectedSize != null && hasSizeStockData && effectiveStock === 0
+  const variations: ProductVariation[] = product.variations ?? []
+
+  // Retorna o estoque de uma variação específica (combo)
+  function getVariationStock(size: string, flavor: string): number {
+    const v = variations.find(v => v.size === size && v.flavor === flavor)
+    return v?.stock ?? 0
+  }
+
+  // Disponibilidade de um tamanho considerando o sabor selecionado
+  function isSizeAvailable(size: string): boolean {
+    if (isCombo) {
+      if (selectedFlavor) return getVariationStock(size, selectedFlavor) > 0
+      // Sem sabor selecionado: disponível se existe alguma variação com estoque
+      return variations.some(v => v.size === size && v.stock > 0)
+    }
+    return hasSizeStockData ? (sizeStock[size] ?? 0) > 0 : product.stock > 0
+  }
+
+  // Disponibilidade de um sabor considerando o tamanho selecionado
+  function isFlavorAvailable(flavor: string): boolean {
+    if (isCombo) {
+      if (selectedSize) return getVariationStock(selectedSize, flavor) > 0
+      return variations.some(v => v.flavor === flavor && v.stock > 0)
+    }
+    return hasFlavorStockData ? (flavorStock[flavor] ?? 0) > 0 : product.stock > 0
+  }
+
+  // Estoque efetivo para a seleção atual
+  const effectiveStock: number | null = (() => {
+    if (isCombo) {
+      if (selectedSize != null && selectedFlavor != null) {
+        return getVariationStock(selectedSize, selectedFlavor)
+      }
+      return null // seleção incompleta
+    }
+    if (isSizeOnly) {
+      if (selectedSize != null) {
+        return hasSizeStockData ? (sizeStock[selectedSize] ?? 0) : product.stock
+      }
+      return null
+    }
+    if (isFlavorOnly) {
+      if (selectedFlavor != null) {
+        return hasFlavorStockData ? (flavorStock[selectedFlavor] ?? 0) : product.stock
+      }
+      return null
+    }
+    return product.stock
+  })()
+
+  const currentStock   = effectiveStock ?? 0
+  const selectionDone  = isCombo ? (selectedSize != null && selectedFlavor != null) : (isSizeOnly ? selectedSize != null : isFlavorOnly ? selectedFlavor != null : true)
+  const outOfStock     = selectionDone && currentStock === 0
+
+  // Label descritivo do esgotamento
+  function outOfStockLabel(): string {
+    if (isCombo)    return 'Esgotado para esta combinação'
+    if (isSizeOnly) return 'Esgotado neste tamanho'
+    if (isFlavorOnly) return 'Esgotado neste sabor'
+    return 'Produto Esgotado'
+  }
 
   return (
     <div className="space-y-4">
-      {/* Seletor de tamanho */}
+
+      {/* ── Seletor de tamanho ── */}
       {hasSizes && (
         <div>
           <p className="text-sm font-semibold text-white mb-2">
@@ -33,17 +94,16 @@ export default function ProductActionsClient({ product }: { product: Product }) 
           </p>
           <div className="flex flex-wrap gap-2">
             {product.sizes.map(size => {
-              const sizeQty = sizeStock[size] ?? 0
-              const isUnavailable = sizeQty === 0
+              const available = isSizeAvailable(size)
               return (
                 <button
                   key={size}
                   onClick={() => { setSelectedSize(size); setQuantity(1) }}
-                  disabled={isUnavailable}
+                  disabled={!available}
                   className={`w-14 h-10 rounded-lg text-sm font-bold border-2 transition-all relative ${
                     selectedSize === size
                       ? 'border-[#b2ea0f] bg-[#b2ea0f] text-black'
-                      : isUnavailable
+                      : !available
                       ? 'border-[#2a2a2a] text-[#4b5563] cursor-not-allowed line-through'
                       : 'border-[#2a2a2a] text-white hover:border-[#b2ea0f]'
                   }`}
@@ -59,18 +119,54 @@ export default function ProductActionsClient({ product }: { product: Product }) 
         </div>
       )}
 
-      {/* Estoque do tamanho selecionado (ou produto esgotado sem tamanho) */}
-      {hasSizes && selectedSize != null && (
+      {/* ── Seletor de sabor ── */}
+      {hasFlavors && (
+        <div>
+          <p className="text-sm font-semibold text-white mb-2">
+            Sabor: {selectedFlavor && <span className="text-[#b2ea0f]">{selectedFlavor}</span>}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {product.flavors.map(flavor => {
+              const available = isFlavorAvailable(flavor)
+              return (
+                <button
+                  key={flavor}
+                  onClick={() => { setSelectedFlavor(flavor); setQuantity(1) }}
+                  disabled={!available}
+                  className={`px-4 h-10 rounded-lg text-sm font-bold border-2 transition-all ${
+                    selectedFlavor === flavor
+                      ? 'border-[#b2ea0f] bg-[#b2ea0f] text-black'
+                      : !available
+                      ? 'border-[#2a2a2a] text-[#4b5563] cursor-not-allowed line-through'
+                      : 'border-[#2a2a2a] text-white hover:border-[#b2ea0f]'
+                  }`}
+                >
+                  {flavor}
+                </button>
+              )
+            })}
+          </div>
+          {!selectedFlavor && (
+            <p className="text-xs text-[#9ca3af] mt-1">Selecione um sabor</p>
+          )}
+        </div>
+      )}
+
+      {/* ── Indicador de estoque ── */}
+      {selectionDone && (
         <div className="flex items-center gap-2">
-          <Package className={`w-4 h-4 ${sizeOutOfStock ? 'text-red-400' : 'text-[#b2ea0f]'}`} />
-          <span className={`text-sm font-semibold ${sizeOutOfStock ? 'text-red-400' : 'text-[#b2ea0f]'}`}>
-            {sizeOutOfStock ? 'Esgotado neste tamanho' : `${effectiveStock} unidade${effectiveStock !== 1 ? 's' : ''} disponível${effectiveStock !== 1 ? 'is' : ''}`}
+          <Package className={`w-4 h-4 ${outOfStock ? 'text-red-400' : 'text-[#b2ea0f]'}`} />
+          <span className={`text-sm font-semibold ${outOfStock ? 'text-red-400' : 'text-[#b2ea0f]'}`}>
+            {outOfStock
+              ? outOfStockLabel()
+              : `${currentStock} unidade${currentStock !== 1 ? 's' : ''} disponível${currentStock !== 1 ? 'is' : ''}`
+            }
           </span>
         </div>
       )}
 
-      {/* Quantidade — só mostra quando há estoque disponível */}
-      {!sizeOutOfStock && (!hasSizes ? product.stock > 0 : selectedSize != null && effectiveStock > 0) && (
+      {/* ── Seletor de quantidade ── */}
+      {selectionDone && !outOfStock && currentStock > 0 && (
         <div>
           <p className="text-sm font-semibold text-white mb-2">Quantidade</p>
           <div className="flex items-center gap-3">
@@ -82,7 +178,7 @@ export default function ProductActionsClient({ product }: { product: Product }) 
             </button>
             <span className="text-lg font-black text-white w-8 text-center">{quantity}</span>
             <button
-              onClick={() => setQuantity(q => Math.min(effectiveStock, q + 1))}
+              onClick={() => setQuantity(q => Math.min(currentStock, q + 1))}
               className="w-10 h-10 rounded-lg bg-[#1a1a1a] border border-[#2a2a2a] flex items-center justify-center text-white hover:bg-[#b2ea0f] hover:text-black hover:border-[#b2ea0f] transition-all"
             >
               <Plus className="w-4 h-4" />
@@ -91,33 +187,34 @@ export default function ProductActionsClient({ product }: { product: Product }) 
         </div>
       )}
 
-      {/* Botão adicionar */}
+      {/* ── Botão de compra ── */}
       {(() => {
-        // Produto sem tamanho esgotado
-        if (!hasSizes && product.stock === 0) {
+        // Produto simples esgotado
+        if (!hasSizes && !hasFlavors && product.stock === 0) {
           return (
             <button disabled className="w-full py-3 rounded-xl text-base font-bold bg-[#2a2a2a] text-[#9ca3af] cursor-not-allowed">
               Produto Esgotado
             </button>
           )
         }
-        // Produto com tamanho esgotado no tamanho selecionado
-        if (hasSizes && selectedSize != null && sizeOutOfStock) {
+        // Seleção feita e esgotada
+        if (selectionDone && outOfStock) {
           return (
             <button disabled className="w-full py-3 rounded-xl text-base font-bold bg-[#2a2a2a] text-[#9ca3af] cursor-not-allowed">
-              Esgotado neste tamanho
+              {outOfStockLabel()}
             </button>
           )
         }
-        // Aguardando seleção de tamanho ou produto normal disponível
-        const disabled = hasSizes && !selectedSize
+        // Aguardando seleção
+        const needsSelection = (hasSizes && !selectedSize) || (hasFlavors && !selectedFlavor)
         return (
-          <div className={disabled ? 'opacity-60 pointer-events-none' : ''}>
+          <div className={needsSelection ? 'opacity-60 pointer-events-none' : ''}>
             <AddToCartButton
               product={product}
               selectedSize={selectedSize}
+              selectedFlavor={selectedFlavor}
               quantity={quantity}
-              sizeStock={stockForSize ?? product.stock}
+              sizeStock={effectiveStock ?? product.stock}
             />
           </div>
         )

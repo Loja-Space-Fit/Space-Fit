@@ -4,6 +4,110 @@ import { enviarEmailConfirmacaoPedido, enviarEmailProntoParaRetirada } from '@/l
 import { processLoyaltyPoints } from '@/lib/loyalty'
 import type { Order } from '@/types'
 
+// Restaura estoque de um item do pedido (produto simples, tamanho, sabor ou variação combo)
+async function restoreItemStock(
+  supabase: ReturnType<typeof createServiceClient>,
+  item: { product_id: string; quantity: number; size?: string; flavor?: string }
+) {
+  // Tenta bundle primeiro
+  const { data: bundle } = await supabase
+    .from('bundles')
+    .select('id, stock')
+    .eq('id', item.product_id)
+    .maybeSingle()
+
+  if (bundle) {
+    await supabase
+      .from('bundles')
+      .update({ stock: bundle.stock + item.quantity })
+      .eq('id', item.product_id)
+    return
+  }
+
+  const { data: product } = await supabase
+    .from('products')
+    .select('id, stock, size_stock, flavor_stock, sizes, flavors')
+    .eq('id', item.product_id)
+    .maybeSingle()
+
+  if (!product) return
+
+  const hasSizes   = Array.isArray(product.sizes)   && product.sizes.length   > 0
+  const hasFlavors = Array.isArray(product.flavors) && product.flavors.length > 0
+  const isCombo    = hasSizes && hasFlavors
+
+  if (isCombo && item.size && item.flavor) {
+    // Variação combo — restaura a variação específica
+    const { data: variation } = await supabase
+      .from('product_variations')
+      .select('stock')
+      .eq('product_id', item.product_id)
+      .eq('size', item.size)
+      .eq('flavor', item.flavor)
+      .maybeSingle()
+
+    if (variation) {
+      await supabase
+        .from('product_variations')
+        .update({ stock: variation.stock + item.quantity })
+        .eq('product_id', item.product_id)
+        .eq('size', item.size)
+        .eq('flavor', item.flavor)
+    }
+
+    // Recalcula stock global
+    const { data: allVariations } = await supabase
+      .from('product_variations')
+      .select('stock')
+      .eq('product_id', item.product_id)
+    const totalStock = (allVariations ?? []).reduce((s: number, v: { stock: number }) => s + v.stock, 0)
+    await supabase.from('products').update({ stock: totalStock }).eq('id', item.product_id)
+
+  } else if (!isCombo && hasSizes && item.size) {
+    // Tamanho apenas
+    const hasSizeStock = product.size_stock && Object.keys(product.size_stock).length > 0
+    if (hasSizeStock) {
+      const updated = { ...(product.size_stock as Record<string, number>) }
+      updated[item.size] = (updated[item.size] ?? 0) + item.quantity
+      const newTotal = Object.values(updated).reduce((a, b) => a + b, 0)
+      await supabase
+        .from('products')
+        .update({ size_stock: updated, stock: newTotal })
+        .eq('id', item.product_id)
+    } else {
+      await supabase
+        .from('products')
+        .update({ stock: product.stock + item.quantity })
+        .eq('id', item.product_id)
+    }
+
+  } else if (!isCombo && hasFlavors && item.flavor) {
+    // Sabor apenas
+    const hasFlavorStock = product.flavor_stock && Object.keys(product.flavor_stock).length > 0
+    if (hasFlavorStock) {
+      const updated = { ...(product.flavor_stock as Record<string, number>) }
+      updated[item.flavor] = (updated[item.flavor] ?? 0) + item.quantity
+      const newTotal = Object.values(updated).reduce((a, b) => a + b, 0)
+      await supabase
+        .from('products')
+        .update({ flavor_stock: updated, stock: newTotal })
+        .eq('id', item.product_id)
+    } else {
+      await supabase
+        .from('products')
+        .update({ stock: product.stock + item.quantity })
+        .eq('id', item.product_id)
+    }
+
+  } else {
+    // Produto simples
+    await supabase
+      .from('products')
+      .update({ stock: product.stock + item.quantity })
+      .eq('id', item.product_id)
+  }
+}
+
 // Webhook do Mercado Pago — chamado automaticamente quando o pagamento muda de status
 export async function POST(req: NextRequest) {
   try {
@@ -11,17 +115,15 @@ export async function POST(req: NextRequest) {
     try {
       body = await req.json()
     } catch {
-      // Corpo vazio ou não-JSON — tudo bem, responder 200
       return NextResponse.json({ received: true })
     }
 
-    // Pings de teste do Mercado Pago (sem type/topic) — confirmar imediatamente, sem HMAC
+    // Pings de teste do Mercado Pago (sem type/topic)
     if (!body.type && !body.topic) {
       return NextResponse.json({ received: true })
     }
 
     // Verificar assinatura HMAC do Mercado Pago
-    // Se o secret estiver configurado, a assinatura é obrigatória para todos os eventos reais
     const mpSignature = req.headers.get('x-signature')
     const mpRequestId = req.headers.get('x-request-id')
     const secret = process.env.MERCADOPAGO_WEBHOOK_SECRET
@@ -54,30 +156,23 @@ export async function POST(req: NextRequest) {
       console.warn('[webhook] MERCADOPAGO_WEBHOOK_SECRET não configurado — validação HMAC desabilitada')
     }
 
-    // Processar notificação
     if (body.type === 'payment' && body.data?.id) {
       const supabase = createServiceClient()
       const mpPaymentId = String(body.data.id)
 
-      // Buscar detalhes do pagamento na API do MP
       const mpRes = await fetch(
         `https://api.mercadopago.com/v1/payments/${mpPaymentId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${process.env.MERCADOPAGO_ACCESS_TOKEN}`,
-          },
-        }
+        { headers: { Authorization: `Bearer ${process.env.MERCADOPAGO_ACCESS_TOKEN}` } }
       )
 
       if (!mpRes.ok) {
         console.error('Erro ao buscar pagamento no MP:', await mpRes.text())
-        return NextResponse.json({ ok: false }, { status: 200 }) // Retornar 200 para MP não reenviar
+        return NextResponse.json({ ok: false }, { status: 200 })
       }
 
       const payment = await mpRes.json()
-      const mpStatus = payment.status // approved | rejected | pending | cancelled | refunded
+      const mpStatus = payment.status
 
-      // Mapear status do MP → status interno
       const statusMap: Record<string, { payment_status: string; order_status: string }> = {
         approved: { payment_status: 'approved', order_status: 'paid' },
         rejected: { payment_status: 'rejected', order_status: 'cancelled' },
@@ -88,7 +183,6 @@ export async function POST(req: NextRequest) {
 
       const mapped = statusMap[mpStatus] || { payment_status: 'pending', order_status: 'pending' }
 
-      // Encontrar pedido pelo external_reference (order_id) ou pelo mp_payment_id
       const externalRef = payment.external_reference
       let query = supabase.from('orders').select('id').eq('mp_payment_id', mpPaymentId)
       if (externalRef) {
@@ -99,7 +193,6 @@ export async function POST(req: NextRequest) {
       if (orders && orders.length > 0) {
         const orderId = orders[0].id
 
-        // Buscar estado atual antes de atualizar (idempotência — evita processar duas vezes)
         const { data: pedidoAtual } = await supabase
           .from('orders')
           .select('payment_status, order_status')
@@ -115,7 +208,7 @@ export async function POST(req: NextRequest) {
           })
           .eq('id', orderId)
 
-        // Transição → aprovado: dispara loyalty, email e incrementa cupom
+        // Aprovado: dispara loyalty, email, incrementa cupom
         if (mapped.payment_status === 'approved' && pedidoAtual?.payment_status !== 'approved') {
           const { data: pedidoCompleto } = await supabase
             .from('orders')
@@ -133,7 +226,6 @@ export async function POST(req: NextRequest) {
               console.error('[webhook] Falha ao enviar email de confirmacao:', e)
             )
 
-            // Incrementar uso do cupom somente após pagamento confirmado
             if (pedidoCompleto.coupon_code) {
               const { data: cupom } = await supabase
                 .from('coupons')
@@ -150,54 +242,20 @@ export async function POST(req: NextRequest) {
           }
         }
 
-        // Transição → rejeitado: restaurar estoque se ainda não foi restaurado pela página de confirmação
-        // (a página pode ter chegado primeiro e já restaurado — a guard evita dupla restauração)
-        if (mapped.payment_status === 'rejected') {
+        // Rejeitado: restaurar estoque se pedido ainda estava pendente
+        if (mapped.payment_status === 'rejected' && pedidoAtual?.payment_status === 'pending') {
           const { data: pedidoCompleto } = await supabase
             .from('orders')
             .select('items')
             .eq('id', orderId)
             .single()
 
-          // Só restaura se o order ainda estava 'pending' ANTES deste webhook (pedidoAtual)
-          // Se a página de confirmação já processou, pedidoAtual.payment_status já será 'rejected'
-          if (pedidoCompleto && pedidoAtual?.payment_status === 'pending') {
-            const orderItems = (pedidoCompleto?.items || []) as Array<{ product_id: string; quantity: number; size?: string }>
+          if (pedidoCompleto) {
+            const orderItems = (pedidoCompleto.items || []) as Array<{
+              product_id: string; quantity: number; size?: string; flavor?: string
+            }>
             for (const item of orderItems) {
-              const { data: bundle } = await supabase
-                .from('bundles')
-                .select('id, stock')
-                .eq('id', item.product_id)
-                .maybeSingle()
-              if (bundle) {
-                await supabase
-                  .from('bundles')
-                  .update({ stock: bundle.stock + item.quantity })
-                  .eq('id', item.product_id)
-              } else {
-                const { data: product } = await supabase
-                  .from('products')
-                  .select('id, stock, size_stock')
-                  .eq('id', item.product_id)
-                  .maybeSingle()
-                if (product) {
-                  const hasSizeStock = product.size_stock && Object.keys(product.size_stock).length > 0
-                  if (hasSizeStock && item.size) {
-                    const updated = { ...(product.size_stock as Record<string, number>) }
-                    updated[item.size] = (updated[item.size] ?? 0) + item.quantity
-                    const newTotal = Object.values(updated).reduce((a, b) => a + b, 0)
-                    await supabase
-                      .from('products')
-                      .update({ size_stock: updated, stock: newTotal })
-                      .eq('id', item.product_id)
-                  } else {
-                    await supabase
-                      .from('products')
-                      .update({ stock: product.stock + item.quantity })
-                      .eq('id', item.product_id)
-                  }
-                }
-              }
+              await restoreItemStock(supabase, item)
             }
           }
         }
@@ -207,6 +265,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ received: true })
   } catch (error) {
     console.error('Webhook error:', error)
-    return NextResponse.json({ error: 'Internal error' }, { status: 200 }) // 200 para evitar retentativas do MP
+    return NextResponse.json({ error: 'Internal error' }, { status: 200 })
   }
 }

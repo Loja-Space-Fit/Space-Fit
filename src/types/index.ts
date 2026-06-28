@@ -15,6 +15,18 @@ export interface Category {
   created_at: string;
 }
 
+// Variação de produto (combinação tamanho × sabor)
+// Usada quando o produto possui tamanho E sabor simultaneamente.
+export interface ProductVariation {
+  id: string;
+  product_id: string;
+  size: string;
+  flavor: string;
+  stock: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Product {
   id: string;
   category_id?: string;
@@ -26,8 +38,14 @@ export interface Product {
   compare_price?: number;
   stock: number;
   images: string[];
+  // Tamanhos
   sizes: string[];
   size_stock: Record<string, number>;
+  // Sabores
+  flavors: string[];
+  flavor_stock: Record<string, number>;
+  // Variações (tamanho × sabor) — preenchido na página do produto
+  variations?: ProductVariation[];
   active: boolean;
   featured: boolean;
   created_at: string;
@@ -92,6 +110,7 @@ export interface OrderItem {
   product_name: string;
   product_image?: string;
   size?: string;
+  flavor?: string;
   quantity: number;
   unit_price: number;
   total_price: number;
@@ -132,6 +151,7 @@ export interface CartItem {
   product_slug: string;
   product_image?: string;
   size?: string;
+  flavor?: string;
   quantity: number;
   unit_price: number;
   stock?: number;

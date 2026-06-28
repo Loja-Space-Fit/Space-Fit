@@ -3,7 +3,6 @@
 import React, { createContext, useContext, useReducer, useEffect, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { CartItem, Coupon } from '@/types'
-import { formatBRL } from '@/lib/utils'
 
 const CART_TTL_MS = 3 * 60 * 60 * 1000 // 3 horas
 
@@ -17,20 +16,25 @@ interface CartState {
 
 type CartAction =
   | { type: 'ADD_ITEM'; payload: CartItem }
-  | { type: 'REMOVE_ITEM'; payload: { product_id: string; size?: string } }
-  | { type: 'UPDATE_QTY'; payload: { product_id: string; size?: string; quantity: number } }
+  | { type: 'REMOVE_ITEM'; payload: { product_id: string; size?: string; flavor?: string } }
+  | { type: 'UPDATE_QTY'; payload: { product_id: string; size?: string; flavor?: string; quantity: number } }
   | { type: 'SET_COUPON'; payload: { coupon: Coupon; code: string } }
   | { type: 'REMOVE_COUPON' }
   | { type: 'CLEAR_CART' }
   | { type: 'TOGGLE_CART'; payload?: boolean }
   | { type: 'RESTORE_ADDED_AT'; payload: number }
 
+// Chave única por item: produto + tamanho + sabor
+function itemKey(product_id: string, size?: string, flavor?: string): string {
+  return `${product_id}-${size || ''}-${flavor || ''}`
+}
+
 function cartReducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
     case 'ADD_ITEM': {
-      const key = `${action.payload.product_id}-${action.payload.size || ''}`
+      const key = itemKey(action.payload.product_id, action.payload.size, action.payload.flavor)
       const existing = state.items.findIndex(
-        i => `${i.product_id}-${i.size || ''}` === key
+        i => itemKey(i.product_id, i.size, i.flavor) === key
       )
       if (existing >= 0) {
         const items = [...state.items]
@@ -47,16 +51,16 @@ function cartReducer(state: CartState, action: CartAction): CartState {
       }
     }
     case 'REMOVE_ITEM': {
-      const key = `${action.payload.product_id}-${action.payload.size || ''}`
-      return { ...state, items: state.items.filter(i => `${i.product_id}-${i.size || ''}` !== key) }
+      const key = itemKey(action.payload.product_id, action.payload.size, action.payload.flavor)
+      return { ...state, items: state.items.filter(i => itemKey(i.product_id, i.size, i.flavor) !== key) }
     }
     case 'UPDATE_QTY': {
-      const key = `${action.payload.product_id}-${action.payload.size || ''}`
+      const key = itemKey(action.payload.product_id, action.payload.size, action.payload.flavor)
       if (action.payload.quantity <= 0) {
-        return { ...state, items: state.items.filter(i => `${i.product_id}-${i.size || ''}` !== key) }
+        return { ...state, items: state.items.filter(i => itemKey(i.product_id, i.size, i.flavor) !== key) }
       }
       const items = state.items.map(i =>
-        `${i.product_id}-${i.size || ''}` === key
+        itemKey(i.product_id, i.size, i.flavor) === key
           ? { ...i, quantity: action.payload.quantity }
           : i
       )
@@ -79,8 +83,8 @@ function cartReducer(state: CartState, action: CartAction): CartState {
 
 interface CartContextValue extends CartState {
   addItem: (item: CartItem) => void
-  removeItem: (product_id: string, size?: string) => void
-  updateQty: (product_id: string, size: string | undefined, quantity: number) => void
+  removeItem: (product_id: string, size?: string, flavor?: string) => void
+  updateQty: (product_id: string, size: string | undefined, flavor: string | undefined, quantity: number) => void
   setCoupon: (coupon: Coupon, code: string) => void
   removeCoupon: () => void
   clearCart: () => void
@@ -179,8 +183,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const totalItems = state.items.reduce((s, i) => s + i.quantity, 0)
 
   const addItem    = useCallback((item: CartItem) => dispatch({ type: 'ADD_ITEM', payload: item }), [])
-  const removeItem = useCallback((product_id: string, size?: string) => dispatch({ type: 'REMOVE_ITEM', payload: { product_id, size } }), [])
-  const updateQty  = useCallback((product_id: string, size: string | undefined, quantity: number) => dispatch({ type: 'UPDATE_QTY', payload: { product_id, size, quantity } }), [])
+  const removeItem = useCallback((product_id: string, size?: string, flavor?: string) => dispatch({ type: 'REMOVE_ITEM', payload: { product_id, size, flavor } }), [])
+  const updateQty  = useCallback((product_id: string, size: string | undefined, flavor: string | undefined, quantity: number) => dispatch({ type: 'UPDATE_QTY', payload: { product_id, size, flavor, quantity } }), [])
   const setCoupon  = useCallback((coupon: Coupon, code: string) => dispatch({ type: 'SET_COUPON', payload: { coupon, code } }), [])
   const removeCoupon = useCallback(() => dispatch({ type: 'REMOVE_COUPON' }), [])
   const clearCart  = useCallback(() => dispatch({ type: 'CLEAR_CART' }), [])

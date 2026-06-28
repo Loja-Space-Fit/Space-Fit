@@ -108,7 +108,7 @@ export default function CartDrawer() {
             </div>
           ) : (
             items.map(item => {
-              const key = `${item.product_id}-${item.size || ''}`
+              const key = `${item.product_id}-${item.size || ''}-${item.flavor || ''}`
               return (
                 <div key={key} className="flex gap-3 p-3 bg-[#1a1a1a] rounded-xl border border-[#2a2a2a]">
                   {/* Imagem */}
@@ -131,8 +131,10 @@ export default function CartDrawer() {
                   {/* Info */}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-white truncate">{item.product_name}</p>
-                    {item.size && (
-                      <p className="text-xs text-[#9ca3af] mt-0.5">Tamanho: {item.size}</p>
+                    {(item.size || item.flavor) && (
+                      <p className="text-xs text-[#9ca3af] mt-0.5">
+                        {[item.flavor, item.size].filter(Boolean).join(' · ')}
+                      </p>
                     )}
                     <p className="text-sm font-bold text-[#b2ea0f] mt-1">
                       {formatBRL(item.unit_price)}
@@ -141,21 +143,21 @@ export default function CartDrawer() {
                     {/* Quantidade */}
                     <div className="flex items-center gap-2 mt-2">
                       <button
-                        onClick={() => updateQty(item.product_id, item.size, item.quantity - 1)}
+                        onClick={() => updateQty(item.product_id, item.size, item.flavor, item.quantity - 1)}
                         className="w-6 h-6 flex items-center justify-center rounded-md bg-[#2a2a2a] text-white hover:bg-[#b2ea0f] hover:text-black transition-colors"
                       >
                         <Minus className="w-3 h-3" />
                       </button>
                       <span className="text-sm font-semibold w-6 text-center text-white">{item.quantity}</span>
                       <button
-                        onClick={() => updateQty(item.product_id, item.size, item.quantity + 1)}
+                        onClick={() => updateQty(item.product_id, item.size, item.flavor, item.quantity + 1)}
                         disabled={item.stock != null && item.quantity >= item.stock}
                         className="w-6 h-6 flex items-center justify-center rounded-md bg-[#2a2a2a] text-white hover:bg-[#b2ea0f] hover:text-black transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-[#2a2a2a] disabled:hover:text-white"
                       >
                         <Plus className="w-3 h-3" />
                       </button>
                       <button
-                        onClick={() => removeItem(item.product_id, item.size)}
+                        onClick={() => removeItem(item.product_id, item.size, item.flavor)}
                         className="ml-auto w-6 h-6 flex items-center justify-center rounded-md text-red-400 hover:bg-red-900/20 transition-colors"
                       >
                         <Trash2 className="w-3 h-3" />

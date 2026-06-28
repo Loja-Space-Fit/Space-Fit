@@ -3,10 +3,16 @@
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { formatBRL, slugify } from '@/lib/utils'
-import { Plus, Pencil, Trash2, X, Loader2, Package, Upload, ImageIcon } from 'lucide-react'
+import { Plus, Pencil, Trash2, X, Loader2, Package, Upload, ChevronDown } from 'lucide-react'
 import toast from 'react-hot-toast'
 import ImageCropEditor from '@/components/admin/ImageCropEditor'
 import type { Product, Category } from '@/types'
+
+// Sabor com estoque (usado apenas no formulário)
+interface FlavorEntry {
+  name: string
+  stock: string
+}
 
 export default function AdminProductsPage() {
   const [products, setProducts]     = useState<Product[]>([])
@@ -17,15 +23,27 @@ export default function AdminProductsPage() {
   const [saving, setSaving]             = useState(false)
   const [activeTab, setActiveTab]       = useState<string>('todos')
   const [form, setForm]                 = useState(defaultForm())
+
+  // Tamanhos
   const [selectedSizes, setSelectedSizes] = useState<string[]>([])
   const [hasSizesToggle, setHasSizesToggle] = useState(false)
   const [sizeStockForm, setSizeStockForm] = useState<Record<string, string>>({ P: '', M: '', G: '', GG: '' })
+
+  // Sabores
+  const [hasFlavorsToggle, setHasFlavorsToggle] = useState(false)
+  const [flavorList, setFlavorList] = useState<FlavorEntry[]>([])
+  // Para produtos com tamanho E sabor: variationStockForm[flavor][size] = estoque
+  const [variationStockForm, setVariationStockForm] = useState<Record<string, Record<string, string>>>({})
+
+  // Imagens
   const [imagesList, setImagesList]   = useState<string[]>([])
   const [uploading, setUploading]     = useState(false)
   const [uploadError, setUploadError] = useState('')
   const [cropSrc, setCropSrc]         = useState<string | null>(null)
 
   const SIZES = ['P', 'M', 'G', 'GG']
+
+  const isCombo = hasSizesToggle && hasFlavorsToggle
 
   function defaultForm() {
     return {
@@ -55,12 +73,15 @@ export default function AdminProductsPage() {
     setSelectedSizes([])
     setHasSizesToggle(false)
     setSizeStockForm({ P: '', M: '', G: '', GG: '' })
+    setHasFlavorsToggle(false)
+    setFlavorList([])
+    setVariationStockForm({})
     setImagesList([])
     setUploadError('')
     setShowForm(true)
   }
 
-  function openEdit(p: Product) {
+  async function openEdit(p: Product) {
     setEditing(p)
     setForm({
       name: p.name, slug: p.slug, description: p.description || '',
@@ -69,14 +90,49 @@ export default function AdminProductsPage() {
       stock: String(p.stock), images: '',
       active: p.active, featured: p.featured,
     })
+
+    const hasSizes   = (p.sizes?.length ?? 0) > 0
+    const hasFlavors = (p.flavors?.length ?? 0) > 0
+
+    setHasSizesToggle(hasSizes)
     setSelectedSizes(p.sizes || [])
-    setHasSizesToggle((p.sizes?.length ?? 0) > 0)
     setSizeStockForm({
       P:  String(p.size_stock?.P  ?? ''),
       M:  String(p.size_stock?.M  ?? ''),
       G:  String(p.size_stock?.G  ?? ''),
       GG: String(p.size_stock?.GG ?? ''),
     })
+
+    setHasFlavorsToggle(hasFlavors)
+
+    if (hasFlavors && hasSizes) {
+      // Produto combo: carrega variações da tabela
+      const supabase = createClient()
+      const { data: variations } = await supabase
+        .from('product_variations')
+        .select('size, flavor, stock')
+        .eq('product_id', p.id)
+
+      setFlavorList((p.flavors || []).map(f => ({ name: f, stock: '' })))
+
+      const vsf: Record<string, Record<string, string>> = {}
+      for (const v of variations ?? []) {
+        if (!vsf[v.flavor]) vsf[v.flavor] = {}
+        vsf[v.flavor][v.size] = String(v.stock)
+      }
+      setVariationStockForm(vsf)
+    } else if (hasFlavors) {
+      // Produto com sabor apenas
+      setFlavorList((p.flavors || []).map(f => ({
+        name: f,
+        stock: String(p.flavor_stock?.[f] ?? ''),
+      })))
+      setVariationStockForm({})
+    } else {
+      setFlavorList([])
+      setVariationStockForm({})
+    }
+
     setImagesList(p.images || [])
     setUploadError('')
     setShowForm(true)
@@ -89,18 +145,39 @@ export default function AdminProductsPage() {
 
     const images = imagesList
     const sizes  = hasSizesToggle ? selectedSizes : []
+    const flavors = hasFlavorsToggle ? flavorList.map(f => f.name).filter(n => n.trim() !== '') : []
 
-    // Estoque por tamanho: só para tamanhos selecionados
-    const size_stock: Record<string, number> = {}
-    if (hasSizesToggle) {
+    let size_stock: Record<string, number> = {}
+    let flavor_stock: Record<string, number> = {}
+    let stock = 0
+
+    if (isCombo) {
+      // Combo: estoque por variação — size_stock e flavor_stock ficam vazios
+      size_stock = {}
+      flavor_stock = {}
+      for (const flavor of flavors) {
+        for (const size of selectedSizes) {
+          stock += parseInt(variationStockForm[flavor]?.[size] || '0') || 0
+        }
+      }
+    } else if (hasSizesToggle) {
+      // Somente tamanho
       for (const s of selectedSizes) {
         size_stock[s] = parseInt(sizeStockForm[s] || '0') || 0
       }
+      stock = Object.values(size_stock).reduce((a, b) => a + b, 0)
+    } else if (hasFlavorsToggle) {
+      // Somente sabor
+      for (const f of flavorList) {
+        if (f.name.trim()) {
+          flavor_stock[f.name] = parseInt(f.stock || '0') || 0
+        }
+      }
+      stock = Object.values(flavor_stock).reduce((a, b) => a + b, 0)
+    } else {
+      // Produto simples
+      stock = parseInt(form.stock) || 0
     }
-    // stock global: soma dos tamanhos (para compatibilidade) ou valor do campo normal
-    const stock = hasSizesToggle
-      ? Object.values(size_stock).reduce((a, b) => a + b, 0)
-      : parseInt(form.stock) || 0
 
     const data = {
       name:         form.name,
@@ -109,21 +186,62 @@ export default function AdminProductsPage() {
       category_id:  form.category_id || null,
       price:        parseFloat(form.price),
       compare_price: form.compare_price ? parseFloat(form.compare_price) : null,
-      stock, images, sizes, size_stock,
+      stock, images, sizes, size_stock, flavors, flavor_stock,
       active:   form.active,
       featured: form.featured,
     }
 
+    let productId: string | null = null
+
     if (editing) {
       await supabase.from('products').update(data).eq('id', editing.id)
+      productId = editing.id
     } else {
-      await supabase.from('products').insert(data)
+      const { data: newProd } = await supabase.from('products').insert(data).select('id').single()
+      productId = newProd?.id ?? null
+    }
+
+    // Salvar variações (combo)
+    if (productId && isCombo) {
+      await supabase.from('product_variations').delete().eq('product_id', productId)
+      const rows = []
+      for (const flavor of flavors) {
+        for (const size of selectedSizes) {
+          rows.push({
+            product_id: productId,
+            size,
+            flavor,
+            stock: parseInt(variationStockForm[flavor]?.[size] || '0') || 0,
+          })
+        }
+      }
+      if (rows.length > 0) {
+        await supabase.from('product_variations').insert(rows)
+      }
+    } else if (productId && editing && !isCombo) {
+      // Se produto deixou de ser combo, limpar variações antigas
+      await supabase.from('product_variations').delete().eq('product_id', productId)
     }
 
     toast.success(editing ? 'Produto atualizado.' : 'Produto criado.')
     setShowForm(false)
     load()
     setSaving(false)
+  }
+
+  // Sincroniza variationStockForm quando tamanhos ou sabores mudam no combo
+  function syncVariationForm(flavors: FlavorEntry[], sizes: string[]) {
+    setVariationStockForm(prev => {
+      const next: Record<string, Record<string, string>> = {}
+      for (const f of flavors) {
+        if (!f.name.trim()) continue
+        next[f.name] = {}
+        for (const s of sizes) {
+          next[f.name][s] = prev[f.name]?.[s] ?? ''
+        }
+      }
+      return next
+    })
   }
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -136,7 +254,6 @@ export default function AdminProductsPage() {
       e.target.value = ''
       return
     }
-    // Abre o editor para o primeiro arquivo selecionado
     const file = files[0]
     const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
     if (!allowed.includes(file.type)) {
@@ -181,32 +298,26 @@ export default function AdminProductsPage() {
   }
 
   async function handleRemoveImage(url: string) {
-    // Remove do state imediatamente
     setImagesList(prev => prev.filter(u => u !== url))
-    // Tenta deletar do Storage (extrai o caminho do arquivo da URL)
     try {
       const supabase = createClient()
       const parts = url.split('/product-images/')
       if (parts.length === 2) {
         await supabase.storage.from('product-images').remove([parts[1]])
       }
-    } catch {
-      // Falha silenciosa — imagem já foi removida da lista
-    }
+    } catch { /* Falha silenciosa */ }
   }
 
   async function handleDelete(id: string, name: string) {
     if (!confirm(`Excluir "${name}"? Esta acao nao pode ser desfeita.`)) return
     const supabase = createClient()
 
-    // Buscar imagens do produto antes de deletar
     const { data: product } = await supabase
       .from('products')
       .select('images')
       .eq('id', id)
       .single()
 
-    // Deletar imagens do Storage
     if (product?.images?.length) {
       const paths = product.images.map((url: string) => {
         const match = url.match(/product-images\/(.+)$/)
@@ -229,7 +340,6 @@ export default function AdminProductsPage() {
 
   return (
     <div>
-      {/* Editor de recorte de imagem */}
       {cropSrc && (
         <ImageCropEditor
           imageSrc={cropSrc}
@@ -306,7 +416,8 @@ export default function AdminProductsPage() {
                   <label className="label">Preço original (riscado, opcional)</label>
                   <input value={form.compare_price} onChange={e => setForm(f => ({ ...f, compare_price: e.target.value }))} type="number" step="0.01" min="0" className="input" placeholder="119.90" />
                 </div>
-                {/* Toggle: Possui tamanhos? */}
+
+                {/* ── Toggle: Possui tamanhos? ── */}
                 <div className="md:col-span-2">
                   <label className="flex items-center gap-3 cursor-pointer select-none">
                     <button
@@ -320,6 +431,10 @@ export default function AdminProductsPage() {
                           setSelectedSizes([])
                           setSizeStockForm({ P: '', M: '', G: '', GG: '' })
                         }
+                        // Sincroniza grade de variações
+                        if (hasFlavorsToggle) {
+                          syncVariationForm(flavorList, next ? selectedSizes : [])
+                        }
                       }}
                       className={`relative w-11 h-6 rounded-full transition-colors focus:outline-none ${
                         hasSizesToggle ? 'bg-[#b2ea0f]' : 'bg-[#2a2a2a]'
@@ -332,15 +447,46 @@ export default function AdminProductsPage() {
                     <span className="text-sm text-white font-medium">Possui tamanhos?</span>
                   </label>
                 </div>
-                {/* Estoque único — só quando NÃO tem tamanhos */}
-                {!hasSizesToggle && (
+
+                {/* ── Toggle: Possui sabores? ── */}
+                <div className="md:col-span-2">
+                  <label className="flex items-center gap-3 cursor-pointer select-none">
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={hasFlavorsToggle}
+                      onClick={() => {
+                        const next = !hasFlavorsToggle
+                        setHasFlavorsToggle(next)
+                        if (!next) {
+                          setFlavorList([])
+                          setVariationStockForm({})
+                        } else if (hasSizesToggle) {
+                          syncVariationForm(flavorList, selectedSizes)
+                        }
+                      }}
+                      className={`relative w-11 h-6 rounded-full transition-colors focus:outline-none ${
+                        hasFlavorsToggle ? 'bg-[#b2ea0f]' : 'bg-[#2a2a2a]'
+                      }`}
+                    >
+                      <span className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${
+                        hasFlavorsToggle ? 'translate-x-5' : 'translate-x-0'
+                      }`} />
+                    </button>
+                    <span className="text-sm text-white font-medium">Possui sabores?</span>
+                  </label>
+                </div>
+
+                {/* ── Estoque único — só quando NÃO tem tamanhos nem sabores ── */}
+                {!hasSizesToggle && !hasFlavorsToggle && (
                   <div>
                     <label className="label">Estoque (unidades)</label>
                     <input value={form.stock} onChange={e => setForm(f => ({ ...f, stock: e.target.value }))} type="number" min="0" className="input" placeholder="50" />
                   </div>
                 )}
-                {/* Tamanhos com estoque individual */}
-                {hasSizesToggle && (
+
+                {/* ── Tamanhos — quando tem tamanho mas NÃO é combo ── */}
+                {hasSizesToggle && !hasFlavorsToggle && (
                   <div className="md:col-span-2">
                     <label className="label">Tamanhos e estoques</label>
                     <div className="grid grid-cols-2 gap-2 mt-1">
@@ -391,10 +537,187 @@ export default function AdminProductsPage() {
                     )}
                   </div>
                 )}
+
+                {/* ── Tamanhos para combo (sem estoques inline — ficam na grade) ── */}
+                {isCombo && (
+                  <div className="md:col-span-2">
+                    <label className="label">Tamanhos disponíveis</label>
+                    <div className="flex gap-2 flex-wrap mt-1">
+                      {SIZES.map(size => {
+                        const checked = selectedSizes.includes(size)
+                        return (
+                          <button
+                            key={size}
+                            type="button"
+                            onClick={() => {
+                              const next = checked
+                                ? selectedSizes.filter(s => s !== size)
+                                : [...selectedSizes, size]
+                              setSelectedSizes(next)
+                              syncVariationForm(flavorList, next)
+                            }}
+                            className={`w-14 h-10 rounded-lg text-sm font-bold border-2 transition-all ${
+                              checked
+                                ? 'border-[#b2ea0f] bg-[#b2ea0f] text-black'
+                                : 'border-[#2a2a2a] text-[#9ca3af] hover:border-[#b2ea0f]/50'
+                            }`}
+                          >
+                            {size}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Sabores (lista gerenciável) ── */}
+                {hasFlavorsToggle && (
+                  <div className="md:col-span-2">
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="label" style={{ marginBottom: 0 }}>
+                        Sabores{isCombo ? '' : ' e estoques'}
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const next = [...flavorList, { name: '', stock: '0' }]
+                          setFlavorList(next)
+                          if (isCombo) syncVariationForm(next, selectedSizes)
+                        }}
+                        className="flex items-center gap-1 text-xs text-[#b2ea0f] hover:text-white border border-[#b2ea0f]/40 hover:border-[#b2ea0f] rounded-lg px-2 py-1 transition-all"
+                      >
+                        <Plus className="w-3 h-3" /> Adicionar sabor
+                      </button>
+                    </div>
+
+                    <div className="space-y-2 mt-1">
+                      {flavorList.map((flavor, idx) => (
+                        <div key={idx} className="flex items-center gap-2 p-2 rounded-lg border border-[#b2ea0f]/20 bg-[#b2ea0f]/5">
+                          <div className="flex-1">
+                            <input
+                              type="text"
+                              placeholder="Nome do sabor (ex: Chocolate)"
+                              value={flavor.name}
+                              onChange={e => {
+                                const oldName = flavorList[idx].name
+                                const newName = e.target.value
+                                const next = flavorList.map((f, i) =>
+                                  i === idx ? { ...f, name: newName } : f
+                                )
+                                setFlavorList(next)
+                                // Renomeia chave no variationStockForm
+                                if (isCombo && oldName !== newName) {
+                                  setVariationStockForm(prev => {
+                                    const updated: Record<string, Record<string, string>> = {}
+                                    for (const [k, v] of Object.entries(prev)) {
+                                      updated[k === oldName ? newName : k] = v
+                                    }
+                                    return updated
+                                  })
+                                }
+                              }}
+                              className="input !py-1 !text-sm w-full"
+                            />
+                          </div>
+                          {/* Estoque só aparece aqui para produtos com sabor apenas (não combo) */}
+                          {!isCombo && (
+                            <div className="w-24">
+                              <p className="text-[10px] text-[#9ca3af] mb-0.5">Estoque</p>
+                              <input
+                                type="number"
+                                min="0"
+                                placeholder="0"
+                                value={flavor.stock}
+                                onChange={e => setFlavorList(prev =>
+                                  prev.map((f, i) => i === idx ? { ...f, stock: e.target.value } : f)
+                                )}
+                                className="input !py-1 !text-sm w-full"
+                              />
+                            </div>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const removedName = flavorList[idx].name
+                              const next = flavorList.filter((_, i) => i !== idx)
+                              setFlavorList(next)
+                              if (isCombo && removedName) {
+                                setVariationStockForm(prev => {
+                                  const updated = { ...prev }
+                                  delete updated[removedName]
+                                  return updated
+                                })
+                              }
+                            }}
+                            className="text-[#9ca3af] hover:text-red-400 transition-colors shrink-0 p-1"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                      {flavorList.length === 0 && (
+                        <p className="text-xs text-yellow-500">
+                          Nenhum sabor adicionado · clique em &quot;Adicionar sabor&quot; para começar.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Grade de variações (combo: sabor × tamanho) ── */}
+                {isCombo && selectedSizes.length > 0 && flavorList.some(f => f.name.trim()) && (
+                  <div className="md:col-span-2">
+                    <label className="label flex items-center gap-1.5">
+                      <ChevronDown className="w-3.5 h-3.5" />
+                      Estoque por variação (sabor × tamanho)
+                    </label>
+                    <div className="overflow-x-auto mt-1 rounded-lg border border-[#2a2a2a] bg-[#1a1a1a]">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-[#2a2a2a]">
+                            <th className="text-left text-[#9ca3af] py-2 px-3 font-medium">Sabor</th>
+                            {selectedSizes.map(size => (
+                              <th key={size} className="text-center text-[#b2ea0f] py-2 px-2 font-bold min-w-[4.5rem]">{size}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {flavorList.filter(f => f.name.trim()).map((flavor, idx) => (
+                            <tr key={flavor.name || idx} className="border-b border-[#2a2a2a] last:border-0">
+                              <td className="text-white py-2 px-3 font-medium whitespace-nowrap">{flavor.name}</td>
+                              {selectedSizes.map(size => (
+                                <td key={size} className="px-1.5 py-1.5">
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    placeholder="0"
+                                    value={variationStockForm[flavor.name]?.[size] ?? ''}
+                                    onChange={e => setVariationStockForm(prev => ({
+                                      ...prev,
+                                      [flavor.name]: {
+                                        ...(prev[flavor.name] ?? {}),
+                                        [size]: e.target.value,
+                                      },
+                                    }))}
+                                    className="input !py-1 !text-sm w-full text-center"
+                                  />
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* Descrição */}
                 <div className="md:col-span-2">
                   <label className="label">Descrição</label>
                   <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} className="input min-h-[80px] resize-y" placeholder="Descreva o produto..." />
                 </div>
+
+                {/* Imagens */}
                 <div className="md:col-span-2">
                   <div className="flex items-center justify-between mb-1">
                     <label className="label" style={{marginBottom:0}}>Imagens do Produto</label>
@@ -403,7 +726,6 @@ export default function AdminProductsPage() {
                     }`}>{imagesList.length}/5</span>
                   </div>
 
-                  {/* Thumbnails das imagens */}
                   {imagesList.length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-3">
                       {imagesList.map((url, i) => (
@@ -424,7 +746,6 @@ export default function AdminProductsPage() {
                     </div>
                   )}
 
-                  {/* Área de upload — oculto quando limite atingido */}
                   {imagesList.length < 5 ? (
                   <label className={`flex flex-col items-center justify-center gap-2 w-full h-24 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
                     uploading
@@ -447,6 +768,7 @@ export default function AdminProductsPage() {
                     <p className="text-xs text-red-400 mt-1">{uploadError}</p>
                   )}
                 </div>
+
                 <div className="md:col-span-2 flex gap-6">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" checked={form.active} onChange={e => setForm(f => ({ ...f, active: e.target.checked }))} className="w-4 h-4 accent-[#b2ea0f]" />
@@ -458,6 +780,7 @@ export default function AdminProductsPage() {
                   </label>
                 </div>
               </div>
+
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setShowForm(false)} className="btn-outline">Cancelar</button>
                 <button type="submit" disabled={saving} className="btn-green flex-1">
@@ -519,19 +842,7 @@ export default function AdminProductsPage() {
                       {p.compare_price && <p className="text-xs text-[#9ca3af] line-through">{formatBRL(p.compare_price)}</p>}
                     </td>
                     <td className="px-5 py-3 text-center hidden sm:table-cell">
-                      {p.sizes?.length > 0 && Object.keys(p.size_stock || {}).length > 0 ? (
-                        <div className="flex flex-col items-center gap-0.5">
-                          {p.sizes.map(s => (
-                            <span key={s} className={`text-xs font-semibold ${(p.size_stock[s] ?? 0) === 0 ? 'text-red-400' : (p.size_stock[s] ?? 0) <= 3 ? 'text-yellow-400' : 'text-white'}`}>
-                              {s}: {p.size_stock[s] ?? 0}
-                            </span>
-                          ))}
-                        </div>
-                      ) : (
-                        <span className={`text-sm font-bold ${p.stock <= 5 ? 'text-yellow-400' : p.stock === 0 ? 'text-red-400' : 'text-white'}`}>
-                          {p.stock}
-                        </span>
-                      )}
+                      <StockCell product={p} />
                     </td>
                     <td className="px-5 py-3 text-center hidden sm:table-cell">
                       <span className={`badge ${p.active ? 'bg-[#b2ea0f]/20 text-[#b2ea0f]' : 'bg-[#2a2a2a] text-[#9ca3af]'}`}>
@@ -563,5 +874,50 @@ export default function AdminProductsPage() {
 
       <style jsx global>{`.label { display: block; color: #9ca3af; font-size: 0.8rem; margin-bottom: 0.25rem; }`}</style>
     </div>
+  )
+}
+
+// Componente de célula de estoque na tabela
+function StockCell({ product: p }: { product: Product }) {
+  const hasSizes   = (p.sizes?.length ?? 0) > 0
+  const hasFlavors = (p.flavors?.length ?? 0) > 0
+
+  if (hasSizes && hasFlavors) {
+    // Combo: mostra total
+    return (
+      <span className={`text-sm font-bold ${p.stock === 0 ? 'text-red-400' : p.stock <= 5 ? 'text-yellow-400' : 'text-white'}`}>
+        {p.stock} total
+      </span>
+    )
+  }
+
+  if (hasSizes && Object.keys(p.size_stock || {}).length > 0) {
+    return (
+      <div className="flex flex-col items-center gap-0.5">
+        {p.sizes.map(s => (
+          <span key={s} className={`text-xs font-semibold ${(p.size_stock[s] ?? 0) === 0 ? 'text-red-400' : (p.size_stock[s] ?? 0) <= 3 ? 'text-yellow-400' : 'text-white'}`}>
+            {s}: {p.size_stock[s] ?? 0}
+          </span>
+        ))}
+      </div>
+    )
+  }
+
+  if (hasFlavors && Object.keys(p.flavor_stock || {}).length > 0) {
+    return (
+      <div className="flex flex-col items-center gap-0.5">
+        {p.flavors.map(f => (
+          <span key={f} className={`text-xs font-semibold ${(p.flavor_stock[f] ?? 0) === 0 ? 'text-red-400' : (p.flavor_stock[f] ?? 0) <= 3 ? 'text-yellow-400' : 'text-white'}`}>
+            {f}: {p.flavor_stock[f] ?? 0}
+          </span>
+        ))}
+      </div>
+    )
+  }
+
+  return (
+    <span className={`text-sm font-bold ${p.stock === 0 ? 'text-red-400' : p.stock <= 5 ? 'text-yellow-400' : 'text-white'}`}>
+      {p.stock}
+    </span>
   )
 }

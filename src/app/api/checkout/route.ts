@@ -14,26 +14,28 @@ export async function POST(req: NextRequest) {
       delivery_type, pickup_location,
     } = body
 
-    // Validação básica
     if (!customer_name || !customer_phone || !items?.length || !payment_method) {
       return NextResponse.json({ error: 'Dados incompletos' }, { status: 400 })
     }
 
-    // Obter user_id do cliente logado (se houver sessão)
     let userId: string | null = null
     try {
       const userClient = await createClient()
       const { data: { user } } = await userClient.auth.getUser()
       if (user) userId = user.id
-    } catch { /* usuário não logado — pedido como visitante */ }
+    } catch { /* usuário não logado */ }
 
     const supabase = createServiceClient()
 
-    // Validar estoque, capturar preços reais e guardar valores atuais
-    const stockMap    = new Map<string, number>()
+    // Maps de estoque por tipo de produto
+    const stockMap        = new Map<string, number>()                          // produto simples
+    const sizeStockMap    = new Map<string, Record<string, number>>()          // somente tamanho
+    const flavorStockMap  = new Map<string, Record<string, number>>()          // somente sabor
+    // variação (tamanho+sabor): chave = "productId|size|flavor"
+    const variationStockMap = new Map<string, number>()
+
     const bundleIds   = new Map<string, number>()
-    const priceMap    = new Map<string, number>() // product_id → preço real do banco
-    const sizeStockMap = new Map<string, Record<string, number>>() // product_id → size_stock completo
+    const priceMap    = new Map<string, number>()
 
     for (const item of items) {
       if (!item.product_id || !item.quantity || item.quantity < 1) {
@@ -42,7 +44,7 @@ export async function POST(req: NextRequest) {
 
       const { data: product } = await supabase
         .from('products')
-        .select('id, stock, size_stock, name, price, active')
+        .select('id, stock, size_stock, flavor_stock, sizes, flavors, name, price, active')
         .eq('id', item.product_id)
         .single()
 
@@ -51,19 +53,78 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ error: `Produto "${product.name}" não está disponível` }, { status: 400 })
         }
 
-        const hasSizeStock = product.size_stock && Object.keys(product.size_stock).length > 0
+        const hasSizes   = Array.isArray(product.sizes)   && product.sizes.length   > 0
+        const hasFlavors = Array.isArray(product.flavors) && product.flavors.length > 0
+        const isCombo    = hasSizes && hasFlavors
+        const isSizeOnly = hasSizes && !hasFlavors
+        const isFlavorOnly = hasFlavors && !hasSizes
 
-        if (hasSizeStock && item.size) {
-          // Validação por tamanho
-          const available = (product.size_stock as Record<string, number>)[item.size] ?? 0
-          if (available < item.quantity) {
+        if (isCombo) {
+          // Produto com tamanho E sabor — valida na tabela product_variations
+          if (!item.size || !item.flavor) {
             return NextResponse.json({
-              error: `Estoque insuficiente para "${product.name}" tamanho ${item.size}. Disponível: ${available}`
+              error: `"${product.name}" requer seleção de tamanho e sabor`
             }, { status: 400 })
           }
-          sizeStockMap.set(item.product_id, product.size_stock as Record<string, number>)
+          const { data: variation } = await supabase
+            .from('product_variations')
+            .select('stock')
+            .eq('product_id', item.product_id)
+            .eq('size', item.size)
+            .eq('flavor', item.flavor)
+            .single()
+
+          const available = variation?.stock ?? 0
+          if (available < item.quantity) {
+            return NextResponse.json({
+              error: `Estoque insuficiente para "${product.name}" — ${item.flavor} / ${item.size}. Disponível: ${available}`
+            }, { status: 400 })
+          }
+          const varKey = `${item.product_id}|${item.size}|${item.flavor}`
+          variationStockMap.set(varKey, available)
+
+        } else if (isSizeOnly) {
+          // Produto com tamanho apenas
+          const hasSizeStock = product.size_stock && Object.keys(product.size_stock).length > 0
+          if (hasSizeStock && item.size) {
+            const available = (product.size_stock as Record<string, number>)[item.size] ?? 0
+            if (available < item.quantity) {
+              return NextResponse.json({
+                error: `Estoque insuficiente para "${product.name}" tamanho ${item.size}. Disponível: ${available}`
+              }, { status: 400 })
+            }
+            sizeStockMap.set(item.product_id, product.size_stock as Record<string, number>)
+          } else {
+            if (product.stock < item.quantity) {
+              return NextResponse.json({
+                error: `Estoque insuficiente para "${product.name}". Disponível: ${product.stock}`
+              }, { status: 400 })
+            }
+            stockMap.set(item.product_id, product.stock)
+          }
+
+        } else if (isFlavorOnly) {
+          // Produto com sabor apenas
+          const hasFlavorStock = product.flavor_stock && Object.keys(product.flavor_stock).length > 0
+          if (hasFlavorStock && item.flavor) {
+            const available = (product.flavor_stock as Record<string, number>)[item.flavor] ?? 0
+            if (available < item.quantity) {
+              return NextResponse.json({
+                error: `Estoque insuficiente para "${product.name}" sabor ${item.flavor}. Disponível: ${available}`
+              }, { status: 400 })
+            }
+            flavorStockMap.set(item.product_id, product.flavor_stock as Record<string, number>)
+          } else {
+            if (product.stock < item.quantity) {
+              return NextResponse.json({
+                error: `Estoque insuficiente para "${product.name}". Disponível: ${product.stock}`
+              }, { status: 400 })
+            }
+            stockMap.set(item.product_id, product.stock)
+          }
+
         } else {
-          // Validação de estoque único
+          // Produto simples
           if (product.stock < item.quantity) {
             return NextResponse.json({
               error: `Estoque insuficiente para "${product.name}". Disponível: ${product.stock}`
@@ -71,8 +132,11 @@ export async function POST(req: NextRequest) {
           }
           stockMap.set(item.product_id, product.stock)
         }
+
         priceMap.set(item.product_id, product.price)
+
       } else {
+        // Bundle / Kit
         const { data: bundle } = await supabase
           .from('bundles')
           .select('id, name, active, stock, price')
@@ -93,18 +157,20 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // --- Recalcular todos os valores no servidor (nunca confiar no cliente) ---
-
-    // Subtotal real baseado nos preços do banco
+    // Recalcular subtotal com preços do banco
     let serverSubtotal = 0
-    const serverItems = items.map((item: { product_id: string; quantity: number; product_name?: string; product_image?: string; size?: string }) => {
+    const serverItems = items.map((item: {
+      product_id: string; quantity: number;
+      product_name?: string; product_image?: string;
+      size?: string; flavor?: string
+    }) => {
       const actualPrice = priceMap.get(item.product_id) ?? 0
       serverSubtotal += actualPrice * item.quantity
       return { ...item, unit_price: actualPrice, total_price: Math.round(actualPrice * item.quantity * 100) / 100 }
     })
     serverSubtotal = Math.round(serverSubtotal * 100) / 100
 
-    // Desconto real do cupom
+    // Validar cupom
     let serverDiscount = 0
     if (coupon_code) {
       const { data: coupon } = await supabase
@@ -133,7 +199,7 @@ export async function POST(req: NextRequest) {
         : Math.min(coupon.value, serverSubtotal)
     }
 
-    // Pontos de fidelidade: validar saldo real do usuário (1 ponto = R$ 1,00)
+    // Validar pontos de fidelidade
     let serverPointsDiscount = 0
     let validatedPointsToUse = 0
     if (points_to_use && points_to_use > 0 && userId) {
@@ -148,7 +214,7 @@ export async function POST(req: NextRequest) {
       serverPointsDiscount = validatedPointsToUse
     }
 
-    // Frete: recalcular server-side a partir do UF do endereço
+    // Calcular frete
     let serverShipping = 0
     if (delivery_type === 'pickup') {
       serverShipping = 0
@@ -169,12 +235,11 @@ export async function POST(req: NextRequest) {
       serverShipping = afterDiscounts >= threshold ? 0 : (shippingRate ? Number(shippingRate.price) : 35.90)
     }
 
-    // Total final do servidor
     const serverTotal = Math.max(0, Math.round(
       (serverSubtotal - serverDiscount - serverPointsDiscount + serverShipping) * 100
     ) / 100)
 
-    // Criar pedido com valores calculados no servidor
+    // Criar pedido
     const { data: order, error } = await supabase
       .from('orders')
       .insert({
@@ -205,14 +270,40 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Erro ao salvar pedido' }, { status: 500 })
     }
 
-    // Decrementar estoque imediatamente ao criar o pedido (para todos os métodos).
-    // Se o pagamento for recusado ou cancelado, o estoque é restaurado no webhook/rota de cancelamento.
+    // ── Decrementar estoques ──────────────────────────────────────────────────
 
-    // Agrupa decrementos de size_stock por produto (evita sobrescrever tamanhos do mesmo produto)
-    type SizeDecrements = Record<string, number>
+    // 1. Variações combo (tamanho + sabor) — agrupado por produto + variação
+    type VarDecrements = Record<string, number> // "size|flavor" → qty
+    const variationDecrementsMap = new Map<string, VarDecrements>()
+
+    // 2. Sabores (sabor apenas) — agrupado por produto
+    type FlavorDecrements = Record<string, number> // flavor → qty
+    const flavorDecrementsMap = new Map<string, FlavorDecrements>()
+
+    // 3. Tamanhos (tamanho apenas) — agrupado por produto
+    type SizeDecrements = Record<string, number> // size → qty
     const sizeDecrementsMap = new Map<string, SizeDecrements>()
+
     for (const item of items) {
-      if (sizeStockMap.has(item.product_id) && item.size) {
+      const varKey = item.size && item.flavor ? `${item.product_id}|${item.size}|${item.flavor}` : null
+
+      if (varKey && variationStockMap.has(varKey)) {
+        // Combo
+        const existing = variationDecrementsMap.get(item.product_id) || {}
+        const ik = `${item.size}|${item.flavor}`
+        variationDecrementsMap.set(item.product_id, {
+          ...existing,
+          [ik]: (existing[ik] || 0) + item.quantity,
+        })
+      } else if (flavorStockMap.has(item.product_id) && item.flavor) {
+        // Sabor apenas
+        const existing = flavorDecrementsMap.get(item.product_id) || {}
+        flavorDecrementsMap.set(item.product_id, {
+          ...existing,
+          [item.flavor]: (existing[item.flavor] || 0) + item.quantity,
+        })
+      } else if (sizeStockMap.has(item.product_id) && item.size) {
+        // Tamanho apenas
         const existing = sizeDecrementsMap.get(item.product_id) || {}
         sizeDecrementsMap.set(item.product_id, {
           ...existing,
@@ -221,16 +312,21 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Bundles e produtos simples
     for (const item of items) {
+      const varKey = item.size && item.flavor ? `${item.product_id}|${item.size}|${item.flavor}` : null
+      const isVariation = varKey && variationStockMap.has(varKey)
+      const isFlavor    = flavorStockMap.has(item.product_id) && item.flavor
+      const isSize      = sizeStockMap.has(item.product_id)   && item.size
+
       if (bundleIds.has(item.product_id)) {
         const currentStock = bundleIds.get(item.product_id) ?? 0
         await supabase
           .from('bundles')
           .update({ stock: Math.max(0, currentStock - item.quantity) })
           .eq('id', item.product_id)
-      } else if (sizeDecrementsMap.has(item.product_id)) {
-        // Já processado abaixo — pular aqui para não duplicar
-      } else {
+      } else if (!isVariation && !isFlavor && !isSize) {
+        // Produto simples
         const currentStock = stockMap.get(item.product_id) ?? 0
         await supabase
           .from('products')
@@ -239,29 +335,64 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Aplicar decrementos de size_stock (um UPDATE por produto)
+    // Tamanho apenas (um UPDATE por produto)
     for (const [productId, decrements] of sizeDecrementsMap) {
       const currentSizeStock = { ...(sizeStockMap.get(productId) ?? {}) }
       let newTotal = 0
       for (const [size, qty] of Object.entries(decrements)) {
         currentSizeStock[size] = Math.max(0, (currentSizeStock[size] ?? 0) - qty)
-        newTotal += currentSizeStock[size]
       }
-      // Soma os tamanhos não alterados para manter stock global coerente
-      for (const [size, qty] of Object.entries(currentSizeStock)) {
-        if (!(size in decrements)) newTotal += qty
-      }
+      for (const qty of Object.values(currentSizeStock)) newTotal += qty
       await supabase
         .from('products')
         .update({ size_stock: currentSizeStock, stock: newTotal })
         .eq('id', productId)
     }
 
-    // Nota: o uso do cupom (uses_count) só é incrementado após aprovação do pagamento (no webhook)
+    // Sabor apenas (um UPDATE por produto)
+    for (const [productId, decrements] of flavorDecrementsMap) {
+      const currentFlavorStock = { ...(flavorStockMap.get(productId) ?? {}) }
+      let newTotal = 0
+      for (const [flavor, qty] of Object.entries(decrements)) {
+        currentFlavorStock[flavor] = Math.max(0, (currentFlavorStock[flavor] ?? 0) - qty)
+      }
+      for (const qty of Object.values(currentFlavorStock)) newTotal += qty
+      await supabase
+        .from('products')
+        .update({ flavor_stock: currentFlavorStock, stock: newTotal })
+        .eq('id', productId)
+    }
 
-    // Criar preferência de pagamento no Mercado Pago (apenas para pagamentos online)
+    // Combo — atualiza cada variação individualmente e recalcula stock global
+    const updatedProductIds = new Set<string>()
+    for (const [productId, decrements] of variationDecrementsMap) {
+      for (const [ik, qty] of Object.entries(decrements)) {
+        const [size, flavor] = ik.split('|')
+        const varKey = `${productId}|${size}|${flavor}`
+        const currentStock = variationStockMap.get(varKey) ?? 0
+        await supabase
+          .from('product_variations')
+          .update({ stock: Math.max(0, currentStock - qty) })
+          .eq('product_id', productId)
+          .eq('size', size)
+          .eq('flavor', flavor)
+      }
+      updatedProductIds.add(productId)
+    }
+    // Recalcula stock global do produto (soma de todas as variações)
+    for (const productId of updatedProductIds) {
+      const { data: allVariations } = await supabase
+        .from('product_variations')
+        .select('stock')
+        .eq('product_id', productId)
+      const totalStock = (allVariations ?? []).reduce((s: number, v: { stock: number }) => s + v.stock, 0)
+      await supabase.from('products').update({ stock: totalStock }).eq('id', productId)
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+
+    // Pedido de retirada: aprovar imediatamente
     if (payment_method === 'pickup') {
-      // Pedido de retirada: aprovar imediatamente, incrementar cupom e enviar email
       await supabase
         .from('orders')
         .update({ payment_status: 'approved', order_status: 'paid' })
@@ -288,100 +419,88 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ order_id: order.id, order_number: order.order_number })
     }
 
-    if (payment_method !== 'pickup') {
-      // Pedido gratuito (cupom 100%) — aprovar diretamente sem passar pelo MP
-      if (Number(serverTotal) <= 0) {
-        await supabase
-          .from('orders')
-          .update({ payment_status: 'approved', order_status: 'paid' })
-          .eq('id', order.id)
+    // Pedido gratuito (cupom 100%)
+    if (Number(serverTotal) <= 0) {
+      await supabase
+        .from('orders')
+        .update({ payment_status: 'approved', order_status: 'paid' })
+        .eq('id', order.id)
 
-        // Incrementar uso do cupom
-        if (coupon_code) {
-          const { data: cupom } = await supabase
-            .from('coupons').select('uses_count').eq('code', coupon_code).single()
-          if (cupom) {
-            await supabase
-              .from('coupons')
-              .update({ uses_count: (cupom.uses_count || 0) + 1 })
-              .eq('code', coupon_code)
-          }
+      if (coupon_code) {
+        const { data: cupom } = await supabase
+          .from('coupons').select('uses_count').eq('code', coupon_code).single()
+        if (cupom) {
+          await supabase
+            .from('coupons')
+            .update({ uses_count: (cupom.uses_count || 0) + 1 })
+            .eq('code', coupon_code)
         }
-
-        // Processar pontos de fidelidade
-        await processLoyaltyPoints(order.id, supabase)
-
-        // Enviar email de confirmação
-        const { data: pedidoAprovado } = await supabase.from('orders').select('*').eq('id', order.id).single()
-        if (pedidoAprovado) {
-          const emailFn = payment_method === 'pickup'
-            ? enviarEmailProntoParaRetirada
-            : enviarEmailConfirmacaoPedido
-          emailFn(pedidoAprovado as import('@/types').Order).catch(() => {})
-        }
-
-        return NextResponse.json({ order_id: order.id, order_number: order.order_number })
       }
 
-      try {
-        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
-          || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
-        const isSandbox = (process.env.MERCADOPAGO_ACCESS_TOKEN || '').startsWith('TEST-')
-        const preferenceClient = getPreferenceClient()
+      await processLoyaltyPoints(order.id, supabase)
 
-        // Calcula o total real a cobrar (calculado no servidor)
-        const totalFinal = serverTotal
+      const { data: pedidoAprovado } = await supabase.from('orders').select('*').eq('id', order.id).single()
+      if (pedidoAprovado) {
+        const emailFn = payment_method === 'pickup'
+          ? enviarEmailProntoParaRetirada
+          : enviarEmailConfirmacaoPedido
+        emailFn(pedidoAprovado as import('@/types').Order).catch(() => {})
+      }
 
-        const preference = await preferenceClient.create({
-          body: {
-            items: [{
-              id: 'pedido',
-              title: `Pedido Space Fit #${order.order_number}`,
-              quantity: 1,
-              currency_id: 'BRL',
-              unit_price: totalFinal,
-            }],
-            payer: {
-              name: customer_name,
-              // Não usar o email da conta do vendedor como payer (MP bloqueia).
-              // Para qualquer outro email real do cliente, usar normalmente.
-              email: customer_email && customer_email !== process.env.RESEND_FROM_EMAIL
-                ? customer_email
-                : 'comprador@mp.com.br',
-            },
-            external_reference: order.id,
-            back_urls: {
-              success: `${siteUrl}/pedido-confirmado/${order.id}`,
-              failure: `${siteUrl}/pedido-confirmado/${order.id}?mp_result=failure`,
-              pending: `${siteUrl}/pedido-confirmado/${order.id}`,
-            },
-            ...(!isSandbox && { auto_return: 'approved' }),
-            notification_url: `${siteUrl}/api/payments/webhook`,
+      return NextResponse.json({ order_id: order.id, order_number: order.order_number })
+    }
+
+    // Pagamento online via Mercado Pago
+    try {
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
+        || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
+      const isSandbox = (process.env.MERCADOPAGO_ACCESS_TOKEN || '').startsWith('TEST-')
+      const preferenceClient = getPreferenceClient()
+
+      const preference = await preferenceClient.create({
+        body: {
+          items: [{
+            id: 'pedido',
+            title: `Pedido Space Fit #${order.order_number}`,
+            quantity: 1,
+            currency_id: 'BRL',
+            unit_price: serverTotal,
+          }],
+          payer: {
+            name: customer_name,
+            email: customer_email && customer_email !== process.env.RESEND_FROM_EMAIL
+              ? customer_email
+              : 'comprador@mp.com.br',
           },
-        })
+          external_reference: order.id,
+          back_urls: {
+            success: `${siteUrl}/pedido-confirmado/${order.id}`,
+            failure: `${siteUrl}/pedido-confirmado/${order.id}?mp_result=failure`,
+            pending: `${siteUrl}/pedido-confirmado/${order.id}`,
+          },
+          ...(!isSandbox && { auto_return: 'approved' }),
+          notification_url: `${siteUrl}/api/payments/webhook`,
+        },
+      })
 
-        // Salvar mp_preference_id no pedido
-        await supabase
-          .from('orders')
-          .update({ mp_preference_id: preference.id })
-          .eq('id', order.id)
+      await supabase
+        .from('orders')
+        .update({ mp_preference_id: preference.id })
+        .eq('id', order.id)
 
-        return NextResponse.json({
-          order_id: order.id,
-          order_number: order.order_number,
-          payment_url: isSandbox ? preference.sandbox_init_point : preference.init_point,
-        })
-      } catch (mpError) {
-        const mpMsg = mpError instanceof Error ? mpError.message : JSON.stringify(mpError)
-        console.error('Erro ao criar preferência Mercado Pago:', mpMsg)
-        return NextResponse.json(
-          { error: 'Não foi possível iniciar o pagamento. Tente novamente em instantes.', order_id: order.id },
-          { status: 502 }
-        )
-      }
-    } // fim if payment_method !== 'pickup'
-
-    return NextResponse.json({ order_id: order.id, order_number: order.order_number })
+      return NextResponse.json({
+        order_id: order.id,
+        order_number: order.order_number,
+        payment_url: isSandbox ? preference.sandbox_init_point : preference.init_point,
+      })
+    } catch (mpError) {
+      const mpMsg = mpError instanceof Error ? mpError.message : JSON.stringify(mpError)
+      console.error('Erro ao criar preferência Mercado Pago:', mpMsg)
+      return NextResponse.json(
+        { error: 'Não foi possível iniciar o pagamento. Tente novamente em instantes.', order_id: order.id },
+        { status: 502 }
+      )
+    }
   } catch (error) {
     console.error('Checkout error:', error)
     return NextResponse.json({ error: 'Erro interno. Tente novamente.' }, { status: 500 })

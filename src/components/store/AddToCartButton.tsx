@@ -8,12 +8,13 @@ import { ShoppingCart, Check } from 'lucide-react'
 interface Props {
   product: Product
   selectedSize?: string
+  selectedFlavor?: string
   quantity?: number
   compact?: boolean
   sizeStock?: number
 }
 
-export default function AddToCartButton({ product, selectedSize, quantity = 1, compact = false, sizeStock }: Props) {
+export default function AddToCartButton({ product, selectedSize, selectedFlavor, quantity = 1, compact = false, sizeStock }: Props) {
   const { addItem, openCart } = useCart()
   const [added, setAdded] = useState(false)
 
@@ -24,6 +25,7 @@ export default function AddToCartButton({ product, selectedSize, quantity = 1, c
       product_slug: product.slug,
       product_image: product.images?.[0],
       size: selectedSize,
+      flavor: selectedFlavor,
       quantity,
       unit_price: product.price,
       stock: sizeStock ?? product.stock,
